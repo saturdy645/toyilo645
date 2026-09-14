@@ -4298,6 +4298,7 @@ let aiRemaining = null;
       body:JSON.stringify({messages,system})
     });
     const d=await res.json().catch(()=>({}));
+    aiRemaining = Number.isInteger(d.remaining) ? d.remaining : aiRemaining;
     if(!res.ok) throw new Error(d.error||('AI HTTP '+res.status));
     const text=String(d.text||'').trim();
     if(!text) throw new Error('AI 응답이 비어 있습니다');
