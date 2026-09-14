@@ -4416,11 +4416,8 @@ const Ai=(function(){
     let reply;
     try{ reply=await ask(history,system(),false); }
     catch(e){
-      const c=CANNED();
-      if(turns<=c.length)      reply=c[turns-1];
-      else if(turns===c.length+1) reply=CONFIRM()[0];
-      else                     reply=TAIL()[0];
-    }
+    console.error('AI call failed:', e);
+reply='AI 연결 오류: '+(e?.message || '알 수 없는 오류');
     typing(false);
     bubble(reply,false);
     history.push({role:'assistant',content:reply});
