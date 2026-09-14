@@ -4418,6 +4418,7 @@ const Ai=(function(){
     catch(e){
     console.error('AI call failed:', e);
 reply='AI 연결 오류: '+(e?.message || '알 수 없는 오류');
+      }
     typing(false);
     bubble(reply,false);
     history.push({role:'assistant',content:reply});
