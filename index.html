@@ -4290,7 +4290,7 @@ const Ai=(function(){
 
   // AI 비밀키는 브라우저에 넣지 않고 Vercel 서버 함수(/api/ai)를 통해 OpenAI를 호출합니다.
   const AI_ENDPOINT='/api/ai';
-
+let aiRemaining = null;
   async function callGPT(messages,system){
     const res=await fetch(AI_ENDPOINT,{
       method:'POST',
