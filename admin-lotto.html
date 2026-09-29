@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>토요일645 관리자</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 520px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    .box {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+    h2 { margin-top: 0; }
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 13px;
+      border: 0;
+      border-radius: 10px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 18px;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    .note {
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>토요일645 당첨번호 등록</h2>
+    <div class="note">
+      검증된 당첨번호만 등록합니다. 기존 회차는 덮어쓰지 않습니다.
+    </div>
+
+    <label>관리자 비밀키</label>
+    <input id="secret" type="password" autocomplete="off">
+
+    <label>회차</label>
+    <input id="round" type="number" min="1">
+
+    <label>추첨일</label>
+    <input id="drawDate" type="date">
+
+    <label>당첨번호 6개</label>
+    <input id="nums" type="text" placeholder="예: 9,18,24,38,43,44">
+
+    <label>보너스 번호</label>
+    <input id="bonus" type="number" min="1" max="45">
+
+    <button id="saveBtn">검증 후 저장</button>
+
+    <div id="result"></div>
+  </div>
+
+<script>
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const result = document.getElementById("result");
+  result.textContent = "확인 중...";
+
+  const secret = document.getElementById("secret").value.trim();
+  const round = Number(document.getElementById("round").value);
+  const draw_date = document.getElementById("drawDate").value;
+  const nums = document.getElementById("nums").value
+    .split(",")
+    .map(v => Number(v.trim()));
+  const bonus = Number(document.getElementById("bonus").value);
+
+  if (!secret) {
+    result.textContent = "관리자 비밀키를 입력하세요.";
+    return;
+  }
+
+  if (!Number.isInteger(round) || round < 1) {
+    result.textContent = "회차를 확인하세요.";
+    return;
+  }
+
+  if (!draw_date) {
+    result.textContent = "추첨일을 입력하세요.";
+    return;
+  }
+
+  if (
+    nums.length !== 6 ||
+    nums.some(n => !Number.isInteger(n) || n < 1 || n > 45) ||
+    new Set(nums).size !== 6
+  ) {
+    result.textContent = "당첨번호 6개를 정확히 입력하세요.";
+    return;
+  }
+
+  if (
+    !Number.isInteger(bonus) ||
+    bonus < 1 ||
+    bonus > 45 ||
+    nums.includes(bonus)
+  ) {
+    result.textContent = "보너스 번호를 확인하세요.";
+    return;
+  }
+
+  if (!confirm(`${round}회 당첨번호를 저장할까요?`)) {
+    result.textContent = "저장을 취소했습니다.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/update-lotto", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-update-secret": secret
+      },
+      body: JSON.stringify({
+        round,
+        draw_date,
+        nums,
+        bonus
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      result.textContent =
+        `저장 완료\n${round}회\n` +
+        `${nums.sort((a,b) => a-b).join(", ")} + 보너스 ${bonus}`;
+    } else if (response.status === 409) {
+      result.textContent =
+        "이미 저장된 회차입니다. 기존 데이터는 변경하지 않았습니다.";
+    } else if (response.status === 401) {
+      result.textContent = "관리자 비밀키가 올바르지 않습니다.";
+    } else {
+      result.textContent =
+        "저장 실패: " + (data.error || "알 수 없는 오류");
+    }
+  } catch (error) {
+    result.textContent = "서버 연결에 실패했습니다.";
+  }
+});
+</script>
+</body>
+</html>
