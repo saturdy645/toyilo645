@@ -1,76 +1,32 @@
 // api/lotto.js
-// 토요일645 - 동행복권 공식 당첨번호 중계 API
-
-const OFFICIAL_URL =
-  'https://www.dhlottery.co.kr/gameResult.do?method=byWin&drwNo=';
+// 토요일645 - 검증된 당첨번호 조회 API
+// Supabase lotto_draws를 기준 저장소로 사용
 
 function validDraw(draw) {
-  if (!draw || !Number.isInteger(draw.round) || draw.round < 1) return false;
-  if (!Array.isArray(draw.nums) || draw.nums.length !== 6) return false;
+  if (!draw || !Number.isInteger(Number(draw.round))) return false;
 
-  const nums = draw.nums.map(Number);
+  const nums = Array.isArray(draw.nums)
+    ? draw.nums.map(Number)
+    : [];
 
+  if (nums.length !== 6) return false;
   if (nums.some(n => !Number.isInteger(n) || n < 1 || n > 45)) return false;
   if (new Set(nums).size !== 6) return false;
 
   const bonus = Number(draw.bonus);
-
   if (!Number.isInteger(bonus) || bonus < 1 || bonus > 45) return false;
   if (nums.includes(bonus)) return false;
 
-  return /^\d{4}-\d{2}-\d{2}$/.test(draw.date);
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(draw.draw_date || draw.date || ''));
 }
 
-async function fetchDraw(round) {
-  const response = await fetch(OFFICIAL_URL + encodeURIComponent(round), {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'text/html'
-    }
-  });
-
-  if (!response.ok) return null;
-
-  const html = await response.text();
-
-  // 해당 회차 결과가 실제로 발표된 페이지인지 먼저 확인
-  const titleMatch = html.match(
-    new RegExp(`${round}\\s*회\\s*당첨결과`)
-  );
-
-  if (!titleMatch) return null;
-
-  // 추첨일
-  const dateMatch = html.match(
-    /\((\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*추첨\)/
-  );
-
-  if (!dateMatch) return null;
-
-  const date =
-    `${dateMatch[1]}-${String(dateMatch[2]).padStart(2, '0')}-${String(dateMatch[3]).padStart(2, '0')}`;
-
-  /*
-    공식 페이지의 당첨번호 영역에서 숫자를 읽는다.
-    ball_645 클래스는 동행복권 로또 번호 표시에 사용된다.
-  */
-  const ballMatches = [
-    ...html.matchAll(/ball_645[^>]*>\s*(\d{1,2})\s*</g)
-  ].map(m => Number(m[1]));
-
-  if (ballMatches.length < 7) return null;
-
-  const nums = ballMatches.slice(0, 6).sort((a, b) => a - b);
-  const bonus = ballMatches[6];
-
-  const draw = {
-    round: Number(round),
-    date,
-    nums,
-    bonus
+function normalize(row) {
+  return {
+    round: Number(row.round),
+    date: String(row.draw_date || row.date).slice(0, 10),
+    nums: row.nums.map(Number).sort((a, b) => a - b),
+    bonus: Number(row.bonus)
   };
-
-  return validDraw(draw) ? draw : null;
 }
 
 export default async function handler(req, res) {
@@ -78,40 +34,60 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return res.status(500).json({
+      error: 'Lottery database is not configured',
+      latest: null,
+      draws: []
+    });
+  }
+
   try {
-    const since = Math.max(0, Number.parseInt(req.query.since || '0', 10) || 0);
-    const requestedRound =
-      Number.parseInt(req.query.round || '0', 10) || 0;
+    const round = Number(req.query.round || 0);
+    const since = Number(req.query.since || 0);
 
-    // 특정 회차 확인용
-    if (requestedRound > 0) {
-      const draw = await fetchDraw(requestedRound);
+    let query =
+      `${supabaseUrl}/rest/v1/lotto_draws` +
+      `?select=round,draw_date,nums,bonus`;
 
-      return res.status(200).json({
-        latest: draw ? draw.round : null,
-        draws: draw ? [draw] : []
-      });
+    if (round > 0) {
+      query += `&round=eq.${round}&limit=1`;
+    } else if (since > 0) {
+      query += `&round=gt.${since}&order=round.asc&limit=3`;
+    } else {
+      query += `&order=round.desc&limit=60`;
     }
 
-    /*
-      앱은 ?since=현재 보유 최신회차 로 호출한다.
-      미래 회차를 무한 조회하지 않도록 최대 3개만 확인한다.
-    */
-    const start = since > 0 ? since + 1 : 1;
-    const draws = [];
+    const response = await fetch(query, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`
+      }
+    });
 
-    for (let round = start; round < start + 3; round++) {
-      const draw = await fetchDraw(round);
-
-      if (!draw) break;
-
-      draws.push(draw);
+    if (!response.ok) {
+      throw new Error(`Supabase returned ${response.status}`);
     }
+
+    const rows = await response.json();
+
+    const draws = (Array.isArray(rows) ? rows : [])
+      .filter(validDraw)
+      .map(normalize);
+
+    if (!round && !since) {
+      draws.sort((a, b) => a.round - b.round);
+    }
+
+    const latest = draws.length
+      ? Math.max(...draws.map(d => d.round))
+      : (since > 0 ? since : null);
 
     return res.status(200).json({
-      latest: draws.length
-        ? draws[draws.length - 1].round
-        : since || null,
+      latest,
       draws
     });
 
@@ -119,7 +95,8 @@ export default async function handler(req, res) {
     console.error('lotto api error:', error);
 
     return res.status(500).json({
-      error: 'Official lottery data could not be loaded',
+      error: 'Lottery data could not be loaded',
+      latest: null,
       draws: []
     });
   }
