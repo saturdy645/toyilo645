@@ -8578,8 +8578,8 @@ const Draws=(function(){
       for(const row of rows){
         const r=Number(row && row.round);
         if(!(r>0) || !ok(row)) continue;                 // 이상한 줄은 버립니다
-        const cur=map[String(r)];
-        if(cur && ok(cur)) continue;                     // 이미 확인된 값은 지키기
+        
+                           
         map[String(r)]={ date:String(row.date||'').slice(0,10),
                          nums:row.nums.map(Number).sort((a,b)=>a-b),
                          bonus:Number(row.bonus) };
