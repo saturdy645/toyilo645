@@ -24,7 +24,9 @@
   body{background:#0A0F1C;color:var(--ink);
     font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
     display:flex;align-items:center;justify-content:center;
-    height:100vh; height:100svh; overflow:hidden}
+    height:100vh; height:100svh; overflow:hidden;
+    /* 아이폰 홈 화면 앱: 맨 아래 손잡이 자리를 비워 둡니다 */
+    padding-bottom:env(safe-area-inset-bottom,0px)}
   /* 항상 400 x 840 비율을 유지하고, 화면에 맞춰 통째로 축소합니다 */
   .phone{position:relative;width:400px;height:840px;flex:none;
     transform:scale(var(--k,1));transform-origin:center center;
@@ -277,6 +279,8 @@
   /* 다 보이는 상태 — 더 조용하게 */
   .sbar.full i{background:rgba(143,168,208,.3)}
   .stack{display:flex;flex-direction:column;gap:8px}
+  /* 저장번호 목록 끝에 여유 — 마지막 카드가 아래 메뉴에 걸리지 않게 합니다 */
+  #check,#log{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
   .win{background:linear-gradient(180deg,rgba(242,180,65,.10),rgba(242,180,65,.04));
     border:1px solid rgba(242,180,65,.34);border-radius:15px;padding:11px 12px 12px;
     margin:0 0 11px;box-shadow:0 6px 18px rgba(0,0,0,.28)}
@@ -386,14 +390,19 @@
   .tapstart{position:absolute;inset:0;z-index:2;display:none;align-items:center;
     justify-content:center;font-size:13px;font-weight:700;color:#fff;
     background:rgba(0,0,0,.55);border-radius:20px}
-  .scan-got{flex:none;margin:10px 0 0;display:flex;flex-direction:column;gap:6px;
-    max-height:150px;overflow-y:auto;scrollbar-width:none}
+  /* 읽은 게임은 빠짐없이 보이고, 길면 이 칸이 세로로 넘어갑니다 */
+  .scan-got{flex:1 1 auto;min-height:0;margin:10px 0 0;display:flex;flex-direction:column;gap:8px;
+    overflow-y:auto;scrollbar-width:none}
   .scan-got::-webkit-scrollbar{width:0}
-  .scan-got .g{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;
+  #scan.got .finder{display:none}          /* 다 읽고 나면 카메라 칸을 비워 결과에 자리를 줍니다 */
+  .scan-got .g{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;
     background:rgba(242,180,65,.09);border:1px solid rgba(242,180,65,.3)}
-  .scan-got .g b{font-size:11px;font-weight:800;color:var(--amber);flex:none}
-  .scan-got .g span{font-size:12.5px;font-weight:700;color:var(--ink);
-    font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .scan-got .g b{font-size:14px;font-weight:800;color:var(--amber);flex:none;width:16px}
+  .scan-got .gn{flex:1;min-width:0;display:flex;gap:5px}
+  .scan-got .gn span{flex:1;min-width:0;aspect-ratio:1;max-width:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
   #scan .more-btn{margin-top:8px}
   .scan-lead{flex:none;text-align:center;font-size:19px;font-weight:800;
     letter-spacing:-.02em;color:var(--ink);margin:10px 0 0}
@@ -616,24 +625,38 @@
   /* 사진으로 번호 읽기 */
   .shot-mode{margin:2px 0 10px}
   .shot-mode button{flex:1;justify-content:center;padding:10px 4px;font-size:13px}
-  .shot-stage{position:relative;height:190px;border-radius:15px;overflow:hidden;
+  /* 사진을 보여주는 칸 — 사진이 없을 때만 빈 상자입니다.
+     사진이 들어오면 상자를 없애고 사진 자체를 가로폭에 꽉 채워 보여줍니다. */
+  .shot-stage{position:relative;min-height:112px;border-radius:15px;overflow:hidden;
     background:var(--surface-2);border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;margin-bottom:11px}
-  .shot-stage canvas{max-width:100%;max-height:100%;display:none}
-  .shot-stage.has canvas{display:block}
+  .shot-stage canvas{display:none}                 /* 읽기용 — 화면에는 쓰지 않습니다 */
+  .shot-stage img{display:none}
+  .shot-stage.has{min-height:0;background:transparent;border:0;border-radius:12px}
+  .shot-stage.has img{display:block;width:100%;height:auto;border-radius:12px}
   .shot-stage.has .shot-empty{display:none}
+  /* 한 번 누르면 조금 더 크게 — 좌우로 밀어서 봅니다 */
+  .shot-stage.has.zoom{overflow:auto;-webkit-overflow-scrolling:touch}
+  .shot-stage.has.zoom img{width:210%;max-width:none}
   .shot-empty{margin:0;font-size:12.5px;color:var(--muted);opacity:.7}
-  .shot-btns button{flex:1}
+  /* 누르기 쉬운 큰 버튼 두 개 */
+  .shot-btns{display:flex;flex-direction:column;gap:8px}
+  .shot-btns button{width:100%;padding:14px;border-radius:13px;font-size:14px;font-weight:700}
+  .shot-read{margin-top:2px}
   .shot-state{min-height:18px;margin:10px 0 4px;text-align:center;
     font-size:12px;color:var(--muted)}
   .shot-state.bad{color:#E86A5A}
-  .shot-rows{display:flex;flex-direction:column;gap:9px}
+  .shot-rows{display:flex;flex-direction:column;gap:10px}
   .shot-row{display:flex;align-items:center;gap:6px}
-  .shot-row .rl{flex:none;width:17px;font-size:12px;font-weight:800;color:var(--amber)}
-  .shot-row .rn{flex:1;min-width:0;aspect-ratio:1;max-width:42px;
+  .shot-row .rl{flex:none;width:18px;font-size:14px;font-weight:800;color:var(--amber)}
+  /* 눌러서 고칠 수 있는 칸이자, 앱의 구간 색을 그대로 쓰는 번호 공입니다 */
+  .shot-row .rn{flex:1;min-width:0;aspect-ratio:1;max-width:46px;
     border-radius:50%;border:1px solid var(--line);background:var(--surface-2);
-    text-align:center;font-size:14px;font-weight:800;color:var(--ink);padding:0}
-  .shot-row .rn.bad{border-color:#E86A5A;color:#E86A5A}
+    text-align:center;font-size:16px;font-weight:800;color:var(--ink);padding:0}
+  .shot-row .rn.hasv{border-color:transparent;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.35)}
+  .shot-row .rn.bad{border-color:#E86A5A;color:#E86A5A;
+    background:var(--surface-2);text-shadow:none}
   .shot-row .rx{flex:none;width:24px;background:none;border:0;color:var(--muted);
     font-size:15px;opacity:.6}
 
@@ -2743,7 +2766,7 @@
     </div>
     <input type="file" id="scanFile" accept="image/*" capture="environment" hidden>
     <div class="scan-got" id="scanGot" hidden></div>
-    <p class="scan-help">QR 당첨 확인은 보조확인 수단이므로<br>반드시 실물과 대조하시기 바라며,<br>당첨금은 실물 복권소지자에게만 지급합니다.</p>
+    <p class="scan-help">QR 당첨 확인은 보조 확인 수단입니다.<br>당첨 시 반드시 실물 복권과 대조해 주세요.</p>
     <button class="primary" id="scanSave" hidden>내 번호로 저장하기</button>
     <button class="ghost more-btn" id="fakeScan">스캔 예시 불러오기</button>
   </div>
@@ -2924,14 +2947,17 @@
 
       <div class="shot-stage" id="shotStage">
         <canvas id="shotCv"></canvas>
+        <img id="shotImg" alt="">
         <p class="shot-empty" id="shotEmpty" data-i="shotEmpty">사진을 고르면 여기에 보입니다</p>
       </div>
 
-      <div class="grow shot-btns">
-        <button class="ghost" id="shotPick" data-i="shotPick">사진 고르기</button>
-        <button class="ghost" id="shotRead" data-i="shotRead" disabled>번호 읽기</button>
+      <div class="shot-btns">
+        <button class="ghost" id="shotCam">📷 복권 촬영하기</button>
+        <button class="ghost" id="shotPick">🖼 사진에서 불러오기</button>
+        <button class="primary shot-read" id="shotRead" disabled>번호 읽기</button>
       </div>
       <input type="file" id="shotFileIn" accept="image/*" capture="environment" hidden>
+      <input type="file" id="shotFileLib" accept="image/*" hidden>
 
       <p class="shot-state" id="shotState"></p>
       <div class="shot-rows" id="shotRows"></div>
@@ -5680,7 +5706,7 @@ const Check=(function(){
                           + mn.getBoundingClientRect().height/k + clh);
     }
     need=Math.ceil(need)+2;
-    const want=Math.max(need, Math.floor((avail-gap*3-2)/4));   // 내 기록과 같이 네 개
+    const want=Math.max(need, Math.floor((avail-gap*2-2)/3));   // 한 화면에 세 장씩 — 넉넉하게 봅니다
     const now=Math.round(cards[0].getBoundingClientRect().height/k);
     if(Math.abs(want-now)<1) return;              // 이미 딱 맞습니다
     document.documentElement.style.setProperty('--chkCard', want+'px');
@@ -5911,14 +5937,22 @@ const Check=(function(){
   function showGot(){
     gotEl.innerHTML=''; gotEl.hidden=!picked;
     saveBtn.hidden=!picked;
+    const sh=$id('scan'); if(sh) sh.classList.toggle('got', !!picked);
     if(!picked) return;
     const AZ='ABCDE';
+    /* 읽은 게임을 하나도 빠뜨리지 않고, 앱의 구간 색 공으로 크게 보여줍니다 */
     picked.games.forEach((ns,i)=>{
       const d=document.createElement('div'); d.className='g';
       const b=document.createElement('b'); b.textContent=AZ[i]||('#'+(i+1));
-      const sp=document.createElement('span');
-      sp.textContent=ns.map(n=>String(n).padStart(2,'0')).join('  ');
-      d.appendChild(b); d.appendChild(sp); gotEl.appendChild(d);
+      const row=document.createElement('div'); row.className='gn';
+      for(const n of ns){
+        const sp=document.createElement('span');
+        sp.textContent=String(n).padStart(2,'0');
+        const bd=bandOf(n);
+        sp.style.background='radial-gradient(circle at 32% 30%,'+bd.hi+','+bd.c+' 62%)';
+        row.appendChild(sp);
+      }
+      d.appendChild(b); d.appendChild(row); gotEl.appendChild(d);
     });
   }
   function readFrame(){
@@ -8578,8 +8612,8 @@ const Draws=(function(){
       for(const row of rows){
         const r=Number(row && row.round);
         if(!(r>0) || !ok(row)) continue;                 // 이상한 줄은 버립니다
-        
-                           
+        const cur=map[String(r)];
+        if(cur && ok(cur)) continue;                     // 이미 확인된 값은 지키기
         map[String(r)]={ date:String(row.date||'').slice(0,10),
                          nums:row.nums.map(Number).sort((a,b)=>a-b),
                          bonus:Number(row.bonus) };
@@ -11544,6 +11578,15 @@ const Shot=(function(){
         const dup=v!=null && ns.filter(x=>x===v).length>1;
         const bad=v==null || !(v>=1&&v<=45) || dup;
         inp.classList.toggle('bad',bad);
+        /* 제대로 된 번호면 앱의 구간 색 공으로 보여줍니다 */
+        if(!bad){
+          const bd=bandOf(v);
+          inp.style.background='radial-gradient(circle at 32% 30%,'+bd.hi+','+bd.c+' 62%)';
+          inp.classList.add('hasv');
+        }else{
+          inp.style.background='';
+          inp.classList.remove('hasv');
+        }
         if(bad) ok=false;
       });
     });
@@ -11561,10 +11604,16 @@ const Shot=(function(){
       const im=new Image();
       im.onload=()=>{
         img=im;
+        /* 읽기용 그림(cv)은 지금까지와 똑같은 크기로 그립니다.
+           화면에 보이는 사진은 아래 <img>가 원본 비율 그대로 크게 맡습니다. */
         const box=stage.getBoundingClientRect();
-        const k=Math.min((box.width-2)/im.width,(box.height-2)/im.height,1);
+        const BW=Math.max(240,(box.width||346))-2, BH=188;
+        const k=Math.min(BW/im.width, BH/im.height, 1);
         cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k);
         cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+        const shown=$maybe('shotImg');
+        if(shown) shown.src=fr.result;
+        stage.classList.remove('zoom');
         stage.classList.add('has');
         readBtn.disabled=false;
         say(t('shotReady','번호 읽기를 눌러주세요'));
@@ -11687,12 +11736,21 @@ const Shot=(function(){
   }
   document.querySelectorAll('#shotMode button').forEach(b=>
     on(b,'click',()=>setMode(b.dataset.m)));
-  on('shotPick','click',()=>fileIn.click());
+  const libIn=$maybe('shotFileLib');
+  on('shotCam','click',()=>fileIn.click());          // 카메라로 찍기
+  on('shotPick','click',()=>{ if(libIn) libIn.click(); });   // 사진 보관함에서 고르기
   on(fileIn,'change',()=>{
     if(!fileIn.files||!fileIn.files.length) return;
     showImage(fileIn.files[0]);
     fileIn.value='';
   });
+  if(libIn) on(libIn,'change',()=>{
+    if(!libIn.files||!libIn.files.length) return;
+    showImage(libIn.files[0]);
+    libIn.value='';
+  });
+  // 사진을 누르면 조금 더 크게 봅니다
+  on('shotImg','click',()=>{ if(stage.classList.contains('has')) stage.classList.toggle('zoom'); });
   on(readBtn,'click',()=>{ readBtn.disabled=true;
     (mode==='ticket'?readTicket():readOMR()).finally(()=>{ readBtn.disabled=false; }); });
   on('shotAddRow','click',()=>{
@@ -15808,7 +15866,7 @@ const I18N=(function(){
       scanNoTorch:'This device has no light', scanTap:'Tap the screen to start the camera',
       scanTapB:'Tap to start',
       scanSave:'Save as my numbers',
-      scanHelp:'A QR check is a helper only — always compare with the ticket itself.<br>Prizes are paid only to the holder of the physical ticket.',
+      scanHelp:'A QR check is a helper only.<br>Always compare with the physical ticket if you win.',
       slipGone:'This QR has expired', slipAgain:'Make a new one',
       shotQrGot:'Read from the QR in the photo',
       mineBirthL:'Birthday', mineCarL:'Car number',
@@ -16040,7 +16098,7 @@ const I18N=(function(){
     ['.scan-lead','scanLead','복권 용지 QR코드를 찍어주세요'],
     ['#scanRetry','scanRetryB','카메라 다시 켜기'],['#scanTorch','scanTorchB','불 켜기'],
     ['#scanSave','scanSave','내 번호로 저장하기'],
-    ['.scan-help','scanHelp','QR 당첨 확인은 보조확인 수단이므로<br>반드시 실물과 대조하시기 바라며,<br>당첨금은 실물 복권소지자에게만 지급합니다.','html'],
+    ['.scan-help','scanHelp','QR 당첨 확인은 보조 확인 수단입니다.<br>당첨 시 반드시 실물 복권과 대조해 주세요.','html'],
     ['#fakeScan','scanDemo','스캔 예시 불러오기'],
     ['#openManual .qt','manualBtn','번호 직접 입력'],
     ['#manual .sheet-bar h2','manualTitle','번호 직접 입력'],
@@ -16457,6 +16515,7 @@ const Tap=(function(){
     const h=Math.min(
       window.innerHeight || Infinity,
       de.clientHeight || Infinity,
+      (document.body && document.body.clientHeight) || Infinity,
       vv ? vv.height : Infinity
     );
     if(!isFinite(w)||!isFinite(h)||w<=0||h<=0) return;
