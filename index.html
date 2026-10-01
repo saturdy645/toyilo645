@@ -192,10 +192,10 @@
   #v-check .card-top{margin-bottom:8px;flex-wrap:wrap;row-gap:6px}
   #v-check .stack{gap:9px}
   #v-check .scroller{padding-bottom:0}
-  /* 훈장은 당첨 표시 아래 줄에 */
-  #v-check .card.won .medal{margin-left:0;order:9}
+  /* 당첨 카드는 메달 하나만 보여줍니다 — 알약이 있던 오른쪽 위 자리에 그대로 붙습니다 */
+  #v-check .card.won .hit{display:none}
+  #v-check .card.won .medal{margin-left:auto;order:0}
   #v-check .card.won .card-top{align-items:center}
-  #v-check .card.won .hit{margin-left:auto}
 
   /* 내 기록 — 첫 화면에 네 개가 잘리지 않고 꽉 차게 (높이는 실제로 재서 맞춥니다) */
   #v-log .card{padding:0 14px;display:flex;flex-direction:column;justify-content:center;
@@ -314,6 +314,11 @@
   .scan-cta{margin:8px 0 10px;flex:none}
   /* 당첨확인 — QR·번호·사진 셋을 같은 폭으로 나란히 */
   .entry3{display:flex;gap:8px;flex:none;margin:10px 0 12px}
+  /* 목록을 내리면 입력 메뉴만 조용히 접힙니다 (하단 내비게이션은 그대로 둡니다) */
+  #v-check .entry3{height:92px;overflow:hidden;
+    transition:height .2s ease, margin .2s ease, opacity .18s ease}
+  #v-check.tuck .entry3{height:0;margin-top:0;margin-bottom:0;opacity:0;pointer-events:none}
+  @media (prefers-reduced-motion:reduce){ #v-check .entry3{transition:none} }
   .entry3 .scan-third{flex:1 1 0;min-width:0;margin:0;height:92px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
     padding:0 3px;border-radius:14px;border-style:dashed;
@@ -8155,8 +8160,10 @@ const Claim=(function(){
 
   (async function(){
     await load();
-    refresh();
-    setTimeout(prompt,2200);           // 화면이 자리를 잡은 뒤에 안내합니다
+    refresh();                         // 카드의 수령 줄은 바로 그립니다
+    /* 안내 팝업은 여기서 띄우지 않습니다.
+       추천번호 화면을 보고 있는데 갑자기 뜨면 흐름이 끊깁니다.
+       '당첨확인' 탭으로 들어올 때만 Claim.prompt() 가 불립니다. */
   })();
 
   return {rowFor, pending, wins, dueOf, daysLeft, prompt, mark};
@@ -16504,6 +16511,10 @@ const Tap=(function(){
 
   function fit(){
     if(!phone) return;
+    /* 두 손가락으로 확대한 상태면 크기를 다시 맞추지 않습니다.
+       여기서 다시 맞추면 손을 떼는 순간 확대가 풀려버립니다.
+       눈이 불편한 분이 확대해서 볼 수 있어야 합니다. */
+    if(window.visualViewport && window.visualViewport.scale > 1.01) return;
     // 여러 값 중 가장 작은 것을 씁니다 (iframe·인앱 브라우저에서 과대 보고되는 경우 대비)
     const de=document.documentElement;
     const vv=window.visualViewport;
@@ -16563,12 +16574,22 @@ const Tap=(function(){
 /* ===================== 탭 ===================== */
 document.querySelectorAll('nav button').forEach(btn=>{
   btn.addEventListener('click',()=>{
+    const chk=document.getElementById('v-check');
+    const wasCheck = !!(chk && chk.classList.contains('on'));   // 이미 보고 있던 화면인지
     document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b===btn));
     document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===btn.dataset.v));
     document.body.classList.toggle('on-game', btn.dataset.v==='v-game');
     document.body.classList.toggle('on-check', btn.dataset.v==='v-check');
     if(btn.dataset.v==='v-pick') Machine.size();
-    if(btn.dataset.v==='v-check') Check.render();
+    if(btn.dataset.v==='v-check'){
+      Check.render();
+      /* 입력 메뉴는 들어올 때마다 다시 펴 둡니다 */
+      if(chk) chk.classList.remove('tuck');
+      const sc0=document.getElementById('check') && document.getElementById('check').parentElement;
+      if(sc0) sc0.scrollTop=0;
+      /* 미수령 안내는 '당첨확인'에 새로 들어왔을 때만 — 보던 화면을 다시 눌렀을 땐 띄우지 않습니다 */
+      if(!wasCheck){ try{ if(window.Claim) Claim.prompt(); }catch(e){} }
+    }
     ['check','log'].forEach(id=>{                  // 오른쪽 드래그 줄
       const el=document.getElementById(id), sc=el&&el.parentElement;
       if(!sc) return;
@@ -16580,6 +16601,25 @@ document.querySelectorAll('nav button').forEach(btn=>{
     Feed.watch(btn.dataset.v==='v-feed');
   });
 });
+/* ── 당첨확인: 목록을 내리면 입력 메뉴만 접습니다 ──
+   조금 움직였다고 메뉴가 들락거리면 화면이 출렁입니다.
+   그래서 내려갈 때와 올라올 때의 기준을 다르게 둡니다. */
+(function(){
+  const view=document.getElementById('v-check');
+  const el=document.getElementById('check');
+  const sc=el && el.parentElement;
+  if(!view || !sc) return;
+  const DOWN=56, UP=14;                  // 56px 넘게 내려가면 접고, 14px 안쪽으로 오면 폅니다
+  let tucked=false, raf=0;
+  function upd(){
+    raf=0;
+    const y=sc.scrollTop;
+    if(!tucked && y>DOWN){ tucked=true; view.classList.add('tuck'); }
+    else if(tucked && y<UP){ tucked=false; view.classList.remove('tuck'); }
+  }
+  sc.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(upd); },{passive:true});
+})();
+
 window.__mainDone=true;                            // 여기까지 오면 본 코드는 끝까지 돈 것입니다
 </script>
 
