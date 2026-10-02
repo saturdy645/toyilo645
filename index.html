@@ -204,6 +204,29 @@
   #v-log .card-top{margin-bottom:10px}
   #v-log .stack{gap:12px}
   #v-log .scroller{padding-bottom:0}
+  /* 저장 카드 왼쪽 swipe 삭제 — iPhone 목록과 같은 방식 */
+  #v-check .card[data-sk],#v-log .card[data-sk]{position:relative;touch-action:pan-y}
+  .swin{width:100%;will-change:transform}
+  .swd{position:absolute;top:0;bottom:0;right:0;width:92px;border:0;padding:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    font-family:inherit;font-size:13.5px;font-weight:700;letter-spacing:-.01em;color:#fff;
+    background:linear-gradient(180deg,#E5484D,#C5343A);
+    border-radius:0 14px 14px 0;transform:translateX(100%);will-change:transform}
+  .swd:active{background:linear-gradient(180deg,#D23C41,#B32D33)}
+  .card.swipe .swin,.card.swipe .swd{transition:transform .24s cubic-bezier(.22,.61,.36,1)}
+  /* 삭제 안내 — 기존 toast 와 같은 자리, 되돌리기 버튼만 붙습니다 */
+  .snack{position:absolute;left:0;right:0;bottom:88px;margin:0 auto;width:max-content;
+    max-width:calc(100% - 28px);display:flex;align-items:center;gap:14px;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+    font-size:13px;font-weight:600;padding:9px 10px 9px 18px;border-radius:999px;
+    transform:translateY(10px);opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;z-index:31}
+  .snack.on{opacity:1;transform:translateY(0);pointer-events:auto}
+  .snack button{border:0;background:rgba(93,169,255,.16);color:var(--sky,#5DA9FF);
+    font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:-.01em;
+    padding:7px 14px;border-radius:999px;cursor:pointer}
+  .snack button:active{background:rgba(93,169,255,.28)}
+
   /* 금장 훈장 */
   .medal{margin-left:auto;display:inline-flex;align-items:center;gap:3px;
     padding:3px 9px 3px 6px;border-radius:999px;
@@ -314,11 +337,19 @@
   .scan-cta{margin:8px 0 10px;flex:none}
   /* 당첨확인 — QR·번호·사진 셋을 같은 폭으로 나란히 */
   .entry3{display:flex;gap:8px;flex:none;margin:10px 0 12px}
-  /* 목록을 내리면 입력 메뉴만 조용히 접힙니다 (하단 내비게이션은 그대로 둡니다) */
+  /* 목록을 내리면 입력 메뉴만 조용히 접힙니다 (하단 내비게이션은 그대로 둡니다).
+     툭 사라지지 않도록, 버튼이 아래로 미끄러져 내려가면서 서서히 옅어집니다.
+     다시 올라올 때는 아래에서 미끄러져 올라오며 서서히 또렷해집니다. */
   #v-check .entry3{height:92px;overflow:hidden;
-    transition:height .2s ease, margin .2s ease, opacity .18s ease}
-  #v-check.tuck .entry3{height:0;margin-top:0;margin-bottom:0;opacity:0;pointer-events:none}
-  @media (prefers-reduced-motion:reduce){ #v-check .entry3{transition:none} }
+    transition:height .28s cubic-bezier(.33,0,.18,1),
+               margin-top .28s cubic-bezier(.33,0,.18,1),
+               margin-bottom .28s cubic-bezier(.33,0,.18,1)}
+  #v-check .entry3 .scan-third{
+    transition:transform .28s cubic-bezier(.33,0,.18,1), opacity .22s ease}
+  #v-check.tuck .entry3{height:0;margin-top:0;margin-bottom:0;pointer-events:none}
+  #v-check.tuck .entry3 .scan-third{transform:translateY(26px);opacity:0}
+  @media (prefers-reduced-motion:reduce){
+    #v-check .entry3,#v-check .entry3 .scan-third{transition:none} }
   .entry3 .scan-third{flex:1 1 0;min-width:0;margin:0;height:92px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
     padding:0 3px;border-radius:14px;border-style:dashed;
@@ -420,106 +451,192 @@
   @keyframes scanFade{0%,100%{opacity:.2}50%{opacity:1}}
 
 
-  /* 판매점 */
-  .map{position:relative;height:172px;border-radius:15px;overflow:hidden;flex:none;
-    background:linear-gradient(160deg,#1B2540,#141C31);
-    box-shadow:inset 0 0 0 1px rgba(143,168,208,.14)}
-  .map .road{position:absolute;background:rgba(143,168,208,.09)}
-  /* 진짜 지도(Leaflet)를 깔 자리 — 타일을 못 받으면 아래 그림 지도가 그대로 보입니다 */
-  .map .real{position:absolute;inset:0;z-index:1;background:#141C31}
+  /* 판매점 지도 — 뼈대 (색은 아래 #storeMap 규칙이 덮습니다) */
+  .map{position:relative;flex:none;overflow:hidden}
+  .map .road{position:absolute}
+  .map .real{position:absolute;inset:0;z-index:1}
   .map.live .road,.map.live>.pin{display:none}
-  .leaflet-container{background:#141C31!important;font:inherit!important}
-  .leaflet-control-attribution{font-size:8.5px!important;
-    background:rgba(10,15,28,.55)!important;color:rgba(200,214,238,.55)!important;
-    padding:0 4px!important}
-  .leaflet-control-attribution a{color:rgba(200,214,238,.75)!important}
+  .leaflet-container{font:inherit!important}
+  .leaflet-control-attribution{font-size:8.5px!important;padding:0 4px!important}
   .leaflet-control-zoom{display:none!important}
-  /* 어두운 화면에 맞춰 타일을 눌러 줍니다 */
-  .map .real .leaflet-tile-pane{filter:invert(1) hue-rotate(185deg) brightness(.86) contrast(.92)
-    saturate(.55)}
   .mpin{display:flex;flex-direction:column;align-items:center;gap:3px;
     cursor:pointer;white-space:nowrap}
-  .mpin i{width:11px;height:11px;border-radius:50%;background:var(--muted);
-    box-shadow:0 0 0 3px rgba(19,26,46,.85)}
-  .mpin.on i{background:var(--amber);box-shadow:0 0 0 3px rgba(242,180,65,.22)}
-  .mpin.me i{background:#3FA9C9;box-shadow:0 0 0 4px rgba(63,169,201,.3)}
-  .mpin b{font-size:10.5px;font-weight:700;color:var(--muted);
-    text-shadow:0 1px 3px rgba(8,12,22,.95),0 0 8px rgba(8,12,22,.8)}
-  .mpin.on b{color:var(--amber)}
-  .mpin.me b{color:#7FD3E8}
+  .mpin i{width:11px;height:11px;border-radius:50%}
+  .mpin b{font-size:10.5px;font-weight:700}
   .pin{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
     align-items:center;gap:3px;cursor:pointer}
-  .pin i{width:11px;height:11px;border-radius:50%;background:var(--muted);
-    box-shadow:0 0 0 3px rgba(19,26,46,.85)}
-  .pin.on i{background:var(--amber);box-shadow:0 0 0 3px rgba(242,180,65,.22)}
-  .pin.me i{background:#3FA9C9;box-shadow:0 0 0 4px rgba(63,169,201,.22)}
+  .pin i{width:11px;height:11px;border-radius:50%}
+  .pin b{font-size:9.5px;font-weight:700;white-space:nowrap}
   .pin.me .acc{position:absolute;left:50%;top:5px;width:64px;height:64px;margin:-32px 0 0 -32px;
-    border-radius:50%;background:rgba(63,169,201,.12);
-    box-shadow:inset 0 0 0 1px rgba(63,169,201,.28);pointer-events:none}
+    border-radius:50%;pointer-events:none}
   .pin.me.ping .acc{animation:ping 1.1s ease-out 2}
   @keyframes ping{
     0%{transform:scale(.35);opacity:.9}
     100%{transform:scale(1.5);opacity:0}}
-  .locwrap{position:absolute;right:10px;bottom:8px;z-index:3;display:flex;flex-direction:column;
+  .locwrap{position:absolute;right:10px;bottom:10px;z-index:3;display:flex;flex-direction:column;
     align-items:center;gap:3px}
-  .locbtn{width:38px;height:38px;padding:0;border-radius:50%;
-    background:rgba(19,26,46,.9);border:1px solid var(--line);
-    color:var(--muted);display:flex;align-items:center;justify-content:center}
-  .locbtn.on{color:#3FA9C9;border-color:rgba(63,169,201,.5)}
-  .locbtn svg{width:19px;height:19px}
-  .loclabel{font-size:9.5px;font-weight:600;color:var(--muted);opacity:.8;
-    text-shadow:0 1px 3px rgba(8,12,22,.9)}
-  .locwrap.on .loclabel{color:#3FA9C9;opacity:1}
-  .pin b{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap}
-  .pin.on b{color:var(--amber)}
-  .today{display:flex;flex-direction:column;gap:5px;margin:10px 0 0;padding:9px 11px;
-    background:rgba(242,180,65,.1);border:1px solid rgba(242,180,65,.3);border-radius:12px}
-  .tday-head{display:flex;align-items:center;justify-content:flex-start;gap:8px}
-  .tday-roll{flex:none;display:flex;align-items:center;gap:4px;padding:4px 9px;
-    border-radius:999px;font-size:10.5px;font-weight:700;
-    background:rgba(242,180,65,.14);color:var(--amber);
-    border:1px solid rgba(242,180,65,.34)}
-  .tday-roll span{font-size:11px;line-height:1}
-  .tday-roll b{font-weight:700}
-  .tday-roll:active span{animation:rollSpin .5s linear}
-  @keyframes rollSpin{to{transform:rotate(360deg)}}
-  .tday-row.mixing{animation:rowMix .42s cubic-bezier(.3,.9,.3,1.2)}
-  @keyframes rowMix{
-    0%{transform:translateX(0);opacity:1}
-    35%{transform:translateX(-10px);opacity:.35}
-    65%{transform:translateX(7px);opacity:.7}
-    100%{transform:translateX(0);opacity:1}}
-  .tday-head-old{font-size:11.5px;font-weight:700;color:var(--amber);margin-bottom:1px}
-  .tday-row{display:flex;align-items:center;gap:8px}
-  .tday-row i{flex:none;width:16px;height:16px;border-radius:50%;font-style:normal;
-    font-size:9.5px;font-weight:800;color:#231803;background:var(--amber);
+  .locbtn{width:38px;height:38px;padding:0;border-radius:50%;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center}
-  .tday-row .tn{font-size:12.5px;font-weight:600}
-  .tday-row .td{margin-left:auto;font-size:11px;color:var(--muted);
-    font-variant-numeric:tabular-nums}
-  .tday-row .navi{padding:5px 9px;font-size:11px;border-radius:9px}
-  .store{display:flex;align-items:center;gap:11px;padding:13px 2px;
-    border-bottom:1px solid var(--line)}
-  .store:last-child{border-bottom:0}
-  .store .info{min-width:0}
-  .store .nm{font-size:14px;font-weight:700}
-  .store .ad{font-size:11.5px;color:var(--muted);margin-top:3px;
+  .locbtn svg{width:19px;height:19px}
+  .loclabel{font-size:9.5px;font-weight:600}
+  /* ===== 판매점 지도 — 지도가 화면 전부, 흰 카드가 그 위에 =====
+     밝은 생활지도 위에 흰 카드와 흰 칩만 떠 있습니다.
+     색은 적게: 밝은 지도 / 흰 바탕 / 진한 글씨 / 회색 보조 / 초록 포인트 / 작은 금색. */
+  :root{ --sg:#15A06B; --sgDim:rgba(21,160,107,.22); --sGold:#9C7314;
+         --smInk:#191C1F; --smSub:#6B7278; --smDim:#9AA1A8;
+         --smLine:rgba(0,0,0,.07); --smPaper:#F2F1ED; }
+  #store,#storeOne{background:var(--smPaper);padding:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',
+                system-ui,'Segoe UI',sans-serif;
+    font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased}
+  #store.on,#storeOne.on{z-index:45}      /* 기기 윗부분 손잡이 모양을 덮습니다 */
+  #mapsel{z-index:60}
+  #store .sheet-bar{display:none}         /* 상단 띠 없이 지도가 끝까지 */
+  .sm-wrap{position:relative;flex:1;min-height:0}
+  /* 지도 위에 떠 있는 뒤로가기 — 흰 알약 하나 */
+  .sm-back{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:6;
+    display:flex;align-items:center;gap:3px;height:40px;padding:0 16px 0 10px;
+    border:0;border-radius:999px;background:#fff;
+    box-shadow:0 2px 10px rgba(0,0,0,.13),0 0 0 .5px rgba(0,0,0,.05);
+    font-size:14.5px;font-weight:600;letter-spacing:-.035em;color:var(--smInk)}
+  .sm-back svg{width:19px;height:19px;color:#4A5157}
+  .sm-back:active{background:#F3F4F5}
+  /* 밝은 지도 — 타일 색을 그대로 씁니다 */
+  #storeMap{position:absolute;inset:0;height:auto;border-radius:0;box-shadow:none;
+    background:var(--smPaper)}
+  #storeMap .real{background:var(--smPaper)}
+  #storeMap .real .leaflet-tile-pane{filter:none}   /* 지도 색을 덮지 않습니다 */
+  #storeMap .road{background:rgba(0,0,0,.09)}
+  #store .leaflet-container{background:var(--smPaper)!important}
+  #store .leaflet-control-attribution{background:rgba(255,255,255,.5)!important;
+    color:rgba(40,46,52,.42)!important;font-size:8px!important;
+    border-radius:4px 0 0 0;padding:1px 4px!important}
+  #store .leaflet-control-attribution a{color:rgba(40,46,52,.68)!important}
+  /* 마커 — 평소엔 점만, 고른 곳만 이름이 보입니다 */
+  #storeMap .mpin i,#storeMap .pin i{position:relative;width:10px;height:10px;
+    background:var(--sg);opacity:.72;box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.22)}
+  #storeMap .mpin b,#storeMap .pin b{display:none}
+  #storeMap .mpin.on i,#storeMap .pin.on i{width:15px;height:15px;opacity:1;
+    box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(21,160,107,.22),0 2px 6px rgba(0,0,0,.26)}
+  #storeMap .mpin.on b,#storeMap .pin.on b{display:block;font-size:11.5px;font-weight:700;
+    letter-spacing:-.03em;color:#15181B;
+    text-shadow:0 0 3px #fff,0 0 6px #fff,0 1px 2px rgba(255,255,255,.95)}
+  #storeMap .mpin.me i,#storeMap .pin.me i{width:12px;height:12px;opacity:1;background:#2E7BF0;
+    box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(46,123,240,.22),0 2px 6px rgba(0,0,0,.24)}
+  #storeMap .mpin.me b,#storeMap .pin.me b{display:block;font-size:10.5px;font-weight:600;
+    color:#1F5FC4;text-shadow:0 0 3px #fff,0 0 6px #fff}
+  /* 1등 이력이 확인된 곳 — 마커에 붙은 아주 작은 금색 점 */
+  #storeMap .mpin.w1st i::after,#storeMap .pin.w1st i::after{content:'';position:absolute;
+    right:-2px;top:-2px;width:5px;height:5px;border-radius:50%;
+    background:#D7A52B;box-shadow:0 0 0 1.5px #fff}
+  #storeMap .mpin.on.w1st i::after,#storeMap .pin.on.w1st i::after{width:6.5px;height:6.5px;
+    right:-3px;top:-3px}
+  #storeMap .pin.tapped,#storeMap .mpin.tapped{background:none!important;
+    box-shadow:none!important;transform:translate(-50%,-50%)!important}
+  #storeMap .locwrap{bottom:calc(154px + env(safe-area-inset-bottom,0px));z-index:5}
+  #storeMap .locbtn{width:40px;height:40px;background:#fff;border:0;
+    color:#4A5157;box-shadow:0 2px 10px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+  #storeMap .locbtn:active{background:#F3F4F5}
+  #storeMap .locbtn.on{color:#2E7BF0}
+  #storeMap .loclabel{display:none}
+  #storeMap .pin.me .acc{background:rgba(46,123,240,.13);box-shadow:none}
+  /* 카드 — 가운데 한 장, 양옆으로 다음 카드가 살짝 보입니다 */
+  .sm-dock{position:absolute;left:0;right:0;z-index:4;overflow:hidden;
+    bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+  .sm-track{display:flex;gap:10px;padding:0 30px;
+    transition:transform .3s cubic-bezier(.3,0,.2,1)}
+  .sm-track.slide{transition:none}
+  /* 옆에도 판매점이 있다는 아주 작은 힌트 */
+  .sm-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+    width:30px;height:58px;padding:0;border:0;background:none;
+    display:flex;align-items:center;justify-content:center;
+    color:#5C636A;font-size:20px;font-weight:400;line-height:1;
+    text-shadow:0 0 3px #fff,0 0 7px rgba(255,255,255,.95);transition:opacity .2s ease}
+  .sm-nav.prev{left:0}
+  .sm-nav.next{right:0}
+  .sm-nav[disabled]{opacity:0;pointer-events:none}
+  .sm-card{flex:0 0 100%;box-sizing:border-box;
+    display:flex;flex-direction:column;justify-content:center;
+    background:#fff;border-radius:20px;padding:15px 16px;cursor:pointer;
+    box-shadow:0 3px 14px rgba(0,0,0,.10),0 0 0 .5px rgba(0,0,0,.06);
+    opacity:.5;transform:scale(.97);
+    transition:opacity .25s ease, transform .25s ease}
+  .sm-card.on{opacity:1;transform:scale(1)}
+  .sm-main{display:flex;align-items:center;gap:13px}
+  /* 사진 자리 — 실제 사진이 생기면 이 칸에 들어갑니다 */
+  .sm-thumb{flex:none;width:56px;height:56px;border-radius:14px;background:#F0F1F2;
+    display:flex;align-items:center;justify-content:center;color:#AEB4BA}
+  .sm-thumb svg{width:21px;height:21px}
+  .sm-thumb img{width:100%;height:100%;object-fit:cover;border-radius:14px;display:block}
+  .sm-txt{flex:1;min-width:0}
+  /* 글자 위계 — 이름(SemiBold) → 1등 이력(Medium) → 거리·주소·영업시간(Regular) */
+  .sm-card .nm{display:block;font-size:16.5px;font-weight:600;color:var(--smInk);
+    letter-spacing:-.04em;line-height:1.3;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .store .dist{margin-left:auto;font-size:11.5px;color:var(--muted);
-    font-variant-numeric:tabular-nums;flex:none}
-  .store .navi{flex:none;background:var(--surface-2);color:var(--ink);
-    font-size:12px;font-weight:700;padding:9px 12px;border-radius:11px}
-  .store{align-items:flex-start}
-  .thumb{flex:none;width:52px;height:52px;border-radius:13px;position:relative;
-    display:flex;align-items:center;justify-content:center;font-size:22px;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
-  .thumb b{position:absolute;left:-3px;top:-6px;font-size:9px;font-weight:800;
-    padding:2px 5px;border-radius:6px;background:var(--amber);color:#231803}
-  .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .tags span{font-size:10px;font-weight:600;padding:3px 7px;border-radius:999px;
-    background:var(--surface-2);color:var(--muted)}
-  .tags span.hot{background:rgba(255,114,114,.16);color:#FF9B9B}
-  .store .right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
+  .sm-card .won{display:flex;align-items:center;gap:4px;margin-top:5px;
+    font-size:12.5px;font-weight:500;letter-spacing:-.03em;color:var(--sGold)}
+  .sm-card .won svg{flex:none;width:13px;height:13px}
+  .sm-card .meta{margin-top:5px;font-size:13px;font-weight:400;color:var(--smSub);
+    letter-spacing:-.03em;line-height:1.45;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sm-card .hours{margin-top:2px;font-size:13px;font-weight:400;color:var(--smDim);
+    letter-spacing:-.03em}
+  .sm-card .hours b{margin-left:7px;font-weight:500;color:var(--sg)}
+  /* 길찾기 — 가장 중요한 행동 */
+  .sm-go{flex:none;display:flex;align-items:center;gap:1px;height:40px;padding:0 12px 0 15px;
+    border-radius:999px;border:1px solid var(--sgDim);background:rgba(21,160,107,.07);
+    color:var(--sg);font-size:13.5px;font-weight:600;letter-spacing:-.03em}
+  .sm-go svg{width:15px;height:15px}
+  .sm-go:active{background:rgba(21,160,107,.16)}
+  /* 지도를 못 받았을 때 — 빈 화면을 그냥 두지 않고 솔직하게 알립니다 */
+  .sm-nomap{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:5;
+    width:min(282px,82%);box-sizing:border-box;padding:18px 18px 15px;
+    display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;
+    background:#fff;border-radius:16px;
+    box-shadow:0 6px 22px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.06)}
+  .sm-nomap[hidden]{display:none}
+  .sm-nomap b{font-size:14.5px;font-weight:600;color:var(--smInk);letter-spacing:-.035em}
+  .sm-nomap span{font-size:12px;font-weight:400;line-height:1.55;color:var(--smSub);
+    letter-spacing:-.03em}
+  .sm-nomap button{margin-top:5px;padding:9px 20px;border:0;border-radius:999px;
+    background:var(--sg);color:#fff;font-family:inherit;
+    font-size:13px;font-weight:600;letter-spacing:-.03em}
+  .sm-nomap button:active{opacity:.8}
+  .sm-empty{position:absolute;inset:0;z-index:5;display:flex;align-items:center;
+    justify-content:center;padding:0 28px;text-align:center;
+    font-size:13px;line-height:1.7;color:var(--smSub);background:rgba(246,245,242,.94)}
+  /* 판매점 상세 */
+  #storeOne{background:#fff}
+  #storeOne .sheet-bar{padding:18px 20px 12px;background:#fff;flex:none;border:0;
+    align-items:center}
+  #storeOne .sheet-bar h2{font-size:18px;font-weight:600;letter-spacing:-.035em;
+    color:var(--smInk);line-height:1.3}
+  .sm-x{width:34px;height:34px;padding:0;margin-right:-6px;background:none;border:0;
+    color:#8A9097;display:flex;align-items:center;justify-content:center}
+  .sm-x svg{width:19px;height:19px}
+  .so-body{flex:1;min-height:0;overflow-y:auto;padding:22px 20px 30px}
+  .so-nm{margin:0;font-size:23px;font-weight:600;color:var(--smInk);letter-spacing:-.045em;
+    line-height:1.28}
+  .so-won{display:flex;align-items:center;gap:6px;margin-top:10px;
+    font-size:14px;font-weight:500;letter-spacing:-.03em;color:var(--sGold)}
+  .so-won svg{flex:none;width:15px;height:15px}
+  .so-rows{margin-top:24px}
+  .so-row{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--smLine)}
+  .so-row:last-child{border-bottom:0}
+  .so-row .k{flex:none;width:64px;font-size:13px;font-weight:400;color:var(--smDim);
+    letter-spacing:-.03em}
+  .so-row .v{font-size:14.5px;font-weight:400;color:#24282C;line-height:1.55;
+    letter-spacing:-.03em}
+  .so-list{margin-top:24px}
+  .so-list h3{margin:0 0 10px;font-size:13px;font-weight:400;color:var(--smDim);
+    letter-spacing:-.03em}
+  .so-list ul{margin:0;padding:0;list-style:none}
+  .so-list li{font-size:14.5px;font-weight:400;color:#24282C;letter-spacing:-.03em;
+    padding:12px 0;border-bottom:1px solid var(--smLine)}
+  .so-list li:last-child{border-bottom:0}
+  .so-go{width:100%;margin-top:28px;padding:16px;border-radius:14px;border:0;
+    background:var(--sg);color:#fff;font-size:15.5px;font-weight:600;letter-spacing:-.03em}
+  .so-note{margin:16px 2px 0;font-size:11.5px;line-height:1.6;color:var(--smDim)}
   .storecard{border-bottom:1px solid var(--line);padding:2px 0 14px}
   .storecard + .storecard{padding-top:12px}
   .storecard:last-child{border-bottom:0}
@@ -1148,7 +1265,8 @@
   .upd-item li{font-size:12.5px;color:var(--ink);line-height:1.65;opacity:.92}
   /* 당첨금 수령 확인 */
   .clm{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
-    margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+    margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    min-height:30px}
   .clm .st{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;
     background:rgba(242,180,65,.18);color:var(--amber)}
   .clm .st.done{background:rgba(143,168,208,.14);color:var(--muted)}
@@ -1727,7 +1845,6 @@
   .slip-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
     gap:12px;padding:4px 0 8px;scrollbar-width:none}
   .slip-body::-webkit-scrollbar{width:0}
-  .slip-lead{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6;text-align:center}
   .slip-paper{position:relative;background:#fff;border-radius:16px;padding:14px 14px 12px;
     display:flex;flex-direction:column;align-items:center;gap:10px;
     box-shadow:0 10px 30px rgba(0,0,0,.35)}
@@ -1754,10 +1871,12 @@
   .slip-dead button{padding:10px 20px;border-radius:999px;font-size:13px;font-weight:800;
     color:#17203A;background:linear-gradient(145deg,#F7D070,#E0A32B);border:0}
   .slip-dead[hidden]{display:none}
-  .slip-paper.hide #slipQr,.slip-paper.hide .slip-url{visibility:hidden}
+  .slip-paper.hide #slipQr{visibility:hidden}
   .slip-top{width:100%;display:flex;align-items:baseline;justify-content:space-between}
-  .slip-top b{font-size:15px;font-weight:800;color:#17203A}
-  .slip-top .tot{font-size:11.5px;color:#5E6B7A;font-weight:700}
+  .slip-top b{font-size:15px;font-weight:800;color:#17203A;letter-spacing:-.02em}
+  /* 이 세트를 사는 데 드는 돈 */
+  .slip-top .amt{font-size:15px;font-weight:800;color:#172230;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums}
   .slip-page{display:flex;align-items:center;gap:10px;margin:-4px 0 -2px}
   .slip-page span{font-size:12px;font-weight:800;color:#172230;
     font-variant-numeric:tabular-nums;min-width:30px;text-align:center}
@@ -1765,10 +1884,6 @@
     line-height:1}
   .slip-page button:disabled{opacity:.25}
   .slip-page.one{display:none}
-  .slip-amt{width:100%;text-align:center;margin-top:-2px}
-  .slip-amt span{display:block;font-size:10.5px;color:#5E6B7A;font-weight:600}
-  .slip-amt b{display:block;margin-top:1px;font-size:20px;font-weight:800;color:#172230;
-    font-variant-numeric:tabular-nums;letter-spacing:-.02em}
   .slip-auto{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;
     border:1px solid var(--line);background:var(--surface)}
   .slip-auto>span{font-size:12.5px;font-weight:700;color:var(--ink);flex:none}
@@ -1781,13 +1896,23 @@
   .slip-auto .stp button:disabled{opacity:.3}
   .slip-auto .stp b{min-width:26px;text-align:center;font-size:13px;font-weight:800;
     font-variant-numeric:tabular-nums}
-  /* QR은 어떤 화면에서도 정사각형을 지킵니다 */
-  #slipQr{width:248px;max-width:82%;aspect-ratio:1/1;flex:none;display:block;
-    background:#fff;border-radius:2px}
+  /* QR은 어떤 화면에서도 정사각형을 지킵니다 — 크기도 줄이지 않습니다 */
+  .slip-qrwrap{position:relative;width:248px;max-width:82%;aspect-ratio:1/1;flex:none;
+    touch-action:pan-y;
+    transition:transform .22s cubic-bezier(.22,.61,.36,1), opacity .22s ease}
+  .slip-qrwrap.drag{transition:none}
+  #slipQr{width:100%;height:100%;display:block;background:#fff;border-radius:2px}
   #slipQr svg{width:100%;height:100%;display:block}
-  .slip-foot{font-size:11.5px;color:#5E6B7A;font-weight:600}
-  .slip-url{width:100%;font-size:9px;line-height:1.45;color:#8894A5;
-    word-break:break-all;text-align:center;font-family:ui-monospace,Menlo,monospace}
+  /* 번호가 바뀌면 옛 QR을 바로 가리고 새로 만드는 중임을 알립니다 */
+  .slip-redo{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;
+    background:#fff;border-radius:2px}
+  .slip-redo[hidden]{display:none}
+  .slip-redo i{width:26px;height:26px;border-radius:50%;
+    border:3px solid rgba(23,34,48,.14);border-top-color:#17203A;
+    animation:redoSpin .8s linear infinite}
+  .slip-redo b{font-size:12.5px;font-weight:800;color:#172230;letter-spacing:-.02em}
+  @keyframes redoSpin{to{transform:rotate(360deg)}}
   .slip-pick{display:flex;flex-direction:column;gap:7px}
   .slip-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;
     border:1px solid var(--line);background:var(--surface);text-align:left}
@@ -1840,6 +1965,21 @@
   .slip-row.live{box-shadow:0 0 0 1px var(--sc,var(--amber)) inset}
   .slip-row.auto .ns{color:var(--muted);font-weight:600}
   .slip-row .ns.dimtx{letter-spacing:0}
+  /* 게임 한 줄씩 지우고 다시 넣기 */
+  .slip-act{flex:none;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;
+    letter-spacing:-.01em;padding:5px 10px;border-radius:999px;line-height:1.2}
+  .slip-act.add{color:var(--amber);border-color:rgba(242,180,65,.45);
+    background:rgba(242,180,65,.10)}
+  .slip-act:active{opacity:.55}
+  /* 지워서 비워 둔 칸 — 자리도 모양도 번호가 든 줄과 똑같습니다.
+     선만 연하게 하고, 앞의 체크만 풀어 둡니다. */
+  .slip-row.gap{border-color:rgba(255,255,255,.13)}
+  .slip-row.gap.live{box-shadow:0 0 0 1px rgba(255,255,255,.11) inset}
+  .slip-row.gap::before{opacity:.3}
+  .slip-row.gap .bx{background:transparent;border-color:rgba(255,255,255,.26)}
+  .slip-row.gap .sq.now{opacity:.5}
+  .slip-row.gap .ns{color:var(--muted);font-weight:600}
   .slip-note{margin:0;font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
 
   /* 우리끼리 N빵 — 화면을 꽉 채우고 닫기는 안쪽에 떠 있습니다 */
@@ -2606,6 +2746,18 @@
   .wc-ok{width:calc(100% + 30px);margin:11px -15px 0;padding:13px;border:0;
     border-top:1px solid #EAEAEA;background:#fff;color:#2B6BE4;
     font-size:13.5px;font-weight:700}
+  /* 공유 안내 */
+  .sh-box{text-align:left}
+  .sh-title{margin:0;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
+  .sh-lead{margin:9px 0 0;font-size:14px;font-weight:700;color:var(--amber);letter-spacing:-.02em}
+  .sh-body{margin:9px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink);opacity:.9}
+  .sh-url{margin:13px 0 0;padding:10px 12px;border-radius:11px;
+    background:rgba(143,168,208,.09);border:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);word-break:break-all}
+  .sh-how{margin:14px 0 0;padding-top:13px;border-top:1px solid var(--line)}
+  .sh-how-t{margin:0;font-size:12.5px;font-weight:700;color:var(--ink);opacity:.92}
+  .sh-how-r{margin:7px 0 0;font-size:11.5px;line-height:1.6;color:var(--muted)}
+  .sh-how-r b{color:var(--ink);opacity:.8;margin-right:5px}
   .modal-msg{margin:0 0 18px;font-size:14.5px;line-height:1.65;text-align:center;
     color:var(--ink);white-space:pre-line}
   .modal-btns{display:flex;gap:8px}
@@ -3374,26 +3526,27 @@
       <button id="closeSlip" data-i="close">닫기</button>
     </div>
     <div class="slip-body">
-      <p class="slip-lead" data-i="slipLead">종이 슬립지는 그만. 앱에서 고르고 QR을 보여주세요.</p>
       <div class="slip-paper">
         <div class="slip-top">
           <b id="slipRound">1243회</b>
-          <span class="tot" id="slipTot">QR 총액 3,000원</span>
+          <span class="amt" id="slipAmt">3,000원</span>
         </div>
         <div class="slip-page">
           <button id="slipPrev" aria-label="이전 장">‹</button>
           <span id="slipPg">1/1</span>
           <button id="slipNext" aria-label="다음 장">›</button>
         </div>
-        <div id="slipQr" role="img" aria-label="내 번호 QR"></div>
+        <div class="slip-qrwrap" id="slipSwipe">
+          <div id="slipQr" role="img" aria-label="내 번호 QR"></div>
+          <div class="slip-redo" id="slipRedo" hidden>
+            <i aria-hidden="true"></i><b data-i="slipRedo">QR 갱신 중</b>
+          </div>
+        </div>
         <div class="slip-wrap" aria-hidden="true">
           <div class="slip-bar" id="slipBar"></div>
           <i class="slip-sweep" id="slipSweep"></i>
         </div>
         <div class="slip-live"><i></i><b id="slipSec">60.0초</b></div>
-        <div class="slip-amt"><span data-i="slipEst">예상 금액 (참고)</span><b id="slipAmt">3,000원</b></div>
-        <div class="slip-foot" data-i="slipShow">판매점에서 이 화면을 보여주세요</div>
-        <div class="slip-url" id="slipUrl"></div>
         <div class="slip-dead" id="slipDead" hidden>
           <b data-i="slipGone">유효 시간이 지났습니다</b>
           <button id="slipNew" data-i="slipAgain">다시 만들기</button>
@@ -3534,16 +3687,36 @@
 
   <!-- ===== 판매점 ===== -->
   <div class="sheet" id="store">
-    <div class="sheet-bar">
-      <h2>주변 판매점</h2>
-      <button id="closeStore">닫기</button>
+    <div class="sm-wrap">
+      <div class="map" id="storeMap"></div>
+      <button class="sm-back" id="closeStore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+        <span class="lbl">주변 판매점</span>
+      </button>
+      <div class="sm-nomap" id="smNoMap" hidden>
+        <b data-i="mapOffT">지도를 불러오지 못했습니다</b>
+        <span data-i="mapOffS">네트워크 상태를 확인해 주세요.<br>판매점 목록과 길찾기는 그대로 쓸 수 있습니다.</span>
+        <button type="button" id="smMapRetry" data-i="mapOffB">다시 시도</button>
+      </div>
+      <div class="sm-dock" id="smDock">
+        <div class="sm-track" id="smTrack"></div>
+        <button class="sm-nav prev" id="smPrev" aria-label="이전 판매점">&lsaquo;</button>
+        <button class="sm-nav next" id="smNext" aria-label="다음 판매점">&rsaquo;</button>
+      </div>
     </div>
-    <div class="map" id="storeMap"></div>
-    <div class="today" id="todayPick"></div>
-    <div class="adslot"><em>AD</em><span data-i="adSlot">광고 영역</span></div>
-    <div class="sheet-body"><div id="storeList"></div></div>
-    <p class="set-note">거리순으로 보여드립니다. 1등 배출 이력은 지난 기록일 뿐,
-    어느 판매점에서 사든 당첨 확률은 같습니다.</p>
+  </div>
+
+  <!-- ===== 판매점 상세 ===== -->
+  <div class="sheet" id="storeOne">
+    <div class="sheet-bar">
+      <h2>판매점 정보</h2>
+      <button class="sm-x" id="closeStoreOne" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+    <div class="so-body" id="soBody"></div>
   </div>
 
   <!-- ===== 우리끼리 N빵 ===== -->
@@ -3743,6 +3916,12 @@
       </div>
 
       <div class="set-group">
+        <div class="set-list">
+          <button class="set-row" id="setShare">토요일645 공유하기</button>
+        </div>
+      </div>
+
+      <div class="set-group">
         <p class="set-title" data-i="setLang">언어</p>
         <div class="set-list">
           <div class="set-row lang-row" style="gap:8px;flex-wrap:wrap">
@@ -3781,7 +3960,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.2.3</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.5.1</span></button>
           <button class="set-row" id="setUpd">앱 업데이트 안내</button>
           <button class="set-row" id="setRights">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -3909,6 +4088,12 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- 삭제 안내 + 실행 취소 -->
+  <div class="snack" id="snack">
+    <span id="snackMsg">삭제됨</span>
+    <button type="button" id="snackAct">실행 취소</button>
+  </div>
+
   <!-- 당첨 축하 배너 (실제 당첨 화면 형식) -->
   <div class="modal" id="winModal" hidden>
     <div class="win-card">
@@ -3942,6 +4127,26 @@
         정확한 기한은 동행복권 발표를 확인해주세요.</p>
       <div class="modal-btns" style="margin-top:12px">
         <button class="modal-no" id="claimLater">나중에</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토요일645 공유하기 -->
+  <div class="modal" id="shareBox" hidden>
+    <div class="modal-box sh-box">
+      <p class="sh-title">🍀 토요일645</p>
+      <p class="sh-lead">평일 열심히, 주말 소액 설렘.</p>
+      <p class="sh-body">번호 추천부터 저장·당첨 확인까지 간편하게.<br>
+        토요일의 작은 설렘을 함께해 보세요.</p>
+      <p class="sh-url">https://toyilo645.vercel.app</p>
+      <div class="sh-how">
+        <p class="sh-how-t">📱 홈 화면에 추가하면 앱처럼 쓸 수 있어요.</p>
+        <p class="sh-how-r"><b>iPhone</b> Safari에서 열기 → 공유 버튼 → 홈 화면에 추가</p>
+        <p class="sh-how-r"><b>Android</b> Chrome에서 열기 → 메뉴(⋮) → 홈 화면에 추가</p>
+      </div>
+      <div class="modal-btns" style="margin-top:16px">
+        <button class="modal-no" id="shareNo">닫기</button>
+        <button class="modal-yes" id="shareGo">공유하기</button>
       </div>
     </div>
   </div>
@@ -5552,6 +5757,7 @@ const Log=(function(){
     for(const it of mine.slice(0,shown)){
       const seq=asc.indexOf(it)+1;
       const card=document.createElement('div');card.className='card';
+      card.dataset.sk=items.indexOf(it);                  // 저장 목록에서의 자리
       const top=document.createElement('div');top.className='card-top';
       const sq=document.createElement('span');sq.className='seq';
       sq.textContent = setLabelLong(seq);                 // 몇 세트 몇 번 칸
@@ -5580,6 +5786,7 @@ const Log=(function(){
         m.textContent=it.memo;card.appendChild(m);
       }
       listEl.appendChild(card);}
+    if(window.SwipeDel) SwipeDel.attach(listEl);
 
     if(mine.length>shown){
       const more=document.createElement('button');more.className='more-btn';
@@ -5611,11 +5818,39 @@ const Log=(function(){
     if(window.Ledger) Ledger.render();
     if(window.Win) Win.check();}
   async function addMany(round,games,memo){
-    for(const nums of games) items.push({round,nums:[...nums].sort((a,b)=>a-b),ts:Date.now(),memo:memo||''});
+    const made=[];
+    for(const nums of games){
+      const it={round,nums:[...nums].sort((a,b)=>a-b),ts:Date.now(),memo:memo||''};
+      items.push(it); made.push(it);
+    }
     cur=round; shown=PAGE;
     render();await save();
-    if(window.Ledger) Ledger.render();}
+    if(window.Ledger) Ledger.render();
+    return made;}
   async function clear(){ items=[]; render(); await save(); }
+  /* 카드 한 장만 지웁니다 — 저장 목록에서의 자리로 찾습니다.
+     한꺼번에 저장하면 저장 시각이 같을 수 있어, 자리를 열쇠로 씁니다.
+     되돌릴 수 있게 원래 자리(at)를 함께 돌려줍니다. */
+  async function removeAt(i){
+    i=Number(i);
+    if(!(i>=0) || i>=items.length) return null;
+    const it=items[i];
+    items.splice(i,1);
+    render(); await save();
+    if(window.Check) Check.render();
+    if(window.Ledger) Ledger.render();
+    return {item:it, at:i};
+  }
+  /* 실행 취소 — 지우기 전 자리에 그대로 돌려놓습니다 */
+  async function putBack(item, at){
+    if(!item) return;
+    if(items.indexOf(item)>=0) return;              // 이미 돌아와 있습니다
+    const i=Math.max(0, Math.min(items.length, at|0));
+    items.splice(i, 0, item);
+    render(); await save();
+    if(window.Check) Check.render();
+    if(window.Ledger) Ledger.render();
+  }
   /* 방금 저장한 자리를 그대로 알려 줍니다 — 1244회 1세트-A에 저장되었습니다 */
   function savedMsg(round, n){
     const cnt=items.filter(it=>it.round===round).length;
@@ -5628,7 +5863,8 @@ const Log=(function(){
     return isKO() ? (roundLabel(round)+' '+lab+'에 저장되었습니다')
                   : (roundLabel(round)+' '+lab+' saved');
   }
-  return {load,add,addMany,clear,render,items:()=>items,refit:fitCards,savedMsg};
+  return {load,add,addMany,clear,removeAt,putBack,render,
+          items:()=>items,refit:fitCards,savedMsg};
 })();
 
 /* ===================== 당첨번호 조회 ===================== */
@@ -5710,7 +5946,7 @@ const Check=(function(){
       need=Math.max(need, tp.getBoundingClientRect().height/k + mb
                           + mn.getBoundingClientRect().height/k + clh);
     }
-    need=Math.ceil(need)+2;
+    need=Math.ceil(need)+22;        // 숨 쉴 자리 — 글자가 구분선에 걸치지 않게 넉넉히
     const want=Math.max(need, Math.floor((avail-gap*2-2)/3));   // 한 화면에 세 장씩 — 넉넉하게 봅니다
     const now=Math.round(cards[0].getBoundingClientRect().height/k);
     if(Math.abs(want-now)<1) return;              // 이미 딱 맞습니다
@@ -5781,7 +6017,8 @@ const Check=(function(){
     row.appendChild(mini);row.appendChild(plus);row.appendChild(bw);
     card.appendChild(lb);card.appendChild(row);checkEl.appendChild(card);
 
-    const mine=Log.items().filter(it=>it.round===cur);
+    const all=Log.items();
+    const mine=all.filter(it=>it.round===cur);
     const head=document.createElement('div');head.className='check-head';
     head.textContent=t('myPicks','내가 저장한 번호');
     if(mine.length){                                // 몇 개인지 · 더 있으면 내려보라고
@@ -5810,6 +6047,7 @@ const Check=(function(){
     for(const it of [...mine].sort((a,b)=>b.ts-a.ts)){
       const seq=asc.indexOf(it)+1;
       const c=document.createElement('div');c.className='card';
+      c.dataset.sk=all.indexOf(it);                       // 저장 목록에서의 자리
       /* 실제 당첨번호가 있을 때만 맞춰 봅니다(hide면 아직 없음) */
       const hits=hide? 0 : it.nums.filter(n=>w.nums.includes(n)).length;
       const key=(!hide && hits===5 && it.nums.includes(w.bonus))?5.5:hits;
@@ -5854,6 +6092,7 @@ const Check=(function(){
       }
       checkEl.appendChild(c);
     }
+    if(window.SwipeDel) SwipeDel.attach(checkEl);
     refit();                                       // 다 그린 뒤에 높이를 맞춥니다
     requestAnimationFrame(refit);
     setTimeout(refit,160);                         // 글꼴이 늦게 와도 다시 맞춥니다
@@ -6679,6 +6918,23 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.5.1', date:'2026-10-02', items:[
+      '주변 판매점 지도를 카카오맵으로 바꿀 수 있게 했습니다.',
+      '지도 키를 서버에서 받아오도록 해, 앱 파일에는 키가 들어 있지 않습니다.',
+      '지도를 못 불러와도 화면이 멈추지 않고 기존 지도로 넘어갑니다.' ]},
+    { v:'10.4.1', date:'2026-10-02', items:[
+      '판매점 지도가 빈 화면으로 보이던 문제를 고쳤습니다. 지도를 받아오는 곳을 여러 군데 두었습니다.',
+      '지도를 끝내 못 받으면 빈 화면 대신 그 사실을 알려 주고 다시 시도할 수 있습니다.' ]},
+    { v:'10.4.0', date:'2026-10-02', items:[
+      '주변 판매점 지도를 밝은 생활지도로 바꿨습니다. 도로와 동네 이름이 잘 보입니다.',
+      '내 번호 QR 화면에서 설명 문구를 덜어내고 QR과 번호만 남겼습니다.',
+      'QR을 좌우로 밀어서 세트를 넘길 수 있습니다. ‹ › 단추도 그대로 씁니다.' ]},
+    { v:'10.3.0', date:'2026-10-02', items:[
+      '주변 판매점 지도를 어두운 지도 타일로 바꿔 격자처럼 보이던 현상을 없앴습니다.',
+      '판매점 지도에서 광고를 뺐습니다.',
+      '저장한 번호 카드를 왼쪽으로 밀어 지울 수 있습니다. 바로 되돌릴 수도 있습니다.',
+      '내 번호 QR에서 게임 한 줄씩 지우고 다시 넣을 수 있습니다. 번호를 바꾸면 QR이 바로 새로 만들어집니다.',
+      '설정에 \'토요일645 공유하기\'를 더했습니다.' ]},
     { v:'10.2.3', date:'2026-09-28', items:[
       'AI 상담이 연결되지 않을 때 미리 준비된 문장을 답변처럼 보여주지 않도록 고쳤습니다.',
       '하루 상담 한도를 다 쓰면 그 사실을 바로 알려줍니다.',
@@ -6746,6 +7002,45 @@ const Settings=(function(){
   on('closeRights','click',()=>$id('rights').classList.remove('on'));
   on('rightsOk','click',async()=>{ await markRead(); $id('rights').classList.remove('on'); });
   loadRights();
+
+  /* ── 토요일645 공유하기 ──────────────────────────────
+     누르자마자 시스템 공유창을 띄우지 않고, 먼저 안내를 보여줍니다.
+     '공유하기'를 누르면 그때 기기의 공유창이 열립니다.
+     공유창이 없는 환경에서는 주소만 복사합니다. */
+  const SHARE_URL='https://toyilo645.vercel.app';
+  const SHARE_TEXT='평일 열심히, 주말 소액 설렘.\n'+
+                   '번호 추천부터 저장·당첨 확인까지 간편하게.\n'+
+                   '토요일의 작은 설렘을 함께해 보세요.';
+  function copyUrl(){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText)
+        return navigator.clipboard.writeText(SHARE_URL);
+    }catch(e){}
+    return new Promise(res=>{                     // 옛 브라우저를 위한 방법
+      try{
+        const ta=document.createElement('textarea');
+        ta.value=SHARE_URL; ta.setAttribute('readonly','');
+        ta.style.cssText='position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove(); res();
+      }catch(e){ res(); }
+    });
+  }
+  async function shareApp(){
+    if(navigator.share){
+      try{ await navigator.share({title:'토요일645', text:SHARE_TEXT, url:SHARE_URL}); }
+      catch(e){ /* 사용자가 취소한 것은 잘못이 아닙니다 — 조용히 돌아갑니다 */ }
+      return;
+    }
+    await copyUrl();
+    toast(t('shareCopied','토요일645 주소를 복사했습니다.'));
+  }
+  on('setShare','click',()=>{ sheet.classList.remove('on');
+    const m=$maybe('shareBox'); if(m) m.hidden=false; });
+  on('shareNo','click',()=>{ const m=$maybe('shareBox'); if(m) m.hidden=true; });
+  on('shareGo','click',async()=>{ const m=$maybe('shareBox'); if(m) m.hidden=true;
+    await shareApp(); });
+  on($maybe('shareBox'),'click',e=>{ if(e.target===$id('shareBox')) $id('shareBox').hidden=true; });
 
   on('setPhil','click',()=>{ sheet.classList.remove('on'); $id('phil').classList.add('on'); });
   on('closePhil','click',()=>$id('phil').classList.remove('on'));
@@ -6842,6 +7137,7 @@ const Manual=(function(){
   const cnt=$id('mCount'),saveBtn=$id('mSave');
   const roundSel=$id('mRound');
   let sel=[], mode='manual';                     // auto / manual / half
+  let want=null;                                 // 한 게임만 골라 돌려줄 곳 (내 번호 QR)
 
   for(let r=ROUND;r>=ROUND-5;r--){
     const o=document.createElement('option');o.value=r;roundSel.appendChild(o);
@@ -6924,13 +7220,25 @@ const Manual=(function(){
   }
   function reset(){ sel=[]; paint(); }
 
-  on('openManual','click',()=>{setMode('manual');sheet.classList.add('on');});
-  on('ckManual','click',()=>{setMode('manual');sheet.classList.add('on');});
+  /* 내 번호 QR의 빈 칸에 넣을 번호 한 게임만 고릅니다 — 고르는 칸은 그대로 씁니다 */
+  function pickFor(r, cb){
+    want=cb; setMode('manual');
+    try{ roundSel.value=r; }catch(e){}
+    roundSel.disabled=true; paint();
+    sheet.classList.add('on');
+  }
+  function bail(){                               // 고르다 말고 닫으면 빈 손으로 알립니다
+    const cb=want; want=null; roundSel.disabled=false;
+    if(cb) cb(null);
+  }
+  function plain(){ want=null; roundSel.disabled=false; setMode('manual'); sheet.classList.add('on'); }
+  on('openManual','click',plain);
+  on('ckManual','click',plain);
   // 용지를 찍어 번호를 읽어오는 기능 (인식 서버 연결 예정)
   on('openShot','click',()=>{ try{ Shot.open(); }catch(e){} });
   on('ckShot','click',()=>{ try{ Shot.open(); }catch(e){} });
   // '취소'는 표시를 지우고 직접 고르는 상태로 되돌립니다
-  on('closeManual','click',()=>sheet.classList.remove('on'));
+  on('closeManual','click',()=>{ sheet.classList.remove('on'); bail(); });
   on('mClear','click',reset);
   on(roundSel,'change',paint);
 
@@ -6940,16 +7248,19 @@ const Manual=(function(){
   on(saveBtn,'click',async()=>{
     if(sel.length<6) fill();                     // 자동·반자동은 여기서 채웁니다
     paint();
-    await Log.addMany(+roundSel.value,[sel]);
+    const made=await Log.addMany(+roundSel.value,[sel]);
     sheet.classList.remove('on');
     Check.render(); Settings.render();
     toast(Log.savedMsg(+roundSel.value, 1));
     if(navigator.vibrate) navigator.vibrate(18);
+    const cb=want; want=null; roundSel.disabled=false;
+    if(cb) cb(made && made[0]);                  // 기다리던 곳에 방금 번호를 넘깁니다
   });
 
   paint();
-  return {reset};
+  return {reset, pickFor};
 })();
+window.Manual=Manual;
 
 /* ===================== 내 정보로 번호 만들기 ===================== */
 const Mine=(function(){
@@ -7444,53 +7755,74 @@ const Ai=(function(){
     lockGender(); } };
 })();
 
-/* ===================== 주변 판매점 ===================== */
+/* ===================== 주변 판매점 =====================
+   밝은 지도 위에서 주변 판매점을 둘러보고, 고른 곳으로 길을 찾습니다.
+   앱이 "추천 판매점"을 고르지 않습니다. 판매점을 특별히 표시하는 기준은
+   공식 자료로 확인된 1등 배출 이력 하나뿐입니다. */
 const Store=(function(){
   const sheet=$id('store');
   const map=$id('storeMap');
-  const list=$id('storeList');
-  const today=$id('todayPick');
+  const dock=$id('smDock'), track=$id('smTrack');
+  const one=$id('storeOne'), oneBody=$id('soBody');
 
-  // 프로토타입용 예시 데이터입니다. 실제 앱은 동행복권 판매점 정보와
-  // 카카오 로컬 API로 현재 위치 기준 목록을 받아옵니다.
+  /* ── 판매점 목록 ──────────────────────────────────────────────
+     아직 실제 판매점 정보를 받아오는 곳이 없습니다.
+     아래는 화면을 확인하기 위한 예시이며, 실제 서비스에서는
+     동행복권 판매점 정보로 이 배열을 채웁니다.
+     1등 이력(win)은 아래 WIN1ST 에서만 옵니다 — 여기에 적지 않습니다. */
   const SHOPS=[
     {name:'행운마트', en:'Haengun Mart',
       addr:'중구 을지로 12길 8', enAddr:'8 Eulji-ro 12-gil, Jung-gu',
-      dist:180, first:2, lat:37.5662, lng:126.9840, mx:38, my:34,
-      icon:'🛒', c1:'#FBC400', c2:'#E08A00', tags:['주차 가능'], enTags:['Parking'],
-      hours:'07:00 ~ 23:00', open:true, tel:'02-2231-0000',
-      last:'1198회 (2024.02)', enLast:'Round 1198 (Feb 2024)'},
+      dist:180, lat:37.5662, lng:126.9840, mx:38, my:34,
+      hours:'07:00 ~ 23:00', open:true},
     {name:'대박복권방', en:'Daebak Lottery',
       addr:'중구 남대문로 41', enAddr:'41 Namdaemun-ro, Jung-gu',
-      dist:340, first:0, lat:37.5638, lng:126.9812, mx:66, my:52,
-      icon:'🎫', c1:'#69C8F2', c2:'#2E9BCB', tags:['복권 전문'], enTags:['Lottery only'],
-      hours:'09:00 ~ 21:00', open:true, tel:'02-771-0000',
-      last:'-', enLast:'-'},
+      dist:340, lat:37.5638, lng:126.9812, mx:66, my:52,
+      hours:'09:00 ~ 21:00', open:true},
     {name:'세븐일레븐 을지로점', en:'7-Eleven Euljiro',
       addr:'중구 을지로 66', enAddr:'66 Eulji-ro, Jung-gu',
-      dist:520, first:1, lat:37.5665, lng:126.9905, mx:24, my:70,
-      icon:'🏪', c1:'#B0D840', c2:'#7FA820', tags:['역 5분'], enTags:['5 min from station'],
-      hours:'24시간', enHours:'24 hours', open:true, tel:'02-2265-0000',
-      last:'1176회 (2023.09)', enLast:'Round 1176 (Sep 2023)'},
+      dist:520, lat:37.5665, lng:126.9905, mx:24, my:70,
+      hours:'24시간', enHours:'24 hours', open:true},
     {name:'황금열쇠 로또', en:'Golden Key Lotto',
       addr:'종로구 청계천로 85', enAddr:'85 Cheonggyecheon-ro, Jongno-gu',
-      dist:760, first:5, lat:37.5695, lng:126.9855, mx:74, my:22,
-      icon:'🔑', c1:'#FF7272', c2:'#D34141', tags:['줄 서는 곳'], enTags:['Expect a queue'],
-      hours:'08:00 ~ 22:00', open:false, tel:'02-2273-0000',
-      last:'1231회 (2024.10)', enLast:'Round 1231 (Oct 2024)'},
+      dist:760, lat:37.5695, lng:126.9855, mx:74, my:22,
+      hours:'08:00 ~ 22:00', open:false},
     {name:'CU 시청역점', en:'CU City Hall',
       addr:'중구 세종대로 110', enAddr:'110 Sejong-daero, Jung-gu',
-      dist:910, first:0, lat:37.5657, lng:126.9769, mx:52, my:80,
-      icon:'🏬', c1:'#AAAAAA', c2:'#7C7C7C', tags:['역 1분'], enTags:['1 min from station'],
-      hours:'24시간', enHours:'24 hours', open:true, tel:'02-753-0000',
-      last:'-', enLast:'-'}
+      dist:910, lat:37.5657, lng:126.9769, mx:52, my:80,
+      hours:'24시간', enHours:'24 hours', open:true}
   ];
 
-  /* ── 실제 위치 ────────────────────────────────────────────────
-     '내 위치'를 누르면 휴대폰의 진짜 좌표를 받아
-     판매점까지의 거리를 다시 재고, 가까운 순으로 다시 세웁니다.
-     아래 지도는 그 좌표를 기준으로 판매점을 제자리에 다시 놓습니다. */
-  let myPos=null;                                  // {lat,lng} — 아직 모르면 null
+  /* ── 1등 배출 이력 ────────────────────────────────────────────
+     동행복권 '당첨 판매점 조회'로 확인된 것만 들어옵니다.
+     이름만으로는 같은 판매점인지 알 수 없어, 이름과 소재지를 함께 씁니다.
+     확인된 자료가 없으면 아무 표시도 하지 않습니다.
+     '1등 0회'라고 적지 않습니다 — 확인된 이력이 없는 것과
+     실제로 한 번도 안 나온 것은 다릅니다.
+       키   : 판매점명 + '|' + 소재지
+       값   : { count:확인된 횟수, rounds:[회차…] }
+     서버에서 받아올 때는 Store.setWins(데이터) 로 넣어주세요. */
+  let WIN1ST=Object.create(null);
+  const keyOf=sh=>String(sh.name||'').trim()+'|'+String(sh.addr||'').trim();
+  function winOf(sh){
+    const w=WIN1ST[keyOf(sh)];
+    if(!w) return null;
+    const n=Number(w.count);
+    if(!(n>0)) return null;                       // 횟수를 모르면 메달도 없습니다
+    const rounds=Array.isArray(w.rounds)
+      ? w.rounds.map(Number).filter(r=>r>0).sort((a,b)=>b-a) : [];
+    return {count:n, rounds};
+  }
+  function setWins(data){
+    WIN1ST=Object.create(null);
+    if(data && typeof data==='object'){
+      for(const k of Object.keys(data)) WIN1ST[k]=data[k];
+    }
+    if(sheet.classList.contains('on')) render();
+  }
+
+  /* ── 실제 위치 ──────────────────────────────────────────────── */
+  let myPos=null;
   function metersBetween(la1,ln1,la2,ln2){
     const R=6371000, rad=Math.PI/180;
     const dLa=(la2-la1)*rad, dLn=(ln2-ln1)*rad;
@@ -7502,80 +7834,299 @@ const Store=(function(){
     if(!myPos) return;
     SHOPS.forEach(s=>{ s.dist=Math.round(metersBetween(myPos.lat,myPos.lng,s.lat,s.lng)); });
   }
-  /* ── 진짜 지도 ────────────────────────────────────────────────
-     OpenStreetMap 타일을 Leaflet 으로 깝니다. 가입도 인증키도 필요 없습니다.
-     나중에 네이버 지도로 바꾸실 때는 tileLayer 한 줄만 갈아 끼우면 됩니다.
-     인터넷이 막혀 타일을 못 받으면 아래의 그림 지도가 그대로 보입니다. */
-  const LIVEMAP = true;                            // false 로 두면 그림 지도만 씁니다
-  const LEAFLET_CSS='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
-  const LEAFLET_JS ='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
-  const TILES='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const TILE_CREDIT='© OpenStreetMap';
 
-  let L=null, live=null, layer=null, liveTried=false;
+  /* ── 밝은 지도 ────────────────────────────────────────────────
+     OpenStreetMap 타일을 Leaflet 으로 깝니다. 어둡게 덮지 않습니다.
+     타일을 못 받으면 아래의 간단한 그림 지도가 그대로 보입니다. */
+  const LIVEMAP = true;
+  /* 한 곳이 막혀도 지도가 뜨도록 받아오는 곳을 세 군데 둡니다.
+     예전에는 한 번 실패하면 그 뒤로 다시 받지 않아서,
+     느린 망에서 '흰 바탕에 점만' 있는 지도가 되곤 했습니다. */
+  const LEAFLET_CDN=[
+    ['https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',
+     'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'],
+    ['https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'],
+    ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
+     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js']
+  ];
+  /* 밝고 자연스러운 생활지도 — 도로·동네·공원·물길·지명이 그대로 들어 있는 타일입니다.
+     타일 색을 뒤집거나 덮지 않습니다(예전 격자 현상의 원인이었습니다).
+     첫 곳이 막히면 OpenStreetMap 기본 지도로 넘어갑니다. */
+  const TILESETS=[
+    {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+     sub:'abcd', max:20, credit:'© OpenStreetMap, © CARTO'},
+    {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+     sub:'abc', max:19, credit:'© OpenStreetMap'}
+  ];
+  const TILES=TILESETS[0].url, TILE_CREDIT=TILESETS[0].credit;
+
+  /* ── 카카오맵 ──────────────────────────────────────────────
+     한국 생활지도를 그대로 씁니다. 지도 엔진만 바뀌고
+     판매점 데이터·카드·스와이프·핀 연동·길찾기는 건드리지 않습니다.
+
+     ■ 키를 다루는 방식
+     이 파일에는 키를 적지 않습니다. 실행할 때 /api/mapkey 에 물어서
+     Vercel 환경변수(KAKAO_JS_KEY)에 넣어 둔 값을 받아옵니다.
+     그래서 소스와 GitHub 에는 실제 키가 남지 않습니다.
+
+     다만 분명히 해 둘 것 — 환경변수로 옮긴다고 키가 숨겨지지는 않습니다.
+     카카오 지도 Web SDK 는 브라우저가 직접 dapi.kakao.com 을 부르는 구조라
+     키가 주소에 실려 개발자도구 네트워크 탭에 그대로 보입니다.
+     이 키는 원래 '노출을 전제로 한 브라우저용 키'이고,
+     실제 보호는 카카오 개발자센터의 '허용 도메인 등록'이 합니다.
+     환경변수의 목적은 은폐가 아니라, 소스와 저장소에서 값을 떼어 내
+     키를 바꿀 때 코드를 고치지 않아도 되게 하는 것입니다.
+
+     REST API 키와 Admin 키는 성격이 완전히 다릅니다.
+     그 둘은 절대 브라우저로 내려보내지 않으며 여기에도 쓰지 않습니다. */
+  const KAKAO_KEY_URL='/api/mapkey';
+  let K=null, kmap=null, kovl=[], kLoading=null, kDead=false;
+  let kKey=null, kKeyWait=null, kKeyTry=0;
+
+  let L=null, live=null, layer=null, marks=[];
+  let tiles=null, tset=0, tileOk=0, tileBad=0, loading=null;
+
+  /* 키를 한 번만 받아서 들고 있습니다. 못 받으면 빈 값으로 두고
+     아래의 CARTO 지도로 조용히 넘어갑니다. */
+  function kakaoKey(){
+    if(kKey!=null) return Promise.resolve(kKey);
+    if(kKeyWait) return kKeyWait;
+    if(location.protocol==='file:'){               // 서버 없이 파일로 열었을 때
+      kKey=''; return Promise.resolve(kKey);
+    }
+    if(kKeyTry>=3) return Promise.resolve('');     // 그만 물어봅니다
+    kKeyTry++;
+    kKeyWait=(async()=>{
+      const ctl=('AbortController' in window)? new AbortController() : null;
+      const tm=setTimeout(()=>{ try{ ctl&&ctl.abort(); }catch(e){} }, 6000);
+      try{
+        const r=await fetch(KAKAO_KEY_URL,{cache:'no-store', signal:ctl?ctl.signal:undefined});
+        if(!r.ok) return {ask:false};              // 못 물어봤습니다 — 나중에 다시
+        const d=await r.json();
+        return {ask:true, key:String((d && d.key) || '')};
+      }catch(e){ return {ask:false}; }
+      finally{ clearTimeout(tm); }
+    })().then(o=>{
+      kKeyWait=null;
+      if(o && o.ask){ kKey=o.key; return kKey; }   // 서버가 답했으면 그대로 믿습니다
+      return '';                                   // 못 물어본 경우에는 담아 두지 않습니다
+    }, ()=>{ kKeyWait=null; return ''; });
+    return kKeyWait;
+  }
+  async function loadKakao(){
+    if(kDead) return null;
+    if(window.kakao && window.kakao.maps && window.kakao.maps.Map) return window.kakao;
+    const key=await kakaoKey();
+    if(!key) return null;                          // 키가 없으면 여기서 끝 — 오류 없이
+    if(kLoading) return kLoading;
+    kLoading=new Promise(res=>{
+      const ok=()=> (window.kakao && window.kakao.maps && window.kakao.maps.Map)
+                    ? window.kakao : null;
+      let over=false;
+      const fin=()=>{ if(over) return; over=true; res(ok()); };
+      const sc=document.createElement('script');
+      sc.async=true;
+      sc.src='https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey='
+             +encodeURIComponent(key);
+      sc.onload=()=>{                              // autoload=false 라 직접 불러옵니다
+        try{ window.kakao.maps.load(fin); }catch(e){ fin(); }
+      };
+      sc.onerror=fin;                              // 키가 틀리면 여기로 옵니다
+      setTimeout(fin, 9000);
+      document.head.appendChild(sc);
+    }).then(v=>{ kLoading=null; return v; }, ()=>{ kLoading=null; return null; });
+    return kLoading;
+  }
+  /* 핀은 지금 쓰던 모양 그대로입니다 — CSS(.mpin)를 그대로 재사용합니다 */
+  function kPin(cls,label){
+    const d=document.createElement('div');
+    d.className='mpin'+(cls? ' '+cls : '');
+    const i=document.createElement('i');
+    const b=document.createElement('b'); b.textContent=label;
+    d.appendChild(i); d.appendChild(b);
+    return d;
+  }
+  function kPaint(){
+    if(!K || !kmap) return;
+    kovl.forEach(o=>{ try{ o.setMap(null); }catch(e){} });
+    kovl=[];
+    const pts=[];
+    const put=(lat,lng,cls,label,tap)=>{
+      const el=kPin(cls,label);
+      if(tap) el.addEventListener('click',ev=>{ ev.stopPropagation(); tap(); });
+      const o=new K.maps.CustomOverlay({
+        position:new K.maps.LatLng(lat,lng), content:el,
+        xAnchor:0.5, yAnchor:0.5, clickable:!!tap, zIndex: tap?3:2});
+      o.setMap(kmap); kovl.push(o);
+      pts.push(new K.maps.LatLng(lat,lng));
+    };
+    if(myPos) put(myPos.lat,myPos.lng,'me',t('myLoc','내 위치'),null);
+    order().forEach((sh,i)=>{
+      const cls=((i===cur?'on ':'')+(winOf(sh)?'w1st':'')).trim();
+      put(sh.lat,sh.lng,cls,nameOf(sh),()=>select(i,true));   // 핀 → 카드
+    });
+    if(!fitted && pts.length){
+      try{
+        const bd=new K.maps.LatLngBounds();
+        pts.forEach(p=>bd.extend(p));
+        kmap.setBounds(bd, 44, 38, 44, 38);      // 동네 이름이 보이도록 넉넉히
+      }catch(e){}
+      fitted=true;
+    }
+  }
+  /* 키가 틀리거나 도메인이 등록되지 않으면 지도가 비어 버립니다.
+     타일 그림이 한 장도 안 그려지면 실패로 보고 CARTO 로 넘깁니다. */
+  function kSane(){
+    const box=map.querySelector('.real');
+    if(!box) return;
+    if(box.querySelectorAll('img').length) return;             // 잘 그려졌습니다
+    kDead=true;
+    try{ kovl.forEach(o=>o.setMap(null)); }catch(e){}
+    kovl=[]; kmap=null; K=null;
+    map.classList.remove('kakao');
+    box.innerHTML='';
+    fitted=false;
+    liveMap();                                                 // CARTO 로 다시
+  }
+  async function kakaoMap(){
+    const lib=await loadKakao();
+    if(!lib) return false;
+    K=lib;
+    let box=map.querySelector('.real');
+    if(!box){ box=document.createElement('div'); box.className='real'; map.appendChild(box); }
+    if(!kmap){
+      try{
+        const v=viewBox();
+        kmap=new K.maps.Map(box,{center:new K.maps.LatLng(v.lat0,v.lng0), level:5});
+        kmap.setDraggable(true); kmap.setZoomable(true);       // 확대·축소·이동 그대로
+      }catch(e){ kmap=null; K=null; kDead=true; return false; }
+    }
+    map.classList.add('live'); map.classList.add('kakao');
+    kPaint();
+    setTimeout(()=>{ try{ kmap.relayout(); kPaint(); }catch(e){} },160);
+    setTimeout(kSane, 3000);
+    return true;
+  }
+  function grab(i){
+    return new Promise(res=>{
+      if(window.L) return res(true);
+      const pair=LEAFLET_CDN[i];
+      const css=document.createElement('link');
+      css.rel='stylesheet'; css.href=pair[0]; document.head.appendChild(css);
+      const js=document.createElement('script');
+      js.src=pair[1]; js.async=true;
+      let over=false;
+      const fin=()=>{ if(over) return; over=true; res(!!window.L); };
+      js.onload=fin; js.onerror=fin;
+      setTimeout(fin, 9000);                       // 느린 망에서도 넉넉히 기다립니다
+      document.head.appendChild(js);
+    });
+  }
   function loadLeaflet(){
     if(!LIVEMAP) return Promise.resolve(null);
     if(window.L) return Promise.resolve(window.L);
-    if(liveTried) return Promise.resolve(null);
-    liveTried=true;
-    return new Promise(res=>{
-      const css=document.createElement('link');
-      css.rel='stylesheet'; css.href=LEAFLET_CSS; document.head.appendChild(css);
-      const js=document.createElement('script');
-      js.src=LEAFLET_JS; js.async=true;
-      const done=ok=>res(ok?window.L:null);
-      js.onload=()=>done(true);
-      js.onerror=()=>done(false);
-      document.head.appendChild(js);
-      setTimeout(()=>done(!!window.L), 4000);       // 4초 안에 안 오면 그림 지도로
-    });
+    if(loading) return loading;                    // 한 번에 하나만 받습니다
+    loading=(async()=>{
+      for(let i=0;i<LEAFLET_CDN.length;i++){
+        await grab(i);
+        if(window.L) break;
+      }
+      return window.L||null;
+    })().then(v=>{ loading=null; return v; },
+              ()=>{ loading=null; return null; }); // 실패해도 다음에 다시 시도합니다
+    return loading;
   }
-
+  /* 화면을 열기 전에 미리 받아 둡니다 — 처음 열 때 바로 지도가 보이도록 */
+  if(LIVEMAP){
+    /* 키가 있으면 카카오를, 없으면 CARTO 를 미리 받아 둡니다 */
+    const warm=()=>{ try{
+      kakaoKey().then(k=>{ try{ k? loadKakao() : loadLeaflet(); }catch(e){} },
+                      ()=>{ try{ loadLeaflet(); }catch(e){} });
+    }catch(e){} };
+    if(window.requestIdleCallback) requestIdleCallback(warm,{timeout:4000});
+    else setTimeout(warm,2500);
+  }
   function iconFor(cls,label){
     return L.divIcon({className:'', iconSize:[0,0],
       html:'<div class="mpin '+cls+'" style="transform:translate(-50%,-50%)">'+
            '<i></i><b>'+label+'</b></div>'});
   }
-  function paintLive(picks){
+  function paintLive(){
     if(!L||!live) return;
     if(layer) layer.clearLayers(); else layer=L.layerGroup().addTo(live);
+    marks=[];
     const pts=[];
     if(myPos){
       L.marker([myPos.lat,myPos.lng],{icon:iconFor('me',t('myLoc','내 위치'))}).addTo(layer);
       pts.push([myPos.lat,myPos.lng]);
     }
-    SHOPS.forEach(sh=>{
-      const m=L.marker([sh.lat,sh.lng],
-        {icon:iconFor(picks.includes(sh)?'on':'',nameOf(sh))}).addTo(layer);
-      m.on('click',()=>navi(sh));
+    order().forEach((sh,i)=>{
+      const cls=(i===cur? 'on ':'')+(winOf(sh)? 'w1st':'');
+      const m=L.marker([sh.lat,sh.lng],{icon:iconFor(cls.trim(),nameOf(sh))}).addTo(layer);
+      m.on('click',()=>select(i,true));            // 핀을 누르면 아래 카드도 따라옵니다
+      marks.push(m);
       pts.push([sh.lat,sh.lng]);
     });
-    if(pts.length) live.fitBounds(pts,{padding:[34,30],maxZoom:16});
+    /* 너무 바짝 당기면 동네 이름이 안 보입니다 — 한 단계 넓게 잡습니다 */
+    if(!fitted && pts.length){ live.fitBounds(pts,{padding:[44,38],maxZoom:15}); fitted=true; }
   }
-  async function liveMap(picks){
+  let fitted=false;
+  /* 타일을 깝니다. 한 장도 못 받으면 다른 지도로 바꾸고,
+     그래도 안 되면 '지도를 불러오지 못했습니다'를 솔직하게 알립니다. */
+  function addTiles(){
+    const ts=TILESETS[tset];
+    if(tiles){ try{ live.removeLayer(tiles); }catch(e){} tiles=null; }
+    tileOk=0; tileBad=0;
+    tiles=L.tileLayer(ts.url,{maxZoom:ts.max, attribution:ts.credit, subdomains:ts.sub});
+    tiles.on('tileload',()=>{ tileOk++; noMap(false); });  // 실제로 한 장 받은 때만
+    tiles.on('tileerror',()=>{
+      tileBad++;
+      if(tileOk>0) return;                          // 몇 장 빠진 것은 그냥 둡니다
+      if(tileBad>=4 && tset<TILESETS.length-1){ tset++; addTiles(); return; }
+      if(tileBad>=6) noMap(true);
+    });
+    tiles.addTo(live);
+  }
+  function noMap(on){
+    const el=document.getElementById('smNoMap');
+    if(el) el.hidden=!on;
+  }
+  function retryMap(){
+    noMap(false);
+    tset=0; fitted=false; kDead=false;              // 카카오도 다시 한 번
+    if(!kKey){ kKey=null; kKeyTry=0; }              // 키를 못 받았던 거면 다시 물어봅니다
+    if(K && kmap){ try{ kmap.relayout(); }catch(e){} kPaint(); return; }
+    if(L && live){ addTiles(); try{ live.invalidateSize(); }catch(e){} return; }
+    liveMap();
+  }
+  on('smMapRetry','click',e=>{ e.stopPropagation(); retryMap(); });
+  async function liveMap(){
+    /* 카카오맵이 되면 그걸로. 키가 없거나 실패하면 아래 CARTO 지도로 갑니다. */
+    try{ if(await kakaoMap()){ noMap(false); return true; } }catch(e){}
+    map.classList.remove('kakao');
     const lib=await loadLeaflet();
-    if(!lib) return false;                          // 못 받으면 그림 지도로
+    if(!lib){ noMap(true); return false; }
+    noMap(false);
     L=lib;
     let box=map.querySelector('.real');
-    if(!box){
-      box=document.createElement('div'); box.className='real';
-      map.appendChild(box);
-    }
+    if(!box){ box=document.createElement('div'); box.className='real'; map.appendChild(box); }
     if(!live){
       try{
         live=L.map(box,{zoomControl:false,attributionControl:true,
           dragging:true,scrollWheelZoom:false,tap:true});
-        L.tileLayer(TILES,{maxZoom:19,attribution:TILE_CREDIT}).addTo(live);
+        /* 꼭 필요한 출처만 작게 남깁니다 — 화면을 깔끔하게 */
+        try{ live.attributionControl.setPrefix(''); }catch(e){}
+        addTiles();
       }catch(e){ live=null; return false; }
     }
     map.classList.add('live');
-    paintLive(picks);
-    setTimeout(()=>{ try{ live.invalidateSize(); paintLive(picks); }catch(e){} },160);
+    paintLive();
+    setTimeout(()=>{ try{ live.invalidateSize(); paintLive(); }catch(e){} },160);
     return true;
   }
 
-  /* 지도 위의 자리 — 위치를 알면 진짜 방향·거리대로 놓습니다.
-     내 위치와 판매점 전부가 화면 안에 들어오도록 가운데와 배율을 잡습니다. */
+  /* 그림 지도(타일을 못 받을 때) 자리 잡기 */
   function viewBox(){
     const pts=SHOPS.map(s=>({lat:s.lat,lng:s.lng}));
     if(myPos) pts.push(myPos);
@@ -7591,51 +8142,18 @@ const Store=(function(){
     const v=viewBox();
     const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
     return {x:cl(50+((lng-v.lng0)*v.kx)/v.hx*40, 11, 89),
-            y:cl(50-((lat-v.lat0)*v.ky)/v.hy*34, 20, 84)};
+            y:cl(50-((lat-v.lat0)*v.ky)/v.hy*34, 16, 62)};
   }
-  function spotOf(s){
-    if(!myPos) return {x:s.mx, y:s.my};
-    return spotAt(s.lat,s.lng);
-  }
-  // 이름표가 서로 겹치면 덜 중요한 쪽을 숨깁니다 (추천 판매점이 우선)
-  function declutter(){
-    const tags=[...map.querySelectorAll('.pin b')];
-    tags.forEach(b=>{ b.style.visibility=''; });
-    tags.sort((a,b)=>{
-      const rank=e=>e.parentElement.classList.contains('me') ? 0
-                  : e.parentElement.classList.contains('on') ? 1 : 2;
-      return rank(a)-rank(b);
-    });
-    const kept=[];
-    tags.forEach(b=>{
-      const r=b.getBoundingClientRect();
-      if(r.width<1) return;
-      const hit=kept.some(k=> !(r.right<k.left-3 || r.left>k.right+3 ||
-                                r.bottom<k.top-3 || r.top>k.bottom+3));
-      if(hit) b.style.visibility='hidden'; else kept.push(r);
-    });
-  }
+  function spotOf(s){ return myPos? spotAt(s.lat,s.lng) : {x:s.mx, y:s.my}; }
 
-  // 언어에 맞는 표기를 골라줍니다
   const EN=()=>isEN();
   const nameOf =s=>EN()&&s.en?s.en:s.name;
   const addrOf =s=>EN()&&s.enAddr?s.enAddr:s.addr;
   const hoursOf=s=>EN()&&s.enHours?s.enHours:s.hours;
-  const lastOf =s=>EN()&&s.enLast?s.enLast:s.last;
-  const tagsOf =s=>EN()&&s.enTags?s.enTags:s.tags;
-
   const km=m=>m<1000?m+'m':(m/1000).toFixed(1)+'km';
-  function todayPicks(){
-    // 날짜를 씨앗으로 세 곳을 고릅니다. 날이 바뀌면 조합도 바뀝니다.
-    const d=new Date();
-    let k=(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())>>>0;
-    const rnd=()=>{k^=k<<13;k>>>=0;k^=k>>17;k^=k<<5;k>>>=0;return k/4294967296;};
-    const pool=SHOPS.slice(), out=[];
-    while(out.length<3&&pool.length) out.push(pool.splice(Math.floor(rnd()*pool.length),1)[0]);
-    return out;
-  }
-  /* 길찾기 — 카카오맵·네이버지도·구글지도 중에서 고릅니다.
-     휴대폰에 그 앱이 깔려 있으면 앱이 열리고, 없으면 웹 지도로 열립니다. */
+  const order=()=>[...SHOPS].sort((a,b)=>a.dist-b.dist);
+
+  /* ── 길찾기 — 쓰던 지도앱으로 넘깁니다 ── */
   const MAPS=[
     {k:'naver', n:'네이버지도', badge:'N', c:'#03C75A',
      url:s=>'https://map.naver.com/p/directions/-/'+s.lng+','+s.lat+','+
@@ -7649,23 +8167,21 @@ const Store=(function(){
   let lastMap=null;
   (async()=>{ try{ const r=await window.storage.get(MAPKEY,false);
     if(r&&r.value) lastMap=r.value; }catch(e){} })();
-
   function openMap(m,s){
     try{ window.storage.set(MAPKEY,m.k,false); }catch(e){}
     lastMap=m.k;
-    window.open(m.url(s),'_blank');                 // 길찾기는 원래 상호로
+    window.open(m.url(s),'_blank');
   }
   function navi(s){
     const box=$id('mapsel'), list=$id('mapselList');
-    if(!box||!list){ openMap(MAPS[0],s); return; }  // 창을 못 찾으면 바로 엽니다
+    if(!box||!list){ openMap(MAPS[0],s); return; }
     const msg=$id('mapselMsg');
     if(msg) msg.textContent=t('mapPick','어느 지도로 길을 찾을까요?');
     list.innerHTML='';
     MAPS.forEach(m=>{
       const b=document.createElement('button');
       b.className = (m.k===lastMap? 'on' : '');
-      const i=document.createElement('i'); i.textContent=m.badge;
-      i.style.background=m.c;
+      const i=document.createElement('i'); i.textContent=m.badge; i.style.background=m.c;
       const nm=document.createElement('span'); nm.textContent=t('map_'+m.k,m.n);
       b.appendChild(i); b.appendChild(nm);
       if(m.k===lastMap){
@@ -7682,17 +8198,17 @@ const Store=(function(){
     box.hidden=false;
   }
 
-  function drawMap(picks){
-    // 진짜 지도 칸(.real)은 남겨 두고 그림만 다시 그립니다
+  /* ── 그림 지도 ── */
+  function drawMap(){
     [...map.children].forEach(c=>{ if(!c.classList.contains('real')) c.remove(); });
     const roads=[[0,42,100,2],[0,74,100,2],[30,0,2,100],[68,0,2,100]];
-    for(const [l,t,w,h] of roads){
+    for(const [l,tp,w,h] of roads){
       const r=document.createElement('div');r.className='road';
-      r.style.cssText='left:'+l+'%;top:'+t+'%;width:'+w+'%;height:'+h+'%';
+      r.style.cssText='left:'+l+'%;top:'+tp+'%;width:'+w+'%;height:'+h+'%';
       map.appendChild(r);
     }
     const me=document.createElement('div');me.className='pin me';
-    const mp=myPos? spotAt(myPos.lat,myPos.lng) : {x:50,y:52};
+    const mp=myPos? spotAt(myPos.lat,myPos.lng) : {x:50,y:44};
     me.style.cssText='left:'+mp.x+'%;top:'+mp.y+'%';
     me.innerHTML='<span class="acc"></span><i></i><b>'+t('myLoc','내 위치')+'</b>';
     map.appendChild(me);
@@ -7707,18 +8223,16 @@ const Store=(function(){
     lw.appendChild(loc);lw.appendChild(lb);
     map.appendChild(lw);
 
-    SHOPS.forEach((s,i)=>{
+    order().forEach((s,i)=>{
       const p=document.createElement('div');
-      p.className='pin'+(picks.includes(s)?' on':'');
+      p.className='pin'+(i===cur?' on':'')+(winOf(s)?' w1st':'');
       const sp=spotOf(s);
       p.style.cssText='left:'+sp.x+'%;top:'+sp.y+'%';
       p.innerHTML='<i></i><b>'+nameOf(s)+'</b>';
-      p.addEventListener('click',()=>navi(s));
+      p.addEventListener('click',()=>select(i,true));
       map.appendChild(p);
     });
-    requestAnimationFrame(declutter);
   }
-
   function locate(me,btn,wrap){
     me.classList.remove('ping'); void me.offsetWidth; me.classList.add('ping');
     if(navigator.vibrate) navigator.vibrate(10);
@@ -7727,9 +8241,7 @@ const Store=(function(){
     navigator.geolocation.getCurrentPosition(
       pos=>{
         myPos={lat:pos.coords.latitude, lng:pos.coords.longitude};
-        remeasure();                               // 거리를 다시 재고
-        mix=null;                                  // 추천도 새 거리로 다시
-        render();                                  // 지도·목록 다시 그리기
+        remeasure(); cur=0; fitted=false; render();
         toast(t('locOk','현재 위치로 다시 정렬했습니다'));
       },
       ()=>{ btn.classList.remove('on'); wrap.classList.remove('on');
@@ -7738,131 +8250,212 @@ const Store=(function(){
     );
   }
 
-  let mix=null, rolled=false;                      // 다시 뽑은 조합 / 한 번이라도 눌렀는지
-  function shuffle(){
-    const rows=[...today.querySelectorAll('.tday-row')];
-    rows.forEach((r,i)=>{ r.classList.remove('mixing'); void r.offsetWidth;
-      r.style.animationDelay=(i*60)+'ms'; r.classList.add('mixing'); });
-    if(window.SFX) SFX.pick();
-    // 빠르게 섞다가 새 조합으로 자리를 잡습니다
-    let n=0;
-    const t1=setInterval(()=>{
-      const pool=SHOPS.slice(), pick=[];
-      while(pick.length<3&&pool.length) pick.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
-      mix=pick; paintRows();
-      if(++n>=7){
-        clearInterval(t1);
-        if(window.SFX) SFX.droplet();
-        if(!rolled){                                // 두 번째부터는 '다시 뽑기'
-          rolled=true;
-          const lb=today.querySelector('.tday-roll b');
-          if(lb) lb.textContent=t('todayAgain','다시 뽑기');
-        }
-      }
-    },90);
+  /* 작은 금색 메달 — 리본 두 가닥과 원반. 이모지 대신 씁니다. */
+  function medalSvg(size){
+    const ns='http://www.w3.org/2000/svg';
+    const sv=document.createElementNS(ns,'svg');
+    sv.setAttribute('viewBox','0 0 16 16');
+    sv.setAttribute('aria-hidden','true');
+    const rb=document.createElementNS(ns,'path');
+    rb.setAttribute('d','M5.3 1.2 7.2 5.6M10.7 1.2 8.8 5.6');
+    rb.setAttribute('stroke','#C3942B'); rb.setAttribute('stroke-width','1.5');
+    rb.setAttribute('stroke-linecap','round'); rb.setAttribute('fill','none');
+    rb.setAttribute('opacity','.55');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx','8'); c.setAttribute('cy','10.3'); c.setAttribute('r','4.5');
+    c.setAttribute('fill','#C3942B');
+    const c2=document.createElementNS(ns,'circle');
+    c2.setAttribute('cx','8'); c2.setAttribute('cy','10.3'); c2.setAttribute('r','2.3');
+    c2.setAttribute('fill','none'); c2.setAttribute('stroke','#fff');
+    c2.setAttribute('stroke-width','1'); c2.setAttribute('opacity','.5');
+    sv.appendChild(rb); sv.appendChild(c); sv.appendChild(c2);
+    return sv;
+  }
+  /* 길찾기 — 단순한 선형 화살표 */
+  function goSvg(){
+    const ns='http://www.w3.org/2000/svg';
+    const sv=document.createElementNS(ns,'svg');
+    sv.setAttribute('viewBox','0 0 24 24'); sv.setAttribute('fill','none');
+    sv.setAttribute('stroke','currentColor'); sv.setAttribute('stroke-width','1.7');
+    sv.setAttribute('stroke-linecap','round'); sv.setAttribute('stroke-linejoin','round');
+    const p=document.createElementNS(ns,'path');
+    p.setAttribute('d','M20.5 3.5 3.8 10.1a.4.4 0 0 0 .05.76l7.07 1.9a.4.4 0 0 1 .28.28l1.9 7.07a.4.4 0 0 0 .76.05z');
+    sv.appendChild(p);
+    return sv;
   }
 
-  function paintRows(){
-    const picks=mix||todayPicks();
-    const rows=[...today.querySelectorAll('.tday-row')];
-    rows.forEach((r,i)=>{
-      const p=picks[i]; if(!p) return;
-      r.querySelector('.tn').textContent=nameOf(p);
-      r.querySelector('.td').textContent=km(p.dist);
-      const go=r.querySelector('.navi');
-      go.onclick=()=>navi(p);
-    });
+  /* ── 지도 위에 떠 있는 카드 ── */
+  let cur=0;
+  /* 사진 자리 — 실제 사진이 없으면 빈 칸으로 둡니다 (가짜 사진을 만들지 않습니다) */
+  /* 실제 사진이 있을 때만 사진 칸을 만듭니다.
+     사진이 없으면 빈 네모를 두지 않고, 글이 그 자리를 씁니다.
+     판매점 사진 주소가 들어오면(sh.photo) 그대로 살아납니다. */
+  function thumbFor(sh){
+    if(!sh.photo) return null;
+    const th=document.createElement('div'); th.className='sm-thumb';
+    const im=document.createElement('img'); im.src=sh.photo; im.alt='';
+    th.appendChild(im);
+    return th;
   }
+  function oneCard(sh,i){
+    const el=document.createElement('div'); el.className='sm-card'+(i===cur?' on':'');
+    const main=document.createElement('div'); main.className='sm-main';
+    const th=thumbFor(sh); if(th) main.appendChild(th);
+    const txt=document.createElement('div'); txt.className='sm-txt';
+
+    const nm=document.createElement('b'); nm.className='nm'; nm.textContent=nameOf(sh);
+    txt.appendChild(nm);
+    const w=winOf(sh);
+    if(w){                                        // 확인된 이력이 있을 때만
+      const won=document.createElement('span'); won.className='won';
+      won.appendChild(medalSvg());
+      won.appendChild(document.createTextNode(
+        EN() ? ('1st prize ×'+w.count) : ('1등 당첨 '+w.count+'회')));
+      txt.appendChild(won);
+    }
+    const meta=document.createElement('div'); meta.className='meta';
+    meta.textContent=km(sh.dist)+' · '+addrOf(sh);
+    txt.appendChild(meta);
+    if(sh.hours){
+      const hr=document.createElement('div'); hr.className='hours';
+      hr.textContent=hoursOf(sh);
+      const b=document.createElement('b');
+      b.textContent=sh.open?t('openNow','영업 중'):t('closedNow','영업 종료');
+      hr.appendChild(b);
+      txt.appendChild(hr);
+    }
+    main.appendChild(txt);
+
+    /* 길찾기가 가장 중요한 행동입니다. 카드를 누르면 상세로 갑니다. */
+    const go=document.createElement('button'); go.className='sm-go';
+    go.appendChild(document.createTextNode(t('navi','길찾기')));
+    go.appendChild(goSvg());
+    go.addEventListener('click',e=>{ e.stopPropagation(); navi(sh); });
+    main.appendChild(go);
+    el.appendChild(main);
+    el.addEventListener('click',()=>{ if(i!==cur) select(i); else openOne(sh); });
+    return el;
+  }
+  function paintCard(){
+    const rows=order();
+    track.innerHTML='';
+    rows.forEach((sh,i)=>track.appendChild(oneCard(sh,i)));
+    slideTo(cur,false);
+  }
+  /* 고른 카드를 가운데로 — 양옆 카드가 살짝 보입니다 */
+  function slideTo(i,animate){
+    const first=track.firstElementChild; if(!first) return;
+    const w=first.offsetWidth + 10;                       // 카드 폭 + 사이 간격 (축소 효과 제외)
+    track.classList.toggle('slide', animate===false);
+    track.style.transform='translateX(-'+(i*w)+'px)';
+    if(animate===false) requestAnimationFrame(()=>track.classList.remove('slide'));
+    [...track.children].forEach((c,n)=>c.classList.toggle('on', n===i));
+    const pv=$maybe('smPrev'), nx=$maybe('smNext');
+    if(pv) pv.disabled = i<=0;
+    if(nx) nx.disabled = i>=track.children.length-1;
+  }
+  /* 카드를 넘기면 그 판매점의 핀이 선택되고, 지도도 그 쪽을 봅니다 */
+  function select(i,fromPin){
+    const rows=order();
+    if(i<0||i>=rows.length) return;
+    cur=i;
+    slideTo(i,true);
+    if(K && kmap){ kPaint();                       // 카카오맵
+      if(!fromPin){ try{ kmap.panTo(new K.maps.LatLng(rows[i].lat,rows[i].lng)); }catch(e){} }
+    }else if(live && L){ paintLive();               // CARTO 폴백
+      if(!fromPin){ try{ live.panTo([rows[i].lat,rows[i].lng],{animate:true,duration:.35}); }catch(e){} }
+    }else{ drawMap(); }
+  }
+  function step(d){ select(cur+d); }
+
+  /* 좌우로 밀어서 넘기기 — 이 화면의 기본 탐색 방법입니다 */
+  (function(){
+    let x0=null,y0=null,dx=0,lock=null,base=0;
+    dock.addEventListener('touchstart',e=>{
+      const t0=e.touches[0]; x0=t0.clientX; y0=t0.clientY; dx=0; lock=null;
+      const first=track.firstElementChild;
+      base = first ? -cur*(first.offsetWidth+10) : 0;
+      track.classList.add('slide');
+    },{passive:true});
+    dock.addEventListener('touchmove',e=>{
+      if(x0==null) return;
+      const t0=e.touches[0];
+      const ax=t0.clientX-x0, ay=t0.clientY-y0;
+      if(lock===null) lock=Math.abs(ax)>Math.abs(ay)+4 ? 'x' : 'y';
+      if(lock!=='x') return;
+      dx=ax; track.style.transform='translateX('+(base+dx*0.9)+'px)';
+    },{passive:true});
+    dock.addEventListener('touchend',()=>{
+      if(x0==null) return;
+      track.classList.remove('slide');
+      if(lock==='x' && Math.abs(dx)>44) step(dx<0? 1 : -1);
+      else slideTo(cur,true);
+      x0=y0=null; dx=0; lock=null;
+    });
+  })();
+  on('smPrev','click',e=>{ e.stopPropagation(); step(-1); });
+  on('smNext','click',e=>{ e.stopPropagation(); step(1); });
+  window.addEventListener('resize',()=>{ if(sheet.classList.contains('on')) slideTo(cur,false); });
+
+  /* ── 판매점 상세 ── */
+  function openOne(s){
+    const w=winOf(s);
+    oneBody.innerHTML='';
+    const nm=document.createElement('p'); nm.className='so-nm'; nm.textContent=nameOf(s);
+    oneBody.appendChild(nm);
+    if(w){
+      const el=document.createElement('span'); el.className='so-won';
+      el.appendChild(medalSvg());
+      el.appendChild(document.createTextNode(
+        EN() ? ('1st prize ×'+w.count) : ('1등 '+w.count+'회')));
+      oneBody.appendChild(el);
+    }
+    const box=document.createElement('div'); box.className='so-rows';
+    const rows=[[t('addr','주소'), addrOf(s)], [t('dist','거리'), km(s.dist)]];
+    if(s.hours) rows.push([t('hours','영업시간'),
+      hoursOf(s)+' · '+(s.open?t('openNow','영업 중'):t('closedNow','영업 종료'))]);
+    for(const [k,v] of rows){
+      const r=document.createElement('div'); r.className='so-row';
+      const a=document.createElement('span'); a.className='k'; a.textContent=k;
+      const b=document.createElement('span'); b.className='v'; b.textContent=v;
+      r.appendChild(a); r.appendChild(b); box.appendChild(r);
+    }
+    oneBody.appendChild(box);
+    if(w && w.rounds.length){                     // 확인된 회차가 있을 때만
+      const lst=document.createElement('div'); lst.className='so-list';
+      const h=document.createElement('h3'); h.textContent=t('winHist','1등 당첨 이력');
+      const ul=document.createElement('ul');
+      for(const r of w.rounds){ const li=document.createElement('li');
+        li.textContent=EN()? ('Round '+r) : (r+'회'); ul.appendChild(li); }
+      lst.appendChild(h); lst.appendChild(ul);
+      oneBody.appendChild(lst);
+    }
+    const go=document.createElement('button'); go.className='so-go';
+    go.textContent=t('navi','길찾기');
+    go.addEventListener('click',()=>navi(s));
+    oneBody.appendChild(go);
+    one.classList.add('on');
+  }
+  on('closeStoreOne','click',()=>one.classList.remove('on'));
 
   function render(){
-    const picks=mix||todayPicks(), pick=picks[0];
-    drawMap(picks);                                 // 예비 그림 + '내 위치' 단추
-    liveMap(picks).then(ok=>{ if(!ok) map.classList.remove('live'); });
-
-    today.innerHTML='';
-    const head=document.createElement('div');head.className='tday-head';
-    const ht=document.createElement('span');ht.textContent=t('todayHead','오늘의 추천 판매점');
-    const roll=document.createElement('button');roll.className='tday-roll';
-    roll.innerHTML='<span>↻</span><b>'+(rolled? t('todayAgain','다시 뽑기')
-                                              : t('todayRoll','뽑기'))+'</b>';
-    roll.addEventListener('click',()=>shuffle());
-    head.appendChild(ht);head.appendChild(roll);
-    today.appendChild(head);
-    picks.forEach((p,i)=>{
-      const r=document.createElement('div');r.className='tday-row';
-      const no=document.createElement('i');no.textContent=i+1;
-      const nm=document.createElement('span');nm.className='tn';nm.textContent=nameOf(p);
-      const ds=document.createElement('span');ds.className='td';ds.textContent=km(p.dist);
-      const go=document.createElement('button');go.className='navi';
-      go.textContent=t('navi','길찾기');
-      go.addEventListener('click',()=>navi(p));
-      r.appendChild(no);r.appendChild(nm);r.appendChild(ds);r.appendChild(go);
-      today.appendChild(r);
-    });
-
-    list.innerHTML='';
-    [...SHOPS].sort((a,b)=>a.dist-b.dist).forEach(s=>{
-      const row=document.createElement('div');row.className='store';
-
-      const th=document.createElement('div');th.className='thumb';
-      th.style.background='linear-gradient(145deg,'+s.c1+','+s.c2+')';
-      th.textContent=s.icon;
-      if(picks.includes(s)){const rb=document.createElement('b');rb.textContent='오늘';th.appendChild(rb);}
-      row.appendChild(th);
-
-      const info=document.createElement('div');info.className='info';
-      const nm=document.createElement('div');nm.className='nm';nm.textContent=nameOf(s);
-      const ad=document.createElement('div');ad.className='ad';ad.textContent=addrOf(s);
-      const tg=document.createElement('div');tg.className='tags';
-      if(s.first){const el=document.createElement('span');el.className='hot';
-        el.textContent=EN()?(s.first+'× jackpot'):('1등 '+s.first+'회 배출');
-        tg.appendChild(el);}
-      for(const x of tagsOf(s)){const el=document.createElement('span');
-        el.textContent=x;tg.appendChild(el);}
-      info.appendChild(nm);info.appendChild(ad);info.appendChild(tg);
-      row.appendChild(info);
-
-      const right=document.createElement('div');right.className='right';
-      const d=document.createElement('span');d.className='dist';d.textContent=km(s.dist);
-      const go=document.createElement('button');go.className='navi';
-      go.textContent=t('navi','길찾기');
-      go.addEventListener('click',()=>navi(s));
-      right.appendChild(d);right.appendChild(go);
-      row.appendChild(right);
-
-      const wrap=document.createElement('div');wrap.className='storecard';
-      wrap.appendChild(row);
-
-      const dl=document.createElement('div');dl.className='detail';
-      const walk=Math.max(1,Math.round(s.dist/67));
-      const rows=[
-        [t('hours','영업시간'), hoursOf(s),
-         s.open?t('openNow','영업 중'):t('closedNow','영업 종료')],
-        [t('walk','도보'), !isEN()?'약 '+walk+'분':walk+' min', ''],
-        [t('lastFirst','최근 1등'),
-         s.last==='-'?t('noJackpot','배출 이력 없음'):lastOf(s), '']
-      ];
-      for(const [k,v,extra] of rows){
-        const r=document.createElement('div');r.className='drow';
-        const a=document.createElement('span');a.className='dk';a.textContent=k;
-        const b=document.createElement('span');b.className='dv';b.textContent=v;
-        r.appendChild(a);r.appendChild(b);
-        if(extra){
-          const c=document.createElement('span');
-          c.className='dstate'+(s.open?' open':'');
-          c.textContent=extra;r.appendChild(c);
-        }
-        dl.appendChild(r);
-      }
-      wrap.appendChild(dl);
-      list.appendChild(wrap);
-    });
+    if(cur>=SHOPS.length) cur=0;
+    drawMap();
+    liveMap().then(ok=>{ if(!ok) map.classList.remove('live'); });
+    paintCard();
   }
 
-  on('openStore','click',()=>{render();sheet.classList.add('on');});
+  on('openStore','click',()=>{ cur=0; fitted=false; render(); sheet.classList.add('on');
+    setTimeout(()=>{
+      try{ if(kmap) kmap.relayout(); }catch(e){}
+      try{ if(live) live.invalidateSize(); }catch(e){}
+    },260); });
   on('closeStore','click',()=>sheet.classList.remove('on'));
   document.addEventListener('langchange',()=>{ if(sheet.classList.contains('on')) render(); });
+
+  return {setWins};
 })();
+window.Store=Store;
 
 /* ===================== 당첨 축하 ===================== */
 const Win=(function(){
@@ -9013,7 +9606,10 @@ const Slip=(function(){
   const sheet=document.getElementById('slip');
   if(!sheet) return {open(){}};
   const cv=document.getElementById('slipQr'), pick=document.getElementById('slipPick');
-  let round=0, rows=[], on=[], autoN=0, page=0;
+  /* 칸 하나하나를 그대로 들고 있습니다 — 지워도 A/B/C/D/E 자리가 밀리지 않습니다.
+       {k:'m', it:저장한 번호} | {k:'a'} 자동 | {k:'0'} 비워 둔 칸          */
+  let round=0, rows=[], slots=[], page=0;
+  let stale=false, fillAt=-1, redoT=0;
 
   /* 동행복권 모바일 슬립지 QR 규격 (실물 두 장을 읽어 맞춘 것입니다)
        MSG_ESLIP{<QR 순번>0645}{(<게임수>,M:<번호 12자리>,M:…)}{}<CRC8 두 자리>|
@@ -9032,39 +9628,58 @@ const Slip=(function(){
   }
   const PER=5, PRICE=1000;                         // 한 장에 다섯 게임, 게임당 천 원
   const MAXG=100;                                  // 1회 구입 한도 10만 원 = 100게임 = 20장
-  /* 고른 번호(수동) 뒤에 자동을 붙이고, 다섯 개씩 장으로 나눕니다 */
-  function entries(){
-    const es=rows.filter((_,i)=>on[i])
-      .map(it=>'M:'+[...it.nums].sort((a,b)=>a-b).map(n=>String(n).padStart(2,'0')).join(''));
-    for(let i=0;i<autoN;i++) es.push('Q:');
-    return es;
+  const autoN=()=>slots.reduce((n,s)=>n+(s.k==='a'?1:0),0);
+  const filled=()=>slots.reduce((n,s)=>n+(s.k!=='0'?1:0),0);
+  const inUse=it=>slots.some(s=>s.k==='m' && s.it===it);
+  /* 칸 하나를 QR 글자로 — M은 수동, Q는 자동, 빈 칸은 QR에 넣지 않습니다 */
+  function one(s){
+    if(!s || s.k==='0') return null;
+    if(s.k==='a') return 'Q:';
+    return 'M:'+[...s.it.nums].sort((a,b)=>a-b).map(n=>String(n).padStart(2,'0')).join('');
   }
+  /* 한 세트는 늘 다섯 칸입니다 — 번호가 없는 칸도 그대로 보여 주어
+     A~E 어느 자리에나 번호를 넣을 수 있습니다.
+     번호가 하나도 없는 뒤쪽 세트는 남겨 두지 않습니다. */
+  function tidy(){
+    let last=-1;
+    for(let i=0;i<slots.length;i++) if(slots[i].k!=='0') last=i;
+    const need=(Math.floor(Math.max(last,0)/PER)+1)*PER;
+    slots=slots.slice(0,need);
+    while(slots.length<need) slots.push({k:'0'});
+  }
+  /* 다섯 칸이 한 장 — 비워 둔 칸도 자리를 지킵니다 */
   function pages(){
-    const es=entries(), out=[];
-    for(let i=0;i<es.length;i+=PER) out.push(es.slice(i,i+PER));
+    const out=[];
+    for(let i=0;i<slots.length;i+=PER) out.push(slots.slice(i,i+PER));
     return out.length? out : [[]];
   }
   function payload(pg){
-    const es=pages()[pg]||[];
-    // {<장 번호>0645}{(게임수, 방식:번호 …)}{}  — M은 수동, Q는 자동
+    const es=(pages()[pg]||[]).map(one).filter(Boolean);
+    // {<장 번호>0645}{(게임수, 방식:번호 …)}{}  — 화면에 보이는 번호와 늘 같습니다
     const body='MSG_ESLIP{'+(pg+1)+'0645}{('+es.length+','+es.join(',')+')}{}';
     return body + crc8(body) + '|';
   }
+  /* 번호가 바뀌면 옛 QR을 바로 치우고, 새로 만든 뒤에 다시 보여줍니다 */
+  function changed(){
+    stale=true; paint();
+    clearTimeout(redoT);
+    redoT=setTimeout(()=>{ stale=false; paint(); fresh(); }, 240);
+  }
   const money=n=>(n||0).toLocaleString('ko-KR')+(isKO()?'원':'');
-  /* 지금 띄워 둔 QR의 상태를 그대로 적어 줍니다 */
-  const liveText=()=> (until>Date.now())
-    ? (isKO()?'QR 생성 중':'QR live') : (isKO()?'다시 만들기':'renew');
+  /* 지금 띄워 둔 QR의 상태를 그대로 적어 줍니다 —
+     다 만들어 둔 QR을 '생성 중'이라고 하지 않습니다 */
+  const liveText=()=> stale ? t('slipRedo','QR 갱신 중')
+    : (until>Date.now()) ? t('slipLive','QR 사용 중')
+    : t('slipAgain','다시 만들기');
   const AZ='ABCDE';
   const label=idx=>(Math.floor(idx/PER)+1)+'-'+AZ[idx%PER];
   const setCol=setColor, setDim=setSoft;          // 저장 목록과 같은 색을 씁니다
   function paint(){
-    const pgs=pages(), all=entries().length;
+    tidy();
+    const pgs=pages(), all=filled();
     if(page>=pgs.length) page=pgs.length-1;
     if(page<0) page=0;
     document.getElementById('slipRound').textContent=roundLabel(round);
-    document.getElementById('slipTot').textContent =
-      (isKO()? ('QR 총액 '+money(all*PRICE)+' · '+pgs.length+'세트')
-             : ('QR total '+money(all*PRICE)+' · '+pgs.length));
     const pgWrap=sheet.querySelector('.slip-page');
     pgWrap.classList.toggle('one', pgs.length<=1);
     const pgEl=document.getElementById('slipPg');
@@ -9073,26 +9688,32 @@ const Slip=(function(){
     pgEl.style.color='#101728';
     document.getElementById('slipPrev').disabled = page<=0;
     document.getElementById('slipNext').disabled = page>=pgs.length-1;
-    document.getElementById('slipAmt').textContent=money((pgs[page]||[]).length*PRICE);
-    document.getElementById('slipAutoN').textContent=autoN;
-    document.getElementById('slipAutoM').disabled = autoN<=0;
-    document.getElementById('slipAutoP').disabled = all>=MAXG;
-    const pay=payload(page);
-    try{ cv.innerHTML=QR.svg(pay); }catch(e){}
-    const u=document.getElementById('slipUrl'); if(u) u.textContent=pay;
+    const nowReal=(pgs[page]||[]).filter(x=>x.k!=='0').length;
+    document.getElementById('slipAmt').textContent=money(nowReal*PRICE);
+    document.getElementById('slipAutoN').textContent=autoN();
+    document.getElementById('slipAutoM').disabled = autoN()<=0;
+    document.getElementById('slipAutoP').disabled = all>=MAXG || slots.length>=MAXG;
+    /* 번호가 바뀌는 동안에는 옛 QR을 띄워 두지 않습니다 —
+       판매점에서 지난 번호를 잘못 읽는 일을 막습니다. */
+    const redo=document.getElementById('slipRedo');
+    const pay=payload(page);                       // QR 데이터 규격은 그대로입니다
+    if(stale){
+      cv.innerHTML='';
+      if(redo) redo.hidden=false;
+    }else{
+      if(redo) redo.hidden=true;
+      try{ cv.innerHTML=QR.svg(pay); }catch(e){}
+    }
     pick.innerHTML='';
     /* ── 세트(장) 단위로 묶어서 보여줍니다 ──
        담은 번호를 다섯 개씩 끊어 한 세트로 만들고, 세트마다 머리글을 답니다.
        여섯 게임이면 '1세트 5게임' + '2세트 1게임'이 됩니다.
        자동으로 넣은 것도 한 줄씩 자리를 차지하니, 세트에 뭐가 들었는지 그대로 보입니다. */
-    const sel=[];
-    rows.forEach((it,i)=>{ if(on[i]) sel.push({kind:'m', i, it}); });
-    for(let a=0;a<autoN;a++) sel.push({kind:'a'});
-
-    const nSet=Math.max(1, Math.ceil(sel.length/PER));
+    const nSet=Math.max(1, Math.ceil(slots.length/PER));
     for(let sIdx=0;sIdx<nSet;sIdx++){
-      const part=sel.slice(sIdx*PER, sIdx*PER+PER);
+      const part=slots.slice(sIdx*PER, sIdx*PER+PER);
       if(!part.length) break;
+      const real=part.filter(x=>x.k!=='0').length;
       const h=document.createElement('div');
       h.className='set-head'+(sIdx===page?' now':' rest');
       h.style.setProperty('--sc', setCol(sIdx));
@@ -9104,18 +9725,14 @@ const Slip=(function(){
         const x=document.createElement('button');
         x.className='set-arw'; x.textContent=txt;
         x.setAttribute('aria-label', label);
-        x.addEventListener('click',e=>{ e.stopPropagation();
-          page=to; paint(); fresh();
-          toast((to+1)+(isKO()?'세트 QR을 만들었습니다':' set QR ready'));
-          if(window.SFX) SFX.pick();
-        });
+        x.addEventListener('click',e=>{ e.stopPropagation(); goPage(to); });
         return x;
       };
       const live = (sIdx===page && nSet>1);
       const arwL = (live && sIdx>0)      ? mkArrow('‹', sIdx-1, '앞 세트') : null;
       const arwR = (live && sIdx<nSet-1) ? mkArrow('›', sIdx+1, '다음 세트') : null;
-      const t2=document.createElement('i'); t2.textContent=part.length+(isKO()?'게임':'g')+
-        ' · '+money(part.length*PRICE);
+      const t2=document.createElement('i'); t2.textContent=real+(isKO()?'게임':'g')+
+        ' · '+money(real*PRICE);
       const go=document.createElement('em');
       go.textContent = sIdx===page ? liveText() : (isKO()?'이 세트 QR 만들기':'make QR');
       if(sIdx===page) go.classList.add('cur');
@@ -9124,9 +9741,7 @@ const Slip=(function(){
         e.stopPropagation();
         if(sIdx===page){ fresh(); toast((sIdx+1)+(isKO()?'세트 QR을 새로 만들었습니다':' set QR renewed'));
           if(window.SFX) SFX.pick(); return; }
-        page=sIdx; paint(); fresh();
-        toast((sIdx+1)+(isKO()?'세트 QR을 만들었습니다. 판매점에 보여주세요':' set QR ready'));
-        if(window.SFX) SFX.pick();
+        goPage(sIdx);
       });
       if(arwL) h.appendChild(arwL);
       h.appendChild(t1);
@@ -9136,32 +9751,38 @@ const Slip=(function(){
 
       part.forEach((e,k)=>{
         const idx=sIdx*PER+k;
-        const b=document.createElement('button');
-        b.className='slip-row on'+(e.kind==='a'?' auto':'')+(sIdx===page?' live':' rest');
+        const gap=(e.k==='0');
+        const b=document.createElement('div');
+        b.className='slip-row on'+(gap?' gap':'')+(e.k==='a'?' auto':'')
+                   +(sIdx===page?' live':' rest');
         b.style.setProperty('--sc', setCol(sIdx));
         b.style.setProperty('--scDim', setDim(sIdx));
         if(k===0) b.classList.add('head');
-        const bx=document.createElement('span'); bx.className='bx'; bx.textContent='✓';
+        const bx=document.createElement('span'); bx.className='bx';
+        if(!gap) bx.textContent='✓';
         const sq=document.createElement('span'); sq.className='sq';
-        sq.textContent=label(idx);
+        sq.textContent=label(idx);                       // 1-A · 1-B … 자리는 그대로입니다
         if(sIdx===page) sq.classList.add('now');
         const ns=document.createElement('span'); ns.className='ns';
-        if(e.kind==='a'){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
+        if(gap){ ns.textContent=t('slipNone','번호 없음'); ns.classList.add('dimtx'); }
+        else if(e.k==='a'){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
         else ns.textContent=e.it.nums.map(x=>String(x).padStart(2,'0')).join('  ');
-        b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
-        b.addEventListener('click',()=>{
-          if(entries().length<=1){ toast(t('slipMin','한 게임은 남겨 주세요')); return; }
-          if(e.kind==='a') autoN=Math.max(0,autoN-1);
-          else on[e.i]=false;
-          paint(); fresh(); if(window.SFX) SFX.pick();
-        });
+        const act=document.createElement('button'); act.type='button'; act.className='slip-act';
+        if(gap){
+          act.classList.add('add'); act.textContent=t('slipFill','번호 넣기');
+          act.addEventListener('click',ev=>{ ev.stopPropagation(); askNums(idx); });
+        }else{
+          act.textContent=t('del','삭제');
+          act.addEventListener('click',ev=>{ ev.stopPropagation(); drop(idx); });
+        }
+        b.appendChild(bx); b.appendChild(sq); b.appendChild(ns); b.appendChild(act);
         pick.appendChild(b);
       });
     }
 
     /* 아직 담지 않은 번호 */
     const rest=[];
-    rows.forEach((it,i)=>{ if(!on[i]) rest.push({i,it}); });
+    rows.forEach((it,i)=>{ if(!inUse(it)) rest.push({i,it}); });
     if(rest.length){
       const h=document.createElement('div'); h.className='set-head off';
       const t1=document.createElement('b'); t1.textContent=isKO()?'담지 않음':'not added';
@@ -9176,20 +9797,87 @@ const Slip=(function(){
         ns.textContent=it.nums.map(x=>String(x).padStart(2,'0')).join('  ');
         b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
         b.addEventListener('click',()=>{
-          if(entries().length>=MAXG){
+          if(filled()>=MAXG){
             toast(t('slipMax','한 번에 100게임(10만 원)까지 담깁니다')); return; }
-          on[i]=true; paint(); fresh(); if(window.SFX) SFX.pick();
+          const g=slots.findIndex(x=>x.k==='0');
+          if(g>=0) slots[g]={k:'m', it};                 // 비워 둔 자리를 먼저 채웁니다
+          else slots.push({k:'m', it});
+          changed(); if(window.SFX) SFX.pick();
         });
         pick.appendChild(b);
       });
     }
-    /* 장을 넘기면 그 세트가 보이도록 따라갑니다 (스무 장까지 가니까요) */
+    /* 세트를 바꾸면 그 세트가 보이도록 따라갑니다 — 다만 QR 은 화면에 그대로 둡니다 */
     const now=pick.querySelector('.set-head.now');
     if(now && lastPage!==page){ lastPage=page;
-      try{ bring(now); }catch(e){}
+      try{ nudge(now); }catch(e){}
     }
   }
+  /* 목록을 꼭 필요한 만큼만 움직입니다.
+     세트를 넘겼는데 정작 보여줄 QR 이 위로 사라지면 안 되기 때문입니다. */
+  function nudge(el){
+    const sc=sheet.querySelector('.slip-body');
+    if(!sc || !el) return;
+    const r=el.getBoundingClientRect(), b=sc.getBoundingClientRect();
+    let d=0;
+    if(r.bottom>b.bottom-8) d=r.bottom-(b.bottom-8);
+    else if(r.top<b.top+8) d=r.top-(b.top+8);
+    if(!d) return;
+    if(d>0){
+      const paper=sheet.querySelector('.slip-paper');
+      if(paper){
+        const pr=paper.getBoundingClientRect();
+        d=Math.min(d, Math.max(0, pr.bottom-b.top-150));   // QR 이 적어도 이만큼은 남습니다
+      }
+    }
+    if(d) sc.scrollTop+=d;
+  }
   let lastPage=-1;
+  /* ── 세트 전환은 오직 여기로만 합니다 ──
+     ‹ › 를 눌러도, QR 을 손가락으로 밀어도, 세트 머리글을 눌러도 같은 길입니다.
+     표시 세트 · QR · 금액 · 유효시간이 한 번에 같이 바뀌므로
+     앞 세트 QR 과 다음 세트 정보가 섞여 보이는 순간이 없습니다. */
+  function goPage(n, quiet){
+    const max=pages().length-1;
+    n=Math.max(0, Math.min(max, Math.round(n)));
+    if(n===page) return false;
+    page=n; paint(); fresh();
+    if(!quiet){
+      toast((n+1)+(isKO()?'세트 QR을 만들었습니다':' set QR ready'));
+      if(window.SFX) SFX.pick();
+    }
+    return true;
+  }
+  /* 한 게임만 지웁니다 — 자리는 빈 칸으로 남겨 두어 A/B/C/D/E 가 밀리지 않습니다 */
+  function drop(idx){
+    const sl=slots[idx];
+    if(!sl || sl.k==='0') return;
+    if(filled()<=1){ toast(t('slipMin','한 게임은 남겨 주세요')); return; }
+    slots[idx]={k:'0'};
+    changed(); if(window.SFX) SFX.pick();
+  }
+  /* 빈 칸 한 줄만 다시 채웁니다 — 번호 고르는 칸을 그대로 씁니다 */
+  function askNums(idx){
+    if(!window.Manual || !Manual.pickFor) return;
+    fillAt=idx;
+    sheet.classList.remove('on'); stop();
+    try{ Manual.pickFor(round, took); }
+    catch(e){ fillAt=-1; back(false); }
+  }
+  function took(it){
+    const at=fillAt; fillAt=-1;
+    let got=false;
+    if(it && at>=0 && at<slots.length && slots[at].k==='0'){
+      if(rows.indexOf(it)<0) rows.push(it);
+      slots[at]={k:'m', it}; got=true;
+    }
+    back(got);
+  }
+  function back(got){
+    sheet.classList.add('on');
+    if(got) changed();                         // 번호가 바뀌었으니 QR을 새로 만듭니다
+    else { paint(); fresh(); }
+  }
   /* ── 유효 시간 (60초) ──
      화면을 찍어 두고 나중에 쓰지 못하도록, 시간이 지나면 QR을 가립니다. */
   const LIFE=60*1000, SEGS=7;
@@ -9227,8 +9915,8 @@ const Slip=(function(){
     const chip=pick && pick.querySelector('.set-head.now em.cur');
     if(chip){
       const alive=left>0;
-      chip.classList.toggle('beat', alive);
-      const want = alive ? (isKO()?'QR 생성 중':'QR live') : (isKO()?'다시 만들기':'renew');
+      chip.classList.toggle('beat', alive && !stale);
+      const want=liveText();
       if(chip.textContent!==want) chip.textContent=want;
     }
     if(left<=0) expire();
@@ -9268,19 +9956,83 @@ const Slip=(function(){
     if(raf2){ cancelAnimationFrame(raf2); raf2=null; } until=0; }
 
   function open(r, items){
-    round=r; rows=items.slice(0,MAXG); autoN=0; page=0;
+    round=r; rows=items.slice(0,MAXG); page=0;
+    stale=false; fillAt=-1; clearTimeout(redoT);
     /* 저장해 둔 번호는 전부 담아 둡니다 — 다섯 개씩 1세트, 2세트로 저절로 갈립니다.
        빼고 싶은 줄만 눌러서 빼면 됩니다. */
-    on=rows.map(()=>true);
+    slots=rows.map(it=>({k:'m', it})); tidy();
     paint(); fresh(); sheet.classList.add('on'); if(window.SFX) SFX.pick();
   }
   function close(){ sheet.classList.remove('on'); stop(); }
   on2('closeSlip','click',close);
   on2('slipNew','click',()=>{ paint(); fresh(); if(window.SFX) SFX.pick(); });
-  on2('slipPrev','click',()=>{ if(page>0){ page--; paint(); fresh(); } });
-  on2('slipNext','click',()=>{ if(page<pages().length-1){ page++; paint(); fresh(); } });
-  function autoUp(){ if(entries().length<MAXG){ autoN++; paint(); fresh(); if(window.SFX) SFX.pick(); return true; } return false; }
-  function autoDn(){ if(autoN>0 && entries().length>1){ autoN--; paint(); fresh(); return true; } return false; }
+  on2('slipPrev','click',()=>goPage(page-1, true));
+  on2('slipNext','click',()=>goPage(page+1, true));
+  /* ── QR 자체를 좌우로 밀어 세트를 넘깁니다 ──
+     ‹ › 와 똑같은 goPage 를 씁니다. 튕기는 움직임은 쓰지 않습니다. */
+  (function(){
+    const wrap=document.getElementById('slipSwipe');
+    if(!wrap) return;
+    let id=null, sx=0, sy=0, dx=0, lock=0;
+    const rest=()=>{ wrap.style.transform=''; wrap.style.opacity=''; };
+    wrap.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(pages().length<=1) return;
+      id=e.pointerId; sx=e.clientX; sy=e.clientY; dx=0; lock=0;
+    });
+    wrap.addEventListener('pointermove',e=>{
+      if(id!==e.pointerId) return;
+      const ax=e.clientX-sx, ay=e.clientY-sy;
+      if(!lock){
+        if(Math.abs(ax)<6 && Math.abs(ay)<6) return;
+        if(Math.abs(ax)<=Math.abs(ay)){ lock=-1; id=null; return; }   // 세로 스크롤은 그대로
+        lock=1; wrap.classList.add('drag');
+        try{ wrap.setPointerCapture(e.pointerId); }catch(err){}
+      }
+      if(lock!==1) return;
+      const max=pages().length-1;
+      let v=ax;
+      if((page<=0 && v>0) || (page>=max && v<0)) v*=0.22;             // 끝에서는 거의 안 끌립니다
+      dx=v;
+      wrap.style.transform='translateX('+(v*0.85).toFixed(1)+'px)';
+      wrap.style.opacity=(1-Math.min(0.4, Math.abs(v)/420)).toFixed(3);
+    });
+    function done(e){
+      if(id!==e.pointerId) return;
+      id=null;
+      if(lock!==1){ lock=0; return; }
+      lock=0;
+      const d=dx<0 ? 1 : -1, far=Math.abs(dx)>46;
+      dx=0;
+      if(far && goPage(page+d, true)){
+        /* 새 세트 QR 이 반대편에서 자연스럽게 들어옵니다 */
+        wrap.style.transform='translateX('+(d>0? 46 : -46)+'px)';
+        wrap.style.opacity='0';
+        requestAnimationFrame(()=>{ wrap.classList.remove('drag'); rest(); });
+        return;
+      }
+      wrap.classList.remove('drag'); rest();
+    }
+    wrap.addEventListener('pointerup',done);
+    wrap.addEventListener('pointercancel',e=>{
+      if(id!==e.pointerId) return;
+      id=null; lock=0; wrap.classList.remove('drag'); rest();
+    });
+  })();
+  window.addEventListener('beforeunload',()=>clearTimeout(redoT));
+  function autoUp(){
+    if(filled()>=MAXG) return false;
+    const g=slots.findIndex(x=>x.k==='0');
+    if(g>=0) slots[g]={k:'a'};                     // 비어 있는 칸부터 채웁니다
+    else slots.push({k:'a'});
+    changed(); if(window.SFX) SFX.pick(); return true;
+  }
+  function autoDn(){
+    const i=slots.map(x=>x.k).lastIndexOf('a');
+    if(i<0 || filled()<=1) return false;
+    slots[i]={k:'0'};                              // 자리는 그대로 두고 비웁니다
+    changed(); return true;
+  }
   on2('slipAutoP','click',autoUp);
   on2('slipAutoM','click',autoDn);
   /* 100게임까지 갈 수 있으니, 꾹 누르면 계속 올라가게 합니다 */
@@ -15544,6 +16296,10 @@ const I18N=(function(){
       scanDemo:'サンプルを読み込む',
       logEmpty:'保存した番号はありません。<br>抽選のあとに保存してみてください。',
       savedCount:'件 保存', noneSaved:'保存なし', more:'もっと見る',
+      del:'削除', delDone:'削除しました', undo:'元に戻す',
+      mapOffT:'地図を読み込めませんでした', mapOffB:'再試行',
+      mapOffS:'通信状態をご確認ください。<br>店舗一覧と経路案内はそのまま使えます。',
+      slipRedo:'QRを更新中', slipLive:'QR 表示中', slipNone:'番号なし', slipFill:'番号を入れる',
       manualBtn:'番号を自分で入力', manualTitle:'番号を入力', clear:'消す', saveBtn:'保存',
       autofill:'残りをランダムで埋める', slipHint:'6つ選んでください', tooMany:'6つまで選べます',
       slipAuto:'自動選択', slipHalf:'自動・半自動選択', slipCancel:'取消',
@@ -15694,6 +16450,10 @@ const I18N=(function(){
       scanDemo:'载入示例彩票',
       logEmpty:'还没有保存的号码。<br>抽取后保存试试。',
       savedCount:'条记录', noneSaved:'没有记录', more:'查看更多',
+      del:'删除', delDone:'已删除', undo:'撤销',
+      mapOffT:'地图加载失败', mapOffB:'重试',
+      mapOffS:'请检查网络连接。<br>门店列表和导航仍可使用。',
+      slipRedo:'正在更新二维码', slipLive:'二维码使用中', slipNone:'没有号码', slipFill:'填入号码',
       manualBtn:'自己输入号码', manualTitle:'输入号码', clear:'清除', saveBtn:'保存',
       autofill:'其余随机填充', slipHint:'请选择六个号码', tooMany:'最多只能选六个',
       slipAuto:'自动选择', slipHalf:'自动及半自动', slipCancel:'取消',
@@ -15851,6 +16611,10 @@ const I18N=(function(){
       logEmpty:'You have not saved any numbers yet.<br>Save some after a draw.',
       logNone:' has no saved numbers.<br>Save some after a draw.',
       savedCount:' saved', noneSaved:'Nothing saved',
+      del:'Delete', delDone:'Deleted', undo:'Undo',
+      mapOffT:'Could not load the map', mapOffB:'Try again',
+      mapOffS:'Please check your connection.<br>The shop list and directions still work.',
+      slipRedo:'Updating QR', slipLive:'QR live', slipNone:'Empty', slipFill:'Add numbers',
       more:'Show more', manualBtn:'Enter numbers myself',
       // 직접 입력
       manualTitle:'Enter numbers', clear:'Clear', saveBtn:'Save',
@@ -16069,8 +16833,6 @@ const I18N=(function(){
     ['#skip','skip','건너뛰기'],
     ['#slip .sheet-bar h2','slipTitle','내 번호 QR'],
     ['#closeSlip','close','닫기'],
-    ['.slip-lead','slipLead','종이 슬립지는 그만. 앱에서 고르고 QR을 보여주세요.'],
-    ['.slip-foot','slipShow','판매점에서 이 화면을 보여주세요'],
     ['.slip-note','slipNote','동행복권 모바일 슬립지와 같은 규격입니다. 한 세트는 다섯 게임, 한 번에 20세트(10만 원)까지 담기고, 1분이 지나면 다시 만들어야 합니다.'],
     ['#ckManual .qt','ck3No','번호<br>직접 입력','html'],
     ['#ckScan .qt','ck3Qr','QR<br>스캔','html'],
@@ -16098,8 +16860,8 @@ const I18N=(function(){
     ['#runSave','runSaveB','이 번호 저장하기'],['.run-luck>b','runLuck','달린 기록으로 뽑은 번호'],
     ['.run-note','runNote','걷는 속도를 넘어서면 저절로 기록이 시작됩니다. 화면을 켜 둔 채 달려주세요.'],
     ['#slipDead b','slipGone','유효 시간이 지났습니다'],['#slipNew','slipAgain','다시 만들기'],
+    ['#slipRedo b','slipRedo','QR 갱신 중'],
     ['label[for=mineBirth]','mineBirthL','생일'],['label[for=mineCar]','mineCarL','자동차 번호'],
-    ['.slip-amt span','slipEst','예상 금액 (참고)'],
     ['.slip-auto>span','slipAuto','자동 넣기'],
     ['.slip-auto i','slipAutoTip','번호 없이 자동으로 뽑습니다'],
     ['.scan-lead','scanLead','복권 용지 QR코드를 찍어주세요'],
@@ -16125,7 +16887,10 @@ const I18N=(function(){
     ['.gender button[data-g="남"] span','male','남'],
     ['.gender button[data-g="여"] span','female','여'],
     ['#store .sheet-bar h2','storeTitle','주변 판매점'],
-    ['#closeStore','close','닫기'],
+    ['#closeStore .lbl','storeTitle','주변 판매점'],
+    ['#smNoMap b','mapOffT','지도를 불러오지 못했습니다'],
+    ['#smNoMap span','mapOffS','네트워크 상태를 확인해 주세요.<br>판매점 목록과 길찾기는 그대로 쓸 수 있습니다.','html'],
+    ['#smMapRetry','mapOffB','다시 시도'],
     ['#store .set-note','storeNote','거리순으로 보여드립니다. 1등 배출 이력은 지난 기록일 뿐, 어느 판매점에서 사든 당첨 확률은 같습니다.'],
     ['#v-feed .hint','chatHint','채팅은 토요일 저녁 6시부터 밤 10시까지만 가능합니다. 모든 사용자에게 공개되며, 욕설·비방, 성적인 내용, 계좌·연락처, 당첨 보장 글은 자동으로 차단되고 반복되면 대화가 제한됩니다.'],
     ['#golf [data-i="gCCLabel"]','gCCLabel','골프장'],
@@ -16618,6 +17383,132 @@ document.querySelectorAll('nav button').forEach(btn=>{
     else if(tucked && y<UP){ tucked=false; view.classList.remove('tuck'); }
   }
   sc.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(upd); },{passive:true});
+})();
+
+/* ── 저장 카드 좌우 swipe 삭제 ──
+   알림 목록처럼 원쪽으로 밀어야 '삭제'가 나오고,
+   그 단추를 직접 눌렀을 때만 지워집니다.
+   밀기만 해서 지워지는 일은 없습니다. */
+window.SwipeDel=(function(){
+  const W=92;                                      // '삭제'가 드러나는 폭
+  const OPEN=34;                                   // 이만큼 밀어 놓으면 열린 상태로 납니다
+  const HOLD=6;                                    // 이 정도는 비비고 내린 것으로 봅니다
+  let open=null, last=null, snackT=0;
+
+  function lay(c,x){
+    const s=c._sw; if(!s) return;
+    s.inr.style.transform='translateX('+x+'px)';
+    s.btn.style.transform='translateX('+Math.max(0,W+x)+'px)';
+  }
+  function shut(c){
+    if(!c||!c._sw) return;
+    c.classList.add('swipe'); c._sw.x=0; lay(c,0);
+    if(open===c) open=null;
+  }
+  function closeAll(except){
+    if(open && open!==except) shut(open);
+  }
+  function swing(c){
+    c.classList.add('swipe'); c._sw.x=-W; lay(c,-W); open=c;
+  }
+
+  function snack(gone){
+    const el=document.getElementById('snack'); if(!el) return;
+    last=gone;
+    const m=document.getElementById('snackMsg'), a=document.getElementById('snackAct');
+    if(m) m.textContent=t('delDone','삭제됨');
+    if(a) a.textContent=t('undo','실행 취소');
+    el.classList.add('on');
+    clearTimeout(snackT);
+    snackT=setTimeout(()=>{ el.classList.remove('on'); last=null; },
+                      Math.max(4000, window.POPUP_MS||4000));
+  }
+  document.addEventListener('click',async e=>{
+    if(!e.target.closest('#snackAct')) return;
+    const g=last; last=null;
+    const el=document.getElementById('snack');
+    if(el) el.classList.remove('on');
+    clearTimeout(snackT);
+    if(g){ try{ await Log.putBack(g.item,g.at); }catch(err){} }
+  });
+  document.addEventListener('langchange',()=>{
+    const m=document.getElementById('snackMsg'), a=document.getElementById('snackAct');
+    if(m) m.textContent=t('delDone','삭제됨');
+    if(a) a.textContent=t('undo','실행 취소');
+    document.querySelectorAll('.swd').forEach(b=>{ b.textContent=t('del','삭제'); });
+  });
+
+  function wire(c){
+    const inr=document.createElement('div'); inr.className='swin';
+    while(c.firstChild) inr.appendChild(c.firstChild);
+    const btn=document.createElement('button'); btn.type='button';
+    btn.className='swd'; btn.textContent=t('del','삭제');
+    c.appendChild(inr); c.appendChild(btn);
+    c._sw={inr:inr,btn:btn,x:0,id:null,sx:0,sy:0,base:0,lock:0,guard:0};
+
+    c.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(e.target.closest('.swd')) return;           // 삭제 단추는 그대로 눌리게
+      const s=c._sw;
+      s.id=e.pointerId; s.sx=e.clientX; s.sy=e.clientY;
+      s.base=s.x; s.lock=0;
+      c.classList.remove('swipe');                   // 끌려오는 동안은 손가락을 바로 따릅니다
+    });
+    c.addEventListener('pointermove',e=>{
+      const s=c._sw;
+      if(s.id!==e.pointerId) return;
+      const dx=e.clientX-s.sx, dy=e.clientY-s.sy;
+      if(!s.lock){
+        if(Math.abs(dx)<HOLD && Math.abs(dy)<HOLD) return;
+        if(Math.abs(dx)<=Math.abs(dy)){ s.lock=-1; s.id=null; return; }  // 세로 스크롤은 그대로
+        s.lock=1; closeAll(c);
+        try{ c.setPointerCapture(e.pointerId); }catch(err){}
+      }
+      if(s.lock!==1) return;
+      let x=s.base+dx;
+      if(x>0) x=x*0.18;                              // 오른쪽으로는 거의 없이
+      else if(x<-W) x=-W+(x+W)*0.18;                 // 끝에서는 살짝만 더
+      s.x=x; lay(c,x);
+    });
+    function done(e){
+      const s=c._sw;
+      if(s.id!==e.pointerId) return;
+      s.id=null;
+      if(s.lock!==1){ s.lock=0; return; }
+      s.lock=0; s.guard=Date.now();                  // 끌고 난 뒤의 탭은 한 번 막습니다
+      if(s.x<=-OPEN) swing(c); else shut(c);
+    }
+    c.addEventListener('pointerup',done);
+    c.addEventListener('pointercancel',e=>{
+      const s=c._sw;
+      if(s.id!==e.pointerId) return;
+      s.id=null;
+      if(s.lock===1) shut(c);
+      s.lock=0;
+    });
+    c.addEventListener('click',e=>{
+      const s=c._sw;
+      if(e.target.closest('.swd')) return;
+      if(s.guard && Date.now()-s.guard<260){ e.stopPropagation(); e.preventDefault(); return; }
+      if(open===c){ e.stopPropagation(); e.preventDefault(); shut(c); }  // 열린 카드를 탭하면 닫힙니다
+    },true);
+    btn.addEventListener('click',async e=>{
+      e.stopPropagation();
+      const at=Number(c.dataset.sk);
+      if(!(at>=0)) return;
+      if(open===c) open=null;
+      let gone=null;
+      try{ gone=await Log.removeAt(at); }catch(err){}
+      if(gone){ snack(gone); if(navigator.vibrate) navigator.vibrate(12); }
+    });
+  }
+
+  function attach(root){
+    if(!root) return;
+    open=null;                                       // 다신 그렸으니 열린 카드도 없습니다
+    root.querySelectorAll('.card[data-sk]').forEach(c=>{ if(!c._sw) wire(c); });
+  }
+  return {attach, closeAll:()=>closeAll(null)};
 })();
 
 window.__mainDone=true;                            // 여기까지 오면 본 코드는 끝까지 돈 것입니다
