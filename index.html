@@ -820,6 +820,7 @@
     letter-spacing:-.02em;margin-bottom:4px}
   .amb h3{font-size:16.5px;margin-bottom:6px}
   .amb-where{font-size:12px;color:var(--dim);margin-bottom:10px !important}
+  .amb-hint{margin-top:-6px !important;margin-bottom:10px !important;color:#8FA8D0;opacity:.85}
   .amb-pic{min-height:76px;display:flex;align-items:center;justify-content:center;
     background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;
     padding:6px}
@@ -2326,12 +2327,20 @@
   .ldg-sum{flex:none;display:flex;gap:7px;margin:9px 0 8px}
   .ldg-sum div{flex:1;min-width:0;padding:7px 8px;border-radius:10px;
     background:rgba(143,168,208,.07);text-align:center}
-  .ldg-sum>div:nth-child(2),.ldg-sum>div:nth-child(3){flex:none;width:80px}
-  .ldg-sum>div:first-child{flex:1;min-width:0}
-  .ldg-sum span{display:block;font-size:9.5px;color:var(--muted);font-weight:600}
+  /* 세 칸을 똑같이 나눠 쓰고, 금액은 줄임표 없이 글씨만 줄여 맞춥니다 */
+  .ldg-sum>div{flex:1 1 0;min-width:0}
+  .ldg-sum>div:nth-child(2),.ldg-sum>div:nth-child(3){flex:1 1 0;width:auto}
+  .ldg-sum>div:first-child{flex:1.15 1 0;min-width:0}
+  .ldg-sum span{display:block;font-size:9.5px;color:var(--muted);font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ldg-sum b{display:block;margin-top:2px;font-size:13px;font-weight:800;
-    font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap;
+    font-variant-numeric:tabular-nums;letter-spacing:-.025em;white-space:nowrap;
+    overflow:visible;text-overflow:clip}
+  .ldg-sum b.wait{color:var(--muted);font-size:11px;font-weight:700}
+  .ldg-netn{display:block;margin-top:1px;font-size:8.5px;color:var(--muted);
+    font-weight:600;letter-spacing:-.04em;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis}
+  .ldg-netn[hidden]{display:none}
   /* 시세 색 — 화면 언어에 따라 갈립니다 (아래 body 규칙에서 정해집니다) */
   .ldg-sum b.minus{color:var(--loss)}              /* 구매는 나간 돈 */
   .ldg-sum b.plus{color:var(--gain)}               /* 당첨은 들어온 돈 */
@@ -2344,22 +2353,32 @@
   .ldg-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;
     scrollbar-width:none}
   .ldg-list::-webkit-scrollbar{width:0}
-  .ldg-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;
+  .ldg-row{display:flex;flex-direction:column;gap:5px;padding:9px 10px;border-radius:10px;
     border:1px solid var(--line);background:rgba(143,168,208,.04);text-align:left;width:100%}
-  .ldg-row .rd{font-size:10.5px;font-weight:800;color:var(--amber);flex:none;
+  .ldg-row .lr-t{display:flex;align-items:center;gap:7px;width:100%;min-width:0}
+  .ldg-row .rd{font-size:11px;font-weight:800;color:var(--amber);flex:none;
     font-variant-numeric:tabular-nums}
   .ldg-row .dt{font-size:10.5px;color:var(--muted);flex:none}
-  .ldg-row .gm{font-size:11px;color:var(--muted);margin-left:2px}
+  .ldg-row .gm{font-size:11px;color:var(--muted);margin-left:2px;flex:none;white-space:nowrap}
   .ldg-row .mo{font-size:10.5px;color:var(--muted);overflow:hidden;white-space:nowrap;
-    text-overflow:ellipsis;flex:1;min-width:0}
-  /* 구매·당첨을 위 요약의 두 칸과 같은 자리에 맞춥니다 */
-  /* 줄 안쪽 여백(10px)과 테두리(1px)만큼 당겨서, 위 요약 칸과 오른쪽 끝을 맞춥니다 */
-  .ldg-row .am{margin-left:auto;margin-right:-11px;flex:none;display:flex;gap:7px;
+    text-overflow:ellipsis;flex:1;min-width:0;text-align:right}
+  /* 아랫단 — 구매 / 당첨 / 손익. 칸을 똑같이 나눠 금액이 잘리지 않게 합니다 */
+  .ldg-row .am{display:flex;gap:6px;width:100%;min-width:0;
     font-variant-numeric:tabular-nums}
-  .ldg-row .am i,.ldg-row .am u{display:block;width:80px;text-align:center;
-    font-style:normal;text-decoration:none;font-size:11.5px;font-weight:800}
-  .ldg-row .am i{color:var(--loss)}
-  .ldg-row .am u{color:var(--gain)}
+  .ldg-row .lc{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px;
+    padding:4px 5px;border-radius:7px;background:rgba(143,168,208,.06)}
+  .ldg-row .lc em{font-style:normal;font-size:8.5px;font-weight:600;color:var(--muted);
+    letter-spacing:-.02em}
+  .ldg-row .lc b{font-size:12px;font-weight:800;letter-spacing:-.025em;white-space:nowrap;
+    overflow:visible;text-overflow:clip}
+  .ldg-row .lc.buy b{color:var(--loss)}
+  .ldg-row .lc.win b{color:var(--gain)}
+  .ldg-row .lc.up b{color:var(--gain)}
+  .ldg-row .lc.down b{color:var(--loss)}
+  /* 추첨 전 — 손익 자리에 '결과 대기' (손실 색을 쓰지 않습니다) */
+  .ldg-row .lc.wait{flex:2 1 0;justify-content:center;background:transparent}
+  .ldg-row .lc.wait b{color:var(--muted);font-size:11px;font-weight:700;text-align:center}
+  .ldg-row.waiting{border-style:dashed}
   .ldg-row.hand{border-color:rgba(242,180,65,.45)}
   .ldg-empty{padding:16px 0;text-align:center;font-size:11.5px;color:var(--muted);line-height:1.6}
   .ldg-foot{flex:none;margin-top:8px}
@@ -3236,14 +3255,16 @@
   <div class="dly-back" id="ambBack" hidden>
     <div class="dly amb" role="dialog" aria-labelledby="ambTitle">
       <span class="amb-step" id="ambStep"></span>
-      <h3 id="ambTitle" data-i="ambTitle">이 숫자를 확인해 주세요</h3>
+      <h3 id="ambTitle" data-i="ambTitle">번호를 정확히 확인하기 어렵습니다</h3>
       <p class="amb-where" id="ambWhere"></p>
+      <p class="amb-where amb-hint" id="ambHint"></p>
       <div class="amb-pic" id="ambPic"></div>
       <div class="amb-pick" id="ambPick"></div>
       <div class="amb-own" id="ambOwn" hidden>
-        <input id="ambIn" inputmode="numeric" maxlength="2" aria-label="직접 입력">
+        <input id="ambIn" inputmode="numeric" maxlength="2" aria-label="직접 수정">
         <button id="ambInOk" data-i="ambPut">넣기</button>
       </div>
+      <button class="dly-ok dly-sub" id="ambShoot" data-i="ambShoot" hidden>다시 촬영</button>
       <button class="dly-ok dly-sub" id="ambLater" data-i="ambLater">나중에 확인</button>
       <button class="dly-ok dly-sub" id="ambClose" data-i="btnClose">닫기</button>
     </div>
@@ -3594,7 +3615,8 @@
         <button class="ldg-all" id="ldAll" data-i="ldAll">전체</button>
       </div>
       <div class="ldg-sum">
-        <div><span data-i="ldNet">손익</span><b id="ldNetV">0원</b></div>
+        <div><span data-i="ldNet">손익</span><b id="ldNetV">0원</b>
+          <em class="ldg-netn" id="ldNetN" hidden></em></div>
         <div><span data-i="ldBuy">구매 합계</span><b class="minus" id="ldBuyV">0원</b></div>
         <div><span data-i="ldWin">당첨 합계</span><b class="plus" id="ldWinV">0원</b></div>
       </div>
@@ -4445,7 +4467,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.16.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.17.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -8070,6 +8092,12 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.17.0', date:'2026-10-04', items:[
+      '명예의 전당 — 아직 추첨하지 않은 회차를 손익에서 뺐습니다. 결과가 나오기 전에는 \'결과 대기\'로만 적습니다.',
+      '회차 줄에 구매·당첨·손익을 모두 적고, 금액은 1원 단위까지 다 보여 줍니다. (\'+5,00…\' 처럼 잘리지 않습니다)',
+      '텍스트 입력이 설명문에 섞인 숫자를 번호로 읽지 않습니다. \'1세트-A:\' 처럼 자리가 적혀 있으면 그 줄만 읽습니다.',
+      '저장을 누르기 전에 회차·게임 수·여섯 칸·중복·범위를 먼저 확인하고, 틀린 곳이 있으면 저장하지 않고 알려 드립니다.',
+      '읽기가 애매한 칸 팝업에 \'다시 촬영\'을 더했습니다.' ]},
     { v:'10.16.0', date:'2026-10-04', items:[
       '입력 단추가 넷이 되었습니다 — 번호 직접 입력 · QR 스캔 · 사진 입력 · 텍스트 입력.',
       '\'텍스트 입력\'이 생겼습니다. 카톡·메모·추천 답변을 통째로 붙여넣으면 회차·세트·A~E 줄·수동/반자동/자동까지 읽습니다.',
@@ -11004,13 +11032,11 @@ const DrawState=(function(){
     const have=Draws.has(round);
     const drawn=(()=>{ try{ return Date.now() >= drawAtRound(round); }catch(e){ return true; } })();
 
-    if(have){                                        // ── 결과 확인 완료
-      const src=Draws.srcOf(round);
-      if(!src) return null;                          // 평범한 회차는 굳이 말하지 않습니다
-      el.className='dw quiet';
-      el.textContent=(isKO()? '출처: ' : 'Source: ')+src.src+(src.at? ' · '+src.at : '');
-      return el;
-    }
+    /* 결과를 이미 확인한 회차에는 아무 줄도 붙이지 않습니다.
+       '출처: 뉴스 3곳 교차확인' 같은 줄은 자리만 차지해서 뺐습니다.
+       (출처와 확인 시각은 그대로 저장해 둡니다 — 공식 발표가 올라오면 다시 대조합니다.
+        Draws.srcOf(회차) 로 꺼내 볼 수 있습니다.) */
+    if(have) return null;
     if(!drawn) return null;                          // ── 추첨 전 — 위 카드가 이미 말합니다
 
     const n=st.notice && st.notice.round===round ? st.notice : null;
@@ -11263,9 +11289,17 @@ const TextIn=(function(){
   const sheet=$maybe('txin'); if(!sheet) return {};
   const area=$maybe('txArea'), readBtn=$maybe('txRead'), note=$maybe('txNote');
 
-  /* 번호가 아닌 숫자를 먼저 걷어냅니다 */
+  /* 번호가 아닌 숫자를 먼저 걷어냅니다.
+     설명문에 섞인 숫자가 번호로 둔갑하지 않게 하는 것이 이 함수의 일입니다.
+     (실제로 '× 5', '2·3·4·5수', 목록 번호 '2.' 가 번호로 읽힌 적이 있습니다) */
   function wipe(line){
     return String(line||'')
+      .replace(/[*`#>]+/g,' ')                                       // **굵게** `코드` # 머리글
+      .replace(/^\s*\d{1,2}\s*[.)]\s+/,' ')                          // 목록 번호  "2. "
+      .replace(/[×✕✖xX*]\s*\d{1,3}/g,' ')                            // × 5  (몇 개인지)
+      .replace(/\d{1,3}\s*[×✕✖]/g,' ')                               // 5 ×
+      .replace(/\d{1,3}\s*(?:수씩|수)\b/g,' ')                        // 12수 · 6수씩 · 2·3·4·5수
+      .replace(/\d{1,3}\s*(?:개|곳|번째|차|종|축|대)/g,' ')
       .replace(/\d{4}\s*[.\/\-]\s*\d{1,2}\s*[.\/\-]\s*\d{1,2}/g,' ')   // 2026-10-04
       .replace(/\d{1,2}\s*[.\/]\s*\d{1,2}\s*[.\/]\s*\d{2,4}/g,' ')     // 10/04/2026
       .replace(/\d{1,2}\s*:\s*\d{2}(?:\s*:\s*\d{2})?/g,' ')            // 17:27:23
@@ -11280,12 +11314,32 @@ const TextIn=(function(){
   }
   const ROWC=/^\s*(?:[(\[]\s*)?([A-Ja-j])\s*[)\].:\-·]/;
 
+  /* ── '1세트-A: 13, 38 [반자동]' 처럼 자리가 또렷하게 적힌 줄 ──
+     이런 줄이 두 개 이상 있으면 그 줄만 읽고 나머지 글은 전부 설명문으로 봅니다.
+     추천 답변에는 보통 긴 설명이 함께 붙어 오는데,
+     설명 속 숫자('× 5', '12수', 목록 번호)가 번호로 둔갑하는 것을 막는
+     가장 확실한 방법입니다. */
+  const TAG=/^\s*[*\-•·]?\s*\[?\s*(\d{1,2})\s*세트\s*[-–—~]\s*([A-Ja-j])\s*\]?\s*[:：]\s*(.*)$/;
+  const HOWTAG=/[\[(（]\s*(완전\s*자동|자동\s*선택|반\s*자동|수\s*동|자동|수동)\s*[\])）]/;
+
+  function tagLines(raw){
+    const out=[];
+    for(const line of raw){
+      const m=line.match(TAG);
+      if(m) out.push({set:+m[1], row:m[2].toUpperCase(), rest:m[3], line:line});
+    }
+    return out;
+  }
+
   /* 한 덩이의 글을 읽습니다. 돌려주는 모양은 사진 입력과 같습니다. */
   function parse(text, nowRound){
     const raw=String(text||'').split(/\r?\n/);
     let round=null;
     const rm=String(text||'').match(/(\d{3,4})\s*회/);
     if(rm){ const v=+rm[1]; if(v>=1 && v<=9999) round=v; }
+
+    const tags=tagLines(raw);
+    if(tags.length>=2) return byTag(tags, round);
 
     let how='', fix=null, set=0, lastSet=0;
     const games=[], hows=[], holds=[], sets=[], rowsAt=[], bad=[];
@@ -11370,10 +11424,59 @@ const TextIn=(function(){
             bad:bad, sets_n:lastSet};
   }
 
+  /* 자리가 또렷하게 적힌 줄만 읽습니다 */
+  function byTag(tags, round){
+    const games=[], hows=[], holds=[], sets=[], rowsAt=[], bad=[];
+    let maxSet=0;
+    for(const tg of tags){
+      const ht=tg.rest.match(HOWTAG);
+      let how = ht ? (/반\s*자동/.test(ht[1]) ? 'semi'
+                    : /수\s*동/.test(ht[1])   ? 'manual' : 'auto')
+                   : '';
+      /* 꼬리표를 떼고 남은 곳에서만 번호를 찾습니다 */
+      const body=wipe(tg.rest.replace(HOWTAG,' '));
+      const qn=(body.match(/[?？_]/g)||[]).length;
+      const ns=[];
+      let m2; const re=/(?:^|[^\d])(\d{1,2})(?![\d])/g;
+      while((m2=re.exec(body))){ const v=+m2[1]; if(v>=1 && v<=45) ns.push(v); }
+      const uniq=[...new Set(ns)];
+      if(uniq.length!==ns.length){ bad.push({line:tg.line, why:'dup', got:ns}); continue; }
+      if(!how) how = uniq.length===6 ? 'manual' : (uniq.length ? 'semi' : 'auto');
+
+      let slot, hold;
+      if(how==='auto' && !uniq.length){
+        slot=[null,null,null,null,null,null];
+        hold=[true,true,true,true,true,true];
+      }else if(how==='semi' || (uniq.length<6 && uniq.length>0)){
+        if(!uniq.length){ bad.push({line:tg.line, why:'nofix'}); continue; }
+        if(uniq.length>6){ bad.push({line:tg.line, why:'many', got:ns}); continue; }
+        how='semi';
+        slot=uniq.slice().sort((a,b)=>a-b);
+        hold=slot.map(()=>false);
+        while(slot.length<6){ slot.push(null); hold.push(true); }
+      }else{
+        if(uniq.length!==6){ bad.push({line:tg.line, why:'count', got:ns}); continue; }
+        slot=uniq.slice().sort((a,b)=>a-b);
+        hold=[false,false,false,false,false,false];
+        how='manual';
+      }
+      games.push(slot); holds.push(hold); hows.push(how);
+      sets.push(tg.set); rowsAt.push(tg.row);
+      if(tg.set>maxSet) maxSet=tg.set;
+    }
+    if(!games.length) return {ok:false, bad, round};
+    return {ok:true, round:round, roundGuess:!round, games, hows, holds, sets, rowsAt,
+            bad:bad, sets_n:maxSet, byTag:true};
+  }
+
   /* 사진 입력의 검토 화면이 쓰는 모양으로 옮깁니다 */
   function toTicket(r, nowRound){
+    /* holds = 처음 읽었을 때의 '?' 자리 (바뀌지 않는 원본)
+       hold  = 지금의 '?' 자리 (사용자가 번호를 넣으면 꺼집니다)
+       둘을 같은 배열로 두면, 넣었다 지웠을 때 원래 '?' 였다는 사실을 잃어버립니다. */
     return {src:'text', round:r.round||nowRound||null, roundGuess:!r.round, tr:'',
-            games:r.games, hows:r.hows, holds:r.holds, hold:r.holds,
+            games:r.games, hows:r.hows,
+            holds:r.holds.map(a=>a.slice()), hold:r.holds.map(a=>a.slice()),
             sets:r.sets, rowsAt:r.rowsAt,
             /* 글로 적힌 숫자는 또렷합니다 — 읽기가 갈릴 일이 없습니다.
                다만 '?' 자리는 확정이 아니므로 확실하다고 표시하지 않습니다. */
@@ -14175,6 +14278,45 @@ const Ledger=(function(){
     if(a>=1e4) return Math.round(n/1e4).toLocaleString('ko-KR')+'만';
     return won(n);
   }
+  /* ── 금액은 끝까지 다 보여 줍니다 ──
+     '+5,00…' 처럼 잘리면 얼마인지 알 수 없습니다.
+     그래서 줄임표(…)를 쓰지 않고, 칸에 들어갈 때까지 글씨 크기만 줄입니다.
+     1억이 넘어가면 '1.2억' 처럼 적습니다 (자릿수가 너무 길어서 — 이때도 잘리지 않습니다). */
+  /* 억·만으로 줄여 적지 않습니다 — 16.8억은 1,683,456,789원을 가려 버립니다.
+     언제나 1원 단위까지 다 적고, 칸에 안 들어가면 글씨만 줄입니다. */
+  function money(n){ return won(Math.round(n)||0); }
+  /* 글씨가 칸을 넘는지 재는 법.
+     overflow:visible 이면 scrollWidth 가 넘치지 않아 쓸 수 없습니다.
+     그래서 글자 자체의 폭(Range)을 재서 칸 안쪽 너비와 견줍니다. */
+  function textW(el){
+    try{
+      const r=document.createRange();
+      r.selectNodeContents(el);
+      const w=r.getBoundingClientRect().width;
+      r.detach && r.detach();
+      if(w>0) return w;
+    }catch(e){}
+    return el.scrollWidth;
+  }
+  function boxW(el){
+    const cs=getComputedStyle(el);
+    return el.clientWidth - (parseFloat(cs.paddingLeft)||0) - (parseFloat(cs.paddingRight)||0);
+  }
+  function fitOne(el){
+    if(!el || !el.firstChild) return;
+    el.style.fontSize='';
+    let size=parseFloat(getComputedStyle(el).fontSize)||13;
+    const room=boxW(el);
+    if(!(room>0)) return;
+    /* 한 번에 0.5px 씩 줄입니다. 7px 아래로는 내려가지 않습니다 (읽을 수 없으니까요). */
+    for(let i=0;i<22 && textW(el)>room-0.5 && size>7; i++){
+      size-=0.5; el.style.fontSize=size+'px';
+    }
+  }
+  function fitSums(){
+    ['ldNetV','ldBuyV','ldWinV'].forEach(id=>fitOne($g(id)));
+    document.querySelectorAll('#ldList .lc b').forEach(fitOne);
+  }
   const num=v=>{ const n=parseFloat(String(v).replace(/[^0-9.-]/g,'')); return isFinite(n)?n:0; };
   const pad=n=>String(n).padStart(2,'0');
   const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -14198,14 +14340,28 @@ const Ledger=(function(){
     try{ await window.storage.set(KEY, JSON.stringify({hand:hand.slice(-200), fix}), false); }catch(e){}
   }
 
-  /* 저장한 번호에서 회차별로 자동 계산 */
+  /* 그 회차의 당첨번호가 확정됐는지 — 손익을 계산해도 되는지의 기준입니다 */
+  function drawn(round){
+    try{ return !!Check.winningOf(round); }catch(e){ return false; }
+  }
+
+  /* 저장한 번호에서 회차별로 자동 계산
+     ■ 세는 법
+     · 게임 수·구매금액 : 번호가 여섯 개 다 정해진 게임만 셉니다.
+       반자동·자동의 '?' 가 남은 슬롯은 아직 산 번호가 없으므로 돈을 쓰지 않은 것으로 봅니다.
+       (몇 자리가 미정인지는 open 으로 따로 들고 있다가 줄에 적어 드립니다)
+     · 당첨금 : 추첨이 끝나고 당첨번호가 확정된 회차만 계산합니다.
+     · 추첨 전 회차는 win 을 0으로 두되 done=false 로 표시해,
+       손익에서 통째로 빼고 화면에는 '결과 대기' 라고 적습니다.
+       사지도 않은 손실을 만들어 보여 주지 않기 위해서입니다. */
   function autoRows(){
     let items=[]; try{ items=Log.items(); }catch(e){ items=[]; }
     const by={};
     for(const it of items){
       const r=it.round;
-      if(!by[r]) by[r]={round:r, games:0, win:0, ts:it.ts, auto:true};
-      by[r].games++;
+      if(!by[r]) by[r]={round:r, games:0, open:0, win:0, ts:it.ts, auto:true};
+      if(isOpen(it)) by[r].open++;              // 아직 번호가 안 정해진 슬롯
+      else by[r].games++;                       // 번호가 다 정해진 게임
       by[r].ts=Math.min(by[r].ts, it.ts);
       let w=null; try{ w=Check.winningOf(r); }catch(e){}
       if(w && !isOpen(it)){                     // '?'가 남은 게임은 판정하지 않습니다
@@ -14216,7 +14372,8 @@ const Ledger=(function(){
     }
     return Object.values(by).map(o=>({
       key:'r'+o.round, round:o.round, date:ymd(new Date(o.ts)),
-      games:o.games, buy:o.games*PRICE, win:o.win, auto:true, memo:''
+      games:o.games, open:o.open, buy:o.games*PRICE, win:o.win,
+      done:drawn(o.round), auto:true, memo:''
     }));
   }
   /* 자동 합산은 공식 고정 당첨금인 4·5등만 합니다.
@@ -14227,9 +14384,12 @@ const Ledger=(function(){
   function allRows(){
     const rows=autoRows().map(r=>{
       const f=fix[r.key];
-      return f ? {...r, ...f, auto:false, fixed:true} : r;
+      /* 손으로 고친 줄은 그 값을 그대로 씁니다.
+         당첨금을 직접 적어 두셨으면 그 회차는 '결과 확정' 으로 봅니다. */
+      return f ? {...r, ...f, done: drawn(r.round) || (+f.win>0), auto:false, fixed:true} : r;
     });
-    for(const h of hand) rows.push({...h, auto:false});
+    for(const h of hand) rows.push({...h, auto:false,
+      done: drawn(h.round) || (+h.win>0)});
     return rows.sort((a,b)=> b.round-a.round || (a.date<b.date?1:-1));
   }
 
@@ -14247,14 +14407,37 @@ const Ledger=(function(){
     $g('ldPrev').disabled = cur===null || i>=rs.length-1;
     $g('ldNext').disabled = cur===null || i<=0;
 
+    /* ── 합계 ──
+       구매 합계 : 실제로 쓴 돈 전부 (추첨 전 회차도 포함합니다 — 이미 쓴 돈이니까요)
+       당첨 합계 : 결과가 확정된 회차의 당첨금만
+       손익      : 결과가 확정된 회차만 (추첨 전 회차는 통째로 뺍니다)
+       추첨 전 회차를 손익에 넣으면 아직 결과도 모르는 돈이 손실로 찍힙니다. */
+    const done=view.filter(r=>r.done);
     const buy=view.reduce((a,r)=>a+(+r.buy||0),0);
-    const win=view.reduce((a,r)=>a+(+r.win||0),0);
-    $g('ldBuyV').textContent = buy? '-'+short(buy) : short(0);
-    $g('ldWinV').textContent = win? '+'+short(win) : short(0);
-    const net=win-buy;
+    const win=done.reduce((a,r)=>a+(+r.win||0),0);
+    const net=done.reduce((a,r)=>a+(+r.win||0)-(+r.buy||0),0);
+    const waiting=view.length-done.length;
+    /* 구매 합계는 '쓴 돈' 이지 손실이 아닙니다 — 빼기표를 붙이지 않습니다.
+       손실 여부는 손익 칸이 말합니다. */
+    $g('ldBuyV').textContent = money(buy);
+    $g('ldWinV').textContent = win? '+'+money(win) : money(0);
     const nv=$g('ldNetV');
-    nv.textContent=(net>0?'+':net<0?'-':'')+short(Math.abs(net));
-    nv.className = net>0?'up' : net<0?'down' : '';
+    if(!done.length){                       // 결과가 나온 회차가 하나도 없습니다
+      nv.textContent=t('ldWait','결과 대기');
+      nv.className='wait';
+    }else{
+      nv.textContent=(net>0?'+':net<0?'-':'')+money(Math.abs(net));
+      nv.className = net>0?'up' : net<0?'down' : '';
+    }
+    /* 추첨 전 회차가 섞여 있으면 손익이 '일부만' 이라는 것을 적어 둡니다 */
+    const nn=$maybe('ldNetN');
+    if(nn){
+      nn.textContent = waiting
+        ? (isKO()? ('추첨 완료분만 ('+waiting+'회차 대기)') : ('drawn rounds only ('+waiting+' waiting)'))
+        : '';
+      nn.hidden=!waiting;
+    }
+    fitSums();
 
     const list=$g('ldList'); list.innerHTML='';
     if(!view.length){
@@ -14263,21 +14446,46 @@ const Ledger=(function(){
                            : 'No purchases yet.<br>Saved numbers are counted automatically.';
       list.appendChild(e); return;
     }
+    /* ── 한 줄을 두 단으로 ──
+       윗단 : 회차 · 날짜 · 게임 수 · 메모
+       아랫단 : 구매 / 당첨 / 손익
+       한 단에 다 넣으면 금액이 잘려서 '+5,00…' 처럼 보입니다.
+       두 단으로 나누면 1원 단위까지 다 보여 줄 자리가 생깁니다. */
     for(const r of view){
       const b=document.createElement('button');
-      b.className='ldg-row'+(r.auto?'':' hand');
+      b.className='ldg-row'+(r.auto?'':' hand')+(r.done?'':' waiting');
+
+      const top=document.createElement('span'); top.className='lr-t';
       const rd=document.createElement('span'); rd.className='rd'; rd.textContent=roundLabel(r.round);
       const dt=document.createElement('span'); dt.className='dt';
       dt.textContent=r.date? r.date.slice(5).replace('-','/') : '';
       const gm=document.createElement('span'); gm.className='gm';
-      gm.textContent=r.games? (r.games+(isKO()?'게임':'g')) : '';
+      gm.textContent=(r.games? (r.games+(isKO()?'게임':'g')) : '')
+        + (r.open? (isKO()? (r.games?' · ':'')+'미정 '+r.open : ' · '+r.open+' open') : '');
       const mo=document.createElement('span'); mo.className='mo'; mo.textContent=r.memo||'';
-      /* 위 요약과 같은 자리에 오도록 한 줄에 나란히 놓습니다 */
+      top.appendChild(rd); top.appendChild(dt); top.appendChild(gm); top.appendChild(mo);
+
       const am=document.createElement('span'); am.className='am';
-      const i1=document.createElement('i'); i1.textContent='-'+won(r.buy);
-      const u1=document.createElement('u'); u1.textContent='+'+won(r.win||0);
-      am.appendChild(i1); am.appendChild(u1);
-      b.appendChild(rd); b.appendChild(dt); b.appendChild(gm); b.appendChild(mo); b.appendChild(am);
+      const cell=(cls, lab, val)=>{
+        const c=document.createElement('span'); c.className='lc '+cls;
+        const l=document.createElement('em'); l.textContent=lab;
+        const v=document.createElement('b'); v.textContent=val;
+        c.appendChild(l); c.appendChild(v); am.appendChild(c);
+      };
+      cell('buy', t('ldBuy','구매'), money(r.buy));
+      if(r.done){
+        cell('win', t('ldWinS','당첨'), '+'+money(r.win||0));
+        const net=(+r.win||0)-(+r.buy||0);
+        cell(net>0?'net up':net<0?'net down':'net',
+             t('ldNet','손익'),
+             (net>0?'+':net<0?'-':'')+money(Math.abs(net)));
+      }else{
+        /* 추첨 전 — 손실로 찍지 않습니다. 결과를 기다리는 중이라고만 적습니다. */
+        const c=document.createElement('span'); c.className='lc wait';
+        const v=document.createElement('b'); v.textContent=t('ldWait','결과 대기');
+        c.appendChild(v); am.appendChild(c);
+      }
+      b.appendChild(top); b.appendChild(am);
       b.addEventListener('click',()=>Cal.open(r));
       list.appendChild(b);
     }
@@ -14289,6 +14497,10 @@ const Ledger=(function(){
     if(i>0){ cur=rs[i-1]; render(); } });
   on('ldAll','click',()=>{ cur = cur===null ? (rounds()[0] ?? null) : null; render(); });
   on('ldCal','click',()=>Cal.open(null));
+  /* 글꼴이 늦게 오거나 화면 폭이 바뀌면 금액 크기를 다시 맞춥니다 */
+  try{ window.addEventListener('resize', fitSums); }catch(e){}
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitSums); }catch(e){}
+  [120,500,1400].forEach(ms=>setTimeout(fitSums, ms));
 
   return {render, load, roundOfDate, PRICE,
     rows:allRows,
@@ -16394,19 +16606,31 @@ const Shot=(function(){
         const b=document.createElement('button');
         b.className = ai===0 ? '' : 'alt2';
         b.textContent=String(al.v);
+        b.setAttribute('aria-label', t('ambUse','인식 결과 사용')+' '+al.v);
         on(b,'click',()=>ambTake(al.v));
         pick.appendChild(b);
       });
       const ob=document.createElement('button');
       ob.className='own';
-      ob.textContent=t('ambOwn','직접 입력');
+      ob.textContent=t('ambOwn','직접 수정');
       on(ob,'click',()=>{
         if(own) own.hidden=false;
         const z=$maybe('ambIn'); if(z) try{ z.focus(); }catch(e){}
       });
       pick.appendChild(ob);
-      /* 후보가 하나도 없으면 고를 것이 없으니 직접 입력을 바로 엽니다 */
+      /* 후보가 하나도 없으면 고를 것이 없으니 직접 수정을 바로 엽니다 */
       if(!(st.a.alts||[]).length && own) own.hidden=false;
+    }
+    /* 어느 숫자를 누르면 되는지 한 줄로 */
+    const hint=$maybe('ambHint');
+    if(hint) hint.textContent=(st.a.alts||[]).length
+      ? t('ambUseHint','읽은 숫자를 누르면 그대로 씁니다.')
+      : t('ambNoneHint','읽어낸 숫자가 없습니다. 직접 넣어 주세요.');
+    /* 사진으로 읽은 복권만 다시 찍을 수 있습니다 (텍스트는 찍을 것이 없습니다) */
+    const sh=$maybe('ambShoot');
+    if(sh){
+      const tk=many[st.ti];
+      sh.hidden = !(tk && (tk.src==='qr' || tk.src==='ocr' || tk.src==='text' && tk.photo!=null));
     }
     back.hidden=false;
   }
@@ -16446,6 +16670,13 @@ const Shot=(function(){
     ambPaint();
     return true;
   }
+  /* 다시 촬영 — 읽은 결과는 버리지 않고, 사진을 새로 받는 화면으로 갑니다 */
+  on('ambShoot','click', ()=>{
+    const b=$maybe('ambBack'); if(b) b.hidden=true;
+    toast(t('ambShootGo','그 복권만 더 가까이, 그림자 없이 다시 찍어주세요.'));
+    const fi=$maybe('shotFileCam') || $maybe('shotFileLib');
+    if(fi) try{ fi.click(); }catch(e){}
+  });
   on('ambLater','click', ambLater);
   on('ambClose','click', ()=>{ const b=$maybe('ambBack'); if(b) b.hidden=true; paintMany(); });
   on('ambInOk','click', ()=>{ const z=$maybe('ambIn'); ambTake(z? +z.value : 0); });
@@ -16455,7 +16686,68 @@ const Shot=(function(){
     const z=$maybe('ambIn'); ambTake(z? +z.value : 0); } });
 
   /* 한꺼번에 구매 등록 — 회차별로 모아서 지금까지와 똑같은 저장 길을 씁니다 */
+  /* ── 저장 전 자동 검증 ──
+     '모두 저장' 을 누르면 먼저 전부 훑어봅니다.
+       · 저장할 게임이 있는지          · 회차가 적혀 있는지
+       · 방식(수동/반자동/자동)을 아는지 · 한 게임이 여섯 칸인지
+       · '?' 가 몇 자리인지            · 한 게임에 같은 번호가 있는지
+       · 1~45 밖의 숫자가 있는지        · 확인 안 된 칸이 남았는지
+     막아야 할 것(범위 밖·중복·빈 칸)이 있으면 저장하지 않고 그 자리를 알려 줍니다.
+     알려만 드릴 것(방식 모름·확인 전 칸)은 한 번 여쭙고 넘어갑니다. */
+  function preflight(){
+    const stop=[], warn=[];
+    let slots=0, open=0, rounds=new Set();
+    many.forEach((tk,ti)=>{
+      if(!tk.use) return;
+      const who=many.length>1 ? (t('tkOne','복권')+' '+(ti+1)+' ') : '';
+      if(!hasRound(tk)){ stop.push(who+t('pfNoRound','회차가 없습니다')); return; }
+      rounds.add(tk.round||ROUND);
+      (tk.games||[]).forEach((g,ri)=>{
+        const where=who+(AZ[ri]||('#'+(ri+1)))+(isKO()?'줄':'');
+        const ns=g||[];
+        if(ns.length!==6){ stop.push(where+' '+t('pfNot6','여섯 칸이 아닙니다')); return; }
+        const got=ns.filter(v=>v!=null);
+        const outs=got.filter(v=>!(v>=1 && v<=45));
+        if(outs.length){ stop.push(where+' '+outs.join(',')+' — '+t('pfRange','1~45 밖입니다')); return; }
+        if(new Set(got).size!==got.length){
+          stop.push(where+' '+t('pfDup','같은 번호가 두 번 있습니다')); return; }
+        /* 못 읽어 빈 칸(반자동이 비워 둔 '?' 가 아닌 것) */
+        let miss=0, q=0;
+        for(let i=0;i<6;i++){
+          if(ns[i]!=null) continue;
+          if(held(tk,ri,i)) q++; else miss++;
+        }
+        if(miss){ stop.push(where+' '+t('pfMiss','아직 못 읽은 칸이 ')+miss+t('pfMiss2','개 있습니다')); return; }
+        slots++; open+=q;
+        if(q && !(tk.hows&&tk.hows[ri])) warn.push(where+' '+t('pfNoHow','구매 방식을 모릅니다'));
+      });
+    });
+    try{ const left=ambCount(); if(left) warn.push(left+t('pfUnsure','칸이 아직 확인 전입니다')); }catch(e){}
+    return {stop, warn, slots, open, rounds:[...rounds]};
+  }
+
   async function saveAll(){
+    /* ① 먼저 검증합니다 */
+    const pf=preflight();
+    if(!pf.slots){
+      say(t('pfNone','저장할 게임이 없습니다.'), true);
+      toast(t('shotNone','저장할 번호가 없습니다')); return;
+    }
+    if(pf.stop.length){
+      say((isKO()? '저장하지 않았습니다 — ' : 'Not saved — ')
+          + pf.stop.slice(0,3).join(' / ') + (pf.stop.length>3? ' 외 '+(pf.stop.length-3) : ''), true);
+      if(window.SFX) SFX.no && SFX.no();
+      return;
+    }
+    if(pf.warn.length){
+      const msg=(isKO()
+        ? (pf.slots+'슬롯을 저장합니다.\n'
+           + (pf.open? '번호 미정 '+pf.open+'자리는 당첨 판정에서 빠집니다.\n' : '')
+           + pf.warn.slice(0,3).join('\n') + '\n이대로 저장할까요?')
+        : (pf.slots+' slots — '+pf.warn.slice(0,3).join(' / ')+'\nSave anyway?'));
+      let go=true; try{ go=window.confirm(msg); }catch(e){ go=true; }
+      if(!go) return;
+    }
     const byRound=new Map();
     let realBuy=false;
     for(const tk of many){
@@ -20726,9 +21018,20 @@ const I18N=(function(){
       scanAim2:'Move closer so the QR fills the box',
       scanAim3:'If no code reads, the button below reads the numbers directly',
       tkRound:'Round',
-      ambTitle:'Please check this number', ambOwn:'Type it', ambPut:'Use',
+      ambOwn:'Edit it', ambPut:'Use',
       ambLater:'Check later', ambRange:'Enter 1 to 45',
       ambCrop:'the cell cropped from the photo',
+      ambTitle:'Hard to read this number for sure',
+      ambUse:'Use what was read', ambShoot:'Take the photo again',
+      ambUseHint:'Tap a number to use it as read.',
+      ambNoneHint:'Nothing could be read — please type it.',
+      ambShootGo:'Photograph that ticket again — closer, without shadows.',
+      pfNoRound:'has no round', pfNot6:'is not six cells', pfRange:'outside 1-45',
+      pfDup:'has the same number twice', pfMiss:'still has ', pfMiss2:' unread cells',
+      pfNoHow:'has no purchase type', pfUnsure:' cells are still unchecked',
+      pfNone:'Nothing to save.',
+      ldWait:'awaiting result',
+      ldWinS:'Won',
       ambHowT:'Pick how it was chosen', howAuto:'Auto',
       ck3Txt:'Paste<br>text',
       txTitle:'Paste text', txRead:'Read numbers', txClear:'Clear',
@@ -21357,6 +21660,8 @@ const I18N=(function(){
     ['#ckManual .qt','ck3No','번호<br>직접 입력','html'],
     ['#ckText .qt','ck3Txt','텍스트<br>입력','html'],
     ['#txin .sheet-bar h2','txTitle','텍스트 입력'],
+    ['#ambTitle','ambTitle','번호를 정확히 확인하기 어렵습니다'],
+    ['#ambShoot','ambShoot','다시 촬영'],
     ['#fill .sheet-bar h2','fillTitle','구매 번호 연결'],
     ['#fillGo','fillGo','이대로 등록'],
     ['#fill .tx-help','fillHelp','미리 적어 두신 자리에 산 번호를 넣을 수 있습니다. 어디에 넣을지 골라 주세요. 고르지 않으면 새 게임으로 저장합니다.'],
