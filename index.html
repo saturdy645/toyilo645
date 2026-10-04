@@ -731,6 +731,9 @@
   .shot-row .rn.qslot{box-shadow:inset 0 0 0 1.5px rgba(143,168,208,.4);
     background:transparent}
   .shot-row .rn.qslot::placeholder{color:#8FA8D0;font-weight:800;opacity:.95}
+  /* 안내문 한 줄 — 좌우 여백과 자간을 줄여 작은 화면에서도 한 줄에 들어갑니다 */
+  .tk-note.one{padding:0 6px 10px;font-size:10.5px;line-height:1.45;
+    letter-spacing:-.05em;white-space:nowrap;overflow:visible}
   .tk-note{margin:0;padding:0 12px 10px;font-size:11px;line-height:1.5;color:#C77A17;
     letter-spacing:-.03em}
   .tk-note.dim{color:var(--dim)}
@@ -811,6 +814,19 @@
   .tx-note{margin:11px 0 0;font-size:12.5px;line-height:1.6;letter-spacing:-.03em;
     color:#E8A33D}
   .tx-note[hidden]{display:none}
+
+  /* ── 번호 고르기 (공을 길게 누르면) ──
+     1~45를 큰 단추로 늘어놓습니다. 손가락으로 눌러야 하므로 작게 만들지 않습니다. */
+  .np{max-width:320px}
+  .np-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:10px}
+  .np-grid button{aspect-ratio:1;min-height:40px;border:0;border-radius:50%;
+    background:rgba(143,168,208,.1);color:var(--ink);font-family:inherit;
+    font-size:14px;font-weight:800;letter-spacing:-.02em;
+    display:flex;align-items:center;justify-content:center;padding:0}
+  .np-grid button.on{box-shadow:0 0 0 2.5px #6FE0BE}
+  .np-grid button[disabled]{opacity:.22}
+  /* 번호 공을 길게 눌러도 아이폰 기본 메뉴가 뜨지 않게 */
+  .shot-row .rn{-webkit-touch-callout:none}
 
   /* ── 애매한 칸 검토 팝업 ──
      원본 조각을 크게 띄우고, 나온 후보를 큰 단추로 늘어놓습니다.
@@ -1044,6 +1060,7 @@
   .gbody::-webkit-scrollbar{width:0;height:0}
   .adslot-sm em{top:5px;right:8px}
 
+  .shot-take[hidden]{display:none}
   /* 사진으로 번호 읽기 */
   .shot-mode{margin:2px 0 10px}
   .shot-mode button{flex:1;justify-content:center;padding:10px 4px;font-size:13px}
@@ -3251,6 +3268,17 @@
   </section>
 
   <!-- ===== QR 스캔 ===== -->
+  <!-- 번호 공을 길게 눌러 고치는 팝업 -->
+  <div class="dly-back" id="npBack" hidden>
+    <div class="dly np" role="dialog" aria-labelledby="npTitle">
+      <h3 id="npTitle" data-i="npTitle">번호 고르기</h3>
+      <p class="amb-where" id="npWhere"></p>
+      <div class="np-grid" id="npGrid"></div>
+      <button class="dly-ok dly-sub" id="npNone" data-i="npNone">미정으로 변경 (?)</button>
+      <button class="dly-ok dly-sub" id="npCancel" data-i="npCancel">취소</button>
+    </div>
+  </div>
+
   <!-- 읽기가 애매한 칸을 하나씩 확인하는 검토 팝업 -->
   <div class="dly-back" id="ambBack" hidden>
     <div class="dly amb" role="dialog" aria-labelledby="ambTitle">
@@ -3515,10 +3543,11 @@
   <!-- ===== 사진으로 번호 읽기 ===== -->
   <div class="sheet" id="shot">
     <div class="sheet-bar">
-      <h2 data-i="shotTitle">사진으로 번호 읽기</h2>
+      <h2 id="shotTitle" data-i="shotTitle">사진으로 번호 읽기</h2>
       <button id="closeShot" data-i="btnClose">닫기</button>
     </div>
     <div class="sheet-body">
+      <div class="shot-take" id="shotTake">
       <div class="chips shot-mode" id="shotMode">
         <button class="on" data-m="ticket" data-i="shotTicket">인쇄된 복권</button>
         <button data-m="omr" data-i="shotOmr">마킹 용지</button>
@@ -3542,6 +3571,7 @@
           <circle cx="8.5" cy="10" r="1.6"/><path d="m4 17 5-4.6 4 3.4 3-2.4 4 3.6"/></svg>
           <span data-i="shotPickB">앨범에서 불러오기</span></button>
         <button class="primary shot-read" id="shotRead" disabled data-i="readNums">번호 읽기</button>
+      </div>
       </div>
       <input type="file" id="shotFileIn" accept="image/*" capture="environment" hidden>
       <input type="file" id="shotFileLib" accept="image/*" multiple hidden>
@@ -4467,7 +4497,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.17.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.19.3</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -8092,6 +8122,25 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.19.3', date:'2026-10-04', items:[
+      '검토 화면 안내문을 \'사진에서 읽은 번호입니다. 저장 전 번호를 확인해 주세요.\' 로 바꿨습니다.',
+      '글씨를 억지로 줄여 한 줄에 넣던 코드를 뺐습니다. 문구가 짧아져 10.5px 그대로 한 줄에 들어갑니다.' ]},
+    { v:'10.19.2', date:'2026-10-04', items:[
+      '목록 아래쪽 줄의 번호 공을 꾹 눌러도 팝업이 뜨지 않던 것을 고쳤습니다. 화면이 저절로 움직일 때 누르기가 취소되고 있었습니다.' ]},
+    { v:'10.19.1', date:'2026-10-04', items:[
+      '번호 공을 꾹 누르면 1~45 중에서 골라 고칠 수 있습니다. 누른 칸만 바뀌고, 같은 게임에 이미 있는 번호는 고를 수 없습니다.',
+      '[미정으로 변경 (?)] 도 있습니다. 반자동·자동 줄은 \'아직 안 정해진 자리\', 수동 줄은 \'확인 필요\'로 구분해 둡니다.',
+      '꾹 누르는 동안 손가락이 움직이면(스크롤) 취소합니다. 평범한 탭·스크롤·확대는 그대로입니다.',
+      '사진 판독 검토 화면에서 금액 표시를 뺐습니다. 장수·슬롯 수·번호 미정 개수만 보여 줍니다. (저장되는 구매 기록의 금액은 그대로입니다)',
+      '검토 화면 안내문을 \'붙여넣은 글 또는 사진에서 읽은 번호입니다. 저장 전 번호를 확인해 주세요.\' 한 줄로 통일했습니다.' ]},
+    { v:'10.18.0', date:'2026-10-04', items:[
+      '슬롯 이름을 1-A ~ 1-T 로 통일했습니다. 복권이 여러 장이면 2-A, 3-A … 로 이어집니다. (#11 같은 표기를 없앴습니다)',
+      '슬롯 하나가 로또 한 게임이므로 1,000원으로 셉니다. 번호가 아직 안 정해진 \'?\' 슬롯도 산 게임이라 금액에 들어갑니다 — 20슬롯이면 20,000원입니다.',
+      '검토 화면 안내문을 한 줄로 줄였습니다. 겹치던 안내문과 \'(산 복권으로 등록되지 않습니다)\' 를 뺐습니다.' ]},
+    { v:'10.17.1', date:'2026-10-04', items:[
+      '텍스트를 붙여넣고 들어온 검토 화면 제목을 \'읽은 번호 확인\'으로 바꿨습니다. 사진으로 들어오면 그대로 \'사진으로 번호 읽기\'입니다.',
+      '텍스트로 들어왔을 때는 촬영·앨범 단추를 감춥니다.',
+      '창을 다시 열면 지난번 합계가 남아 있던 것을 고쳤습니다.' ]},
     { v:'10.17.0', date:'2026-10-04', items:[
       '명예의 전당 — 아직 추첨하지 않은 회차를 손익에서 뺐습니다. 결과가 나오기 전에는 \'결과 대기\'로만 적습니다.',
       '회차 줄에 구매·당첨·손익을 모두 적고, 금액은 1원 단위까지 다 보여 줍니다. (\'+5,00…\' 처럼 잘리지 않습니다)',
@@ -11585,7 +11634,7 @@ const Fill=(function(){
     rows.forEach((r,gi)=>{
       const box=document.createElement('div'); box.className='fl-g';
       const hd=document.createElement('b');
-      hd.textContent=(AZF[gi]||('#'+(gi+1)))+(isKO()? ' 게임' : '');
+      hd.textContent=(AZF[gi]||('#'+(gi+1)));
       box.appendChild(hd);
       const ns=document.createElement('div'); ns.className='fl-ns';
       r.game.forEach(n=>{
@@ -11618,7 +11667,7 @@ const Fill=(function(){
       listEl.appendChild(box);
     });
   }
-  const AZF='ABCDEFGHIJ';
+  const AZF='ABCDEFGHIJKLMNOPQRST';
 
   /* 사용자가 고른 대로 돌려줍니다. 닫으면 '전부 새로 저장' 입니다. */
   function ask(r, games){
@@ -14347,9 +14396,9 @@ const Ledger=(function(){
 
   /* 저장한 번호에서 회차별로 자동 계산
      ■ 세는 법
-     · 게임 수·구매금액 : 번호가 여섯 개 다 정해진 게임만 셉니다.
-       반자동·자동의 '?' 가 남은 슬롯은 아직 산 번호가 없으므로 돈을 쓰지 않은 것으로 봅니다.
-       (몇 자리가 미정인지는 open 으로 따로 들고 있다가 줄에 적어 드립니다)
+     · 게임 수·구매금액 : 슬롯 하나가 로또 한 게임이므로 전부 셉니다 (슬롯 수 × 1,000원).
+       번호가 아직 안 정해진 '?' 슬롯도 산 게임입니다.
+       (그중 몇 자리가 미정인지는 open 으로 따로 들고 있다가 줄에 적어 드립니다)
      · 당첨금 : 추첨이 끝나고 당첨번호가 확정된 회차만 계산합니다.
      · 추첨 전 회차는 win 을 0으로 두되 done=false 로 표시해,
        손익에서 통째로 빼고 화면에는 '결과 대기' 라고 적습니다.
@@ -14360,8 +14409,8 @@ const Ledger=(function(){
     for(const it of items){
       const r=it.round;
       if(!by[r]) by[r]={round:r, games:0, open:0, win:0, ts:it.ts, auto:true};
-      if(isOpen(it)) by[r].open++;              // 아직 번호가 안 정해진 슬롯
-      else by[r].games++;                       // 번호가 다 정해진 게임
+      by[r].games++;                            // 슬롯 하나가 한 게임입니다
+      if(isOpen(it)) by[r].open++;              // 그중 번호가 아직 안 정해진 것
       by[r].ts=Math.min(by[r].ts, it.ts);
       let w=null; try{ w=Check.winningOf(r); }catch(e){}
       if(w && !isOpen(it)){                     // '?'가 남은 게임은 판정하지 않습니다
@@ -15986,7 +16035,14 @@ const Shot=(function(){
     return true;
   }
 
-  const AZ='ABCDEFGHIJ';
+  /* ── 슬롯 이름 ──
+     복권 한 장의 슬롯은 A부터 T까지 스무 개입니다.
+       복권 1 → 1-A, 1-B, … 1-T
+       복권 2 → 2-A, 2-B, … 2-T
+     스무 칸을 넘으면 그제야 1-#21 처럼 번호를 씁니다 (실물 용지는 다섯 줄입니다).
+     위아래 어디서나 같은 이름을 씁니다. */
+  const AZ='ABCDEFGHIJKLMNOPQRST';
+  const slotName=(ti,ri)=>(ti+1)+'-'+(AZ[ri] || ('#'+(ri+1)));
   const gameCount=n=>isKO()? (n+'게임') : (n+(n===1?' game':' games'));
   /* 그 자리가 '반자동이 일부러 비워 둔 자리' 인지 */
   const held=(tk,ri,i)=>!!(tk.hold && (tk.hold[ri]||[])[i]);
@@ -16074,13 +16130,11 @@ const Shot=(function(){
     const sum=$maybe('shotSum'), all=$maybe('shotSaveAll');
     const n=manySum(), papers=many.filter(tk=>tk.use).length;
     const op=openSum();
-    /* '?'가 남은 슬롯은 아직 산 것이 아니므로 금액에 넣지 않습니다 */
-    const paid=n-op;
+    /* 이 화면에는 금액을 적지 않습니다 — 장수·슬롯 수·미정 개수만 봅니다.
+       실제 구매 기록의 금액(명예의 전당)은 그대로 둡니다. */
     if(sum) sum.textContent = isKO()
-      ? (papers+'장 · '+n+(op? '슬롯 (번호 미정 '+op+') · ' : '게임 · ')
-         +(paid*1000).toLocaleString()+'원')
-      : (papers+' · '+n+(op? ' slots ('+op+' open) · ₩' : ' games · ₩')
-         +(paid*1000).toLocaleString());
+      ? (papers+'장 · '+n+(op? '슬롯 (번호 미정 '+op+')' : '게임'))
+      : (papers+' · '+n+(op? ' slots ('+op+' open)' : ' games'));
     if(all) all.disabled = n===0;
     /* 실물 복권을 읽은 것이 하나도 없으면 '번호 저장' 입니다 — 구매 등록이 아닙니다 */
     if(all){
@@ -16099,7 +16153,11 @@ const Shot=(function(){
     /* 여러 장을 보여 줄 때는 한 장짜리 칸과 저장 단추를 접어 둡니다 (지우지는 않습니다) */
     if(rowsEl) rowsEl.hidden=!!many.length;
     if(saveBtn) saveBtn.hidden=!!many.length;
-    if(!many.length) return;
+    if(!many.length){
+      /* 창을 다시 열었을 때 지난번 합계가 남아 있지 않게 지웁니다 */
+      refreshSum();
+      return;
+    }
     many.forEach((tk,ti)=>{
       const card=document.createElement('div');
       card.className='tk'+(tk.use?'':' off');
@@ -16145,7 +16203,7 @@ const Shot=(function(){
       tk.games.forEach((ns,ri)=>{
         const row=document.createElement('div'); row.className='shot-row';
         const rl=document.createElement('span'); rl.className='rl';
-        rl.textContent=AZ[ri]||('#'+(ri+1));
+        rl.textContent=slotName(ti, ri);
         row.appendChild(rl);
         const how=document.createElement('span');
         how.className='tk-how'+(tk.hows[ri]?'':' chk');
@@ -16176,6 +16234,8 @@ const Shot=(function(){
             inp.setAttribute('aria-label', t('openSlot','아직 정해지지 않은 자리'));
           }
           else if(!(tk.sure[ri]||[])[i]) inp.classList.add('unsure');
+          /* 꾹 누르면 번호를 골라서 고칠 수 있습니다 */
+          longPress(inp, ()=>npOpen(ti, ri, i));
           on(inp,'input',()=>{
             inp.value=inp.value.replace(/\D/g,'').slice(0,2);
             tk.games[ri][i]=inp.value?+inp.value:null;
@@ -16195,24 +16255,32 @@ const Shot=(function(){
       });
       card.appendChild(rows);
 
-      const notes=[];
-      if(tk.noOcr)
-        notes.push(t('tkNoOcr','지금은 글자를 읽을 수 없습니다. 번호를 직접 넣어주세요.'));
-      else if(tk.src!=='qr')
-        notes.push(t('tkOcrNote','QR을 읽지 못해 번호를 글자로 읽었습니다. 틀린 곳이 없는지 꼭 확인해 주세요.'));
-      if(!hasRound(tk))
-        notes.push(t('tkNoRound','회차를 읽지 못했습니다. 복권에 적힌 회차를 넣어주세요.'));
-      else if(tk.roundGuess)
-        notes.push(t('tkRoundGuess','회차를 그림에서 찾지 못해 지금 보는 회차로 두었습니다. 다르면 고쳐주세요.'));
-      if(tk.src==='text')
-        notes.push(t('tkTextNote','그림에 적힌 숫자를 읽었습니다. 번호가 맞는지 확인해 주세요. (산 복권으로 등록되지 않습니다)'));
-      if(twinOf(tk,ti))
-        notes.push(t('tkTwin','번호가 똑같은 복권이 또 있습니다. 같은 장을 두 번 찍은 것이라면 한쪽의 체크를 꺼주세요.'));
-      notes.forEach((txt,i)=>{
+      /* ── 안내문은 한 줄만 ──
+         전에는 '글자로 읽었습니다', '회차를 못 읽었습니다', '산 복권으로 등록되지
+         않습니다' 가 겹겹이 쌓여 카드보다 안내문이 길었습니다.
+         지금은 꼭 필요한 한 줄만 둡니다.
+
+         · 읽은 번호는 어차피 저장 전에 눈으로 보게 되므로 한 문장이면 충분합니다.
+         · 회차를 못 읽은 것은 회차 칸에 주황 테두리로 이미 보이고,
+           저장을 누르면 검증이 막아 줍니다.
+         · 같은 장을 두 번 찍은 경우만 따로 알려 드립니다 — 이것은 눈으로
+           알아채기 어렵고, 모르고 넘어가면 두 배로 저장되기 때문입니다. */
+      /* 사진이든 붙여넣은 글이든 한 문구로 씁니다 */
+      const note1 = tk.noOcr
+        ? t('tkNoOcr','지금은 글자를 읽을 수 없습니다. 번호를 직접 넣어주세요.')
+        : tk.src==='qr'
+          ? ''
+          : t('tkReadNote','사진에서 읽은 번호입니다. 저장 전 번호를 확인해 주세요.');
+      if(note1){
         const p=document.createElement('p');
-        p.className='tk-note'+(i?' dim':'');
-        p.textContent=txt; card.appendChild(p);
-      });
+        p.className='tk-note one'; p.textContent=note1; card.appendChild(p);
+      }
+      if(twinOf(tk,ti)){
+        const p=document.createElement('p');
+        p.className='tk-note one dim';
+        p.textContent=t('tkTwin','같은 번호의 복권이 또 있습니다. 한 장을 두 번 찍었다면 한쪽 체크를 꺼주세요.');
+        card.appendChild(p);
+      }
       /* 이 복권에 애매한 칸이 남아 있으면 바로 확인할 수 있게 둡니다 */
       const mine=ambList().filter(z=>z.ti===ti).length;
       if(mine){
@@ -16228,7 +16296,31 @@ const Shot=(function(){
       markMany(card, tk);
       box.appendChild(card);
     });
+    fitNotes();
     refreshSum();
+  }
+
+  /* ── 안내문을 한 줄에 맞춥니다 ──
+     문구를 짧게 두고 좌우 여백을 줄여, 글씨를 줄이지 않고도 한 줄에 들어갑니다.
+     실측(아이폰 13 화면 기준): 글자 247px / 칸 346px — 여유가 많습니다.
+
+     그래도 기기 글꼴이 달라 넘칠 수 있으니 안전장치를 하나만 둡니다.
+     9.5px 아래로는 줄이지 않습니다. 작게 만들어 억지로 한 줄에 넣느니
+     읽히는 크기를 지키는 편이 낫기 때문입니다. */
+  function fitNotes(){
+    document.querySelectorAll('#shotMany .tk-note.one').forEach(el=>{
+      el.style.fontSize='';
+      const card=el.closest('.tk');
+      if(!card) return;
+      /* scrollWidth 에는 이 칸의 좌우 여백이 들어 있습니다.
+         카드 안쪽 폭도 같은 기준이므로 그대로 견주면 됩니다. */
+      const room=card.clientWidth;
+      if(!(room>0)) return;
+      let size=parseFloat(getComputedStyle(el).fontSize)||10.5;
+      for(let i=0;i<4 && size>9.5 && el.scrollWidth>room+0.5; i++){
+        size-=0.25; el.style.fontSize=size+'px';
+      }
+    });
   }
 
   /* ── 애매한 칸을 사람에게 보여 줄 준비 ──
@@ -16490,6 +16582,134 @@ const Shot=(function(){
   }
 
 
+
+  /* ══════════ 번호 공을 길게 눌러 고치기 ══════════
+     공(또는 '?' 공)을 꾹 누르면 1~45 중에서 고를 수 있습니다.
+
+     ■ 지키는 것
+     · 누른 칸 하나만 바뀝니다. 다른 칸이 자리를 옮기지 않습니다 (정렬하지 않습니다).
+     · 그 게임의 다른 칸에 이미 있는 번호는 고를 수 없게 막습니다.
+     · [취소] 하거나 팝업을 닫으면 아무것도 바뀌지 않습니다.
+     · 번호를 고쳐도 구매 상태(buy)와 수동/반자동/자동은 건드리지 않습니다.
+     · [미정으로 변경] 은 그 줄이 반자동·자동이면 '아직 안 정해진 자리'로,
+       수동이면 '판독 미확인'으로 둡니다 — 둘은 다른 상태입니다.
+     · 공 색은 기존 규칙(bandOf)을 그대로 씁니다. */
+  let npAt=null;                                   // {ti, ri, i}
+
+  function npPaint(){
+    const st=npAt; if(!st) return;
+    const tk=many[st.ti]; if(!tk) return;
+    const row=tk.games[st.ri]||[];
+    const now=row[st.i];
+    const used=new Set(row.filter((v,j)=>j!==st.i && v!=null));
+    const wh=$maybe('npWhere');
+    if(wh) wh.textContent = slotName(st.ti, st.ri)
+      + (isKO()? (' · '+(POS[st.i]||(st.i+1))+' 칸') : (' · cell '+(st.i+1)));
+    const g=$maybe('npGrid'); if(!g) return;
+    g.innerHTML='';
+    for(let v=1; v<=45; v++){
+      const b=document.createElement('button');
+      b.textContent=v;
+      b.type='button';
+      if(v===now){
+        b.className='on';
+        b.setAttribute('aria-current','true');
+      }
+      if(used.has(v)){
+        b.disabled=true;                           // 이 게임에 이미 있는 번호
+        b.setAttribute('aria-label', v+' '+t('npUsed','이 게임에 이미 있음'));
+      }else{
+        const bd=bandOf(v);
+        b.style.background='radial-gradient(circle at 32% 30%,'+bd.hi+','+bd.c+' 62%)';
+        b.style.color='#17203A';
+        on(b,'click',()=>npTake(v));
+      }
+      g.appendChild(b);
+    }
+    const back=$maybe('npBack'); if(back) back.hidden=false;
+  }
+  function npOpen(ti, ri, i){
+    npAt={ti:ti, ri:ri, i:i};
+    npPaint();
+  }
+  function npClose(){
+    npAt=null;
+    const b=$maybe('npBack'); if(b) b.hidden=true;
+  }
+  function npTake(v){
+    const st=npAt; if(!st) return;
+    const tk=many[st.ti]; if(!tk) return;
+    if(!(v>=1 && v<=45)) return;
+    if((tk.games[st.ri]||[]).some((z,j)=>j!==st.i && z===v)) return;   // 중복 막기
+    tk.games[st.ri][st.i]=v;                       // 누른 칸만 바뀝니다
+    tk.sure[st.ri][st.i]=true;                     // 사람이 고른 값입니다
+    if(tk.hold && tk.hold[st.ri]) tk.hold[st.ri][st.i]=false;
+    npClose(); paintMany();
+  }
+  function npNone(){
+    const st=npAt; if(!st) return;
+    const tk=many[st.ti]; if(!tk) return;
+    tk.games[st.ri][st.i]=null;
+    /* 반자동·자동 줄이면 '아직 안 정해진 자리', 수동 줄이면 '판독 미확인' */
+    const how=(tk.hows && tk.hows[st.ri])||'';
+    const blank=(how==='semi' || how==='auto');
+    if(!tk.hold) tk.hold=tk.games.map(g=>g.map(()=>false));
+    if(!tk.hold[st.ri]) tk.hold[st.ri]=[false,false,false,false,false,false];
+    tk.hold[st.ri][st.i]=blank;
+    tk.sure[st.ri][st.i]=blank;                    // 반자동 빈자리는 정상이므로 '확인됨'
+    npClose(); paintMany();
+  }
+  on('npCancel','click', npClose);
+  on('npBack','click', e=>{ if(e.target && e.target.id==='npBack') npClose(); });
+  on('npNone','click', npNone);
+
+  /* ── 길게 누르기 ──
+     · 손가락이 10px 넘게 움직이면(=스크롤) 취소합니다.
+     · 손을 떼거나 화면을 벗어나도 취소합니다.
+     · 화면이 스크롤되기 시작하면 취소합니다.
+     · 아이폰 기본 글자 선택·메뉴가 뜨지 않게 선택을 풀고 입력칸에서 손을 뗍니다.
+     그래서 평범한 스크롤·탭·확대는 그대로 됩니다. */
+  function longPress(el, fn){
+    let timer=null, sx=0, sy=0, fired=false;
+    const cancel=()=>{ if(timer){ clearTimeout(timer); timer=null; } };
+    const pt=e=>(e.touches && e.touches[0]) || e;
+    const start=e=>{
+      const p=pt(e); sx=p.clientX; sy=p.clientY; fired=false;
+      cancel();
+      timer=setTimeout(()=>{
+        timer=null; fired=true;
+        try{ el.blur(); }catch(e2){}
+        try{ const s2=window.getSelection(); if(s2) s2.removeAllRanges(); }catch(e2){}
+        if(navigator.vibrate) try{ navigator.vibrate(12); }catch(e2){}
+        fn();
+      }, 480);
+    };
+    const move=e=>{
+      const p=pt(e);
+      if(Math.abs(p.clientX-sx)>10 || Math.abs(p.clientY-sy)>10) cancel();
+    };
+    el.addEventListener('touchstart', start, {passive:true});
+    el.addEventListener('touchmove', move, {passive:true});
+    el.addEventListener('touchend', cancel);
+    el.addEventListener('touchcancel', cancel);
+    el.addEventListener('mousedown', start);
+    el.addEventListener('mousemove', move);
+    el.addEventListener('mouseup', cancel);
+    el.addEventListener('mouseleave', cancel);
+    /* 길게 눌러 팝업이 뜬 뒤의 탭이 입력칸으로 새지 않게 합니다 */
+    el.addEventListener('click', e=>{
+      if(fired){ e.preventDefault(); e.stopPropagation(); fired=false; }
+    }, true);
+    el.addEventListener('contextmenu', e=>e.preventDefault());
+    el._lpCancel=cancel;
+  }
+  /* 스크롤 취소는 touchmove 와 touchcancel 로 합니다.
+     · 손가락으로 목록을 끌면 touchmove 가 먼저 옵니다 → 10px 넘으면 취소.
+     · 아이폰이 스크롤을 넘겨받으면 touchcancel 을 보냅니다 → 취소.
+     한때 window 의 scroll 이벤트로도 취소했는데, 화면을 프로그램이 움직일 때
+     (칸으로 스크롤해 가기 등) 손가락과 상관없이 취소돼서
+     목록 아래쪽 줄을 아예 못 고치게 되었습니다. 그래서 뺐습니다. */
+
   /* ══════════ 애매한 칸 검토 ══════════
      읽기가 갈린 칸만 모아 하나씩 확인받습니다.
 
@@ -16533,11 +16753,10 @@ const Shot=(function(){
 
   const POS=['첫째','둘째','셋째','넷째','다섯째','여섯째'];
   function ambWhere(st){
-    const one=many.length>1 ? (t('tkOne','복권')+' '+(st.ti+1)+' · ') : '';
-    const row=(AZ[st.ri]||('#'+(st.ri+1)));
-    if(st.k==='how') return isKO() ? (one+row+'줄') : (one+'row '+row);
-    return isKO() ? (one+row+'줄 '+(POS[st.i]||(st.i+1))+' 칸')
-                  : (one+'row '+row+' · cell '+(st.i+1));
+    const row=slotName(st.ti, st.ri);
+    if(st.k==='how') return row;
+    return isKO() ? (row+' · '+(POS[st.i]||(st.i+1))+' 칸')
+                  : (row+' · cell '+(st.i+1));
   }
   /* 수동·반자동·자동 — 읽어서 알 수 없을 때 고르게 합니다.
      고르지 않으면 '확인 필요' 로 둡니다. 임의로 '자동' 이라고 적지 않습니다. */
@@ -16699,11 +16918,11 @@ const Shot=(function(){
     let slots=0, open=0, rounds=new Set();
     many.forEach((tk,ti)=>{
       if(!tk.use) return;
-      const who=many.length>1 ? (t('tkOne','복권')+' '+(ti+1)+' ') : '';
+      const who=t('tkOne','복권')+' '+(ti+1)+' ';
       if(!hasRound(tk)){ stop.push(who+t('pfNoRound','회차가 없습니다')); return; }
       rounds.add(tk.round||ROUND);
       (tk.games||[]).forEach((g,ri)=>{
-        const where=who+(AZ[ri]||('#'+(ri+1)))+(isKO()?'줄':'');
+        const where=slotName(ti, ri);
         const ns=g||[];
         if(ns.length!==6){ stop.push(where+' '+t('pfNot6','여섯 칸이 아닙니다')); return; }
         const got=ns.filter(v=>v!=null);
@@ -16867,11 +17086,22 @@ const Shot=(function(){
     await Log.saveGames(qrRound||ROUND, games);   // 직접 입력과 똑같은 저장 경로입니다
   });
 
+  /* 이 창은 사진·텍스트가 함께 쓰는 '읽은 번호 검토' 자리입니다.
+     어느 길로 들어왔는지에 따라 제목과 사진 고르는 자리를 바꿉니다.
+     (텍스트를 붙여넣고 들어왔는데 '사진으로 번호 읽기' 라고 적혀 있으면
+      사진이 잘못 읽힌 것으로 오해하게 됩니다) */
+  function dressFor(how){
+    const h=$maybe('shotTitle'), take=$maybe('shotTake');
+    if(h) h.textContent = how==='photo' ? t('shotTitle','사진으로 번호 읽기')
+                                        : t('shotTitle2','읽은 번호 확인');
+    if(take) take.hidden = how!=='photo';      // 사진이 아니면 촬영·앨범 단추를 감춥니다
+  }
   function open(){
     rows=five(null); img=null; photos=[]; many=[];
     paint(); paintMany(); say('');
     stage.classList.remove('has'); readBtn.disabled=true;
     setMode(mode);
+    dressFor('photo');
     sheet.classList.add('on');
   }
   /* 밖에서 사진 한 장을 바로 넘겨 읽습니다.
@@ -16892,16 +17122,20 @@ const Shot=(function(){
     paint(); say('');
     if(stage) stage.classList.remove('has');
     if(readBtn) readBtn.disabled=true;
+    dressFor(kind==='photo' ? 'photo' : 'read');
     (list||[]).forEach(tk=>{ if(tk && tk.games && tk.games.length) addTicket(tk); });
     paintMany();
     sheet.classList.add('on');
     const n=manySum(), op=openSum();
-    say(isKO() ? (n+(op? '슬롯을 읽었습니다 (번호 미정 '+op+'자리). ' : '게임을 읽었습니다. ')
+    /* op 는 '번호가 덜 정해진 슬롯 수' 입니다 (빈 칸 수가 아닙니다) */
+    say(isKO() ? (n+(op? '슬롯을 읽었습니다 (번호 미정 '+op+'슬롯). ' : '게임을 읽었습니다. ')
                  + '회차와 번호를 확인하고 저장해 주세요.')
                : (n+' slots read — check the round and numbers, then save.'));
     if(ambCount()) setTimeout(ambOpen, 420);
     return n;
   }
+  try{ window.addEventListener('resize', fitNotes); }catch(e){}
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitNotes); }catch(e){}
   setMode('ticket');
   return {open, intake, parseNums, readFrom, parseQR:gamesFromQR,
           readLoose:async im=>readLoose(im, await ocrWorker())};
@@ -20993,9 +21227,7 @@ const I18N=(function(){
       tkHowChk:'check',
       tkNoOcr:'Text reading is unavailable right now. Please type the numbers in.',
       tkOcr:'Text',
-      tkOcrNote:'The QR could not be read, so the numbers were read as text. Please check them.',
       tkOne:'Ticket',
-      tkTwin:'Another ticket here has the same numbers. If you photographed one ticket twice, untick one.',
       tkUse:'Include in my purchases',
       howManual:'manual',
       howSemi:'semi-auto',
@@ -21032,6 +21264,10 @@ const I18N=(function(){
       pfNone:'Nothing to save.',
       ldWait:'awaiting result',
       ldWinS:'Won',
+      npTitle:'Pick a number', npNone:'Set to undecided (?)', npCancel:'Cancel',
+      npUsed:'already in this game',
+      tkReadNote:'Read from the photo — please check before saving.',
+      tkTwin:'Another ticket has the same numbers. If you photographed one twice, untick one.',
       ambHowT:'Pick how it was chosen', howAuto:'Auto',
       ck3Txt:'Paste<br>text',
       txTitle:'Paste text', txRead:'Read numbers', txClear:'Clear',
@@ -21046,7 +21282,6 @@ const I18N=(function(){
       askBoughtB:'I bought it', askThanks:'Got it — we will not ask again for this round.',
       tkText:'Numbers in image', shotLoose:'Looking for numbers in the image…',
       tkRoundGuess:'The round was not found in the image, so the round you are viewing is used. Change it if needed.',
-      tkTextNote:'These numbers were read from the image. Please check them. (This is not registered as a bought ticket.)',
       tkNoRound:'The round could not be read. Please enter the round printed on the ticket.',
       open24:'Open 24 hours',
       soAsOf:'Last checked',
@@ -21355,6 +21590,7 @@ const I18N=(function(){
       shotOmr:'Marking slip',
       shotTicket:'Printed ticket',
       shotTitle:'Read numbers from a photo',
+      shotTitle2:'Check the numbers read',
       slipAgain:'Make a new one',
       slipCancel:'Cancel',
       slipHalf:'Auto & semi-auto',
@@ -21662,6 +21898,9 @@ const I18N=(function(){
     ['#txin .sheet-bar h2','txTitle','텍스트 입력'],
     ['#ambTitle','ambTitle','번호를 정확히 확인하기 어렵습니다'],
     ['#ambShoot','ambShoot','다시 촬영'],
+    ['#npTitle','npTitle','번호 고르기'],
+    ['#npNone','npNone','미정으로 변경 (?)'],
+    ['#npCancel','npCancel','취소'],
     ['#fill .sheet-bar h2','fillTitle','구매 번호 연결'],
     ['#fillGo','fillGo','이대로 등록'],
     ['#fill .tx-help','fillHelp','미리 적어 두신 자리에 산 번호를 넣을 수 있습니다. 어디에 넣을지 골라 주세요. 고르지 않으면 새 게임으로 저장합니다.'],
