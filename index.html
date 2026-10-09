@@ -12,8 +12,11 @@
      카카오톡·메신저는 링크를 받으면 이 값들을 읽어 제목·설명·그림을 만듭니다.
      og:image 는 반드시 실제로 열리는 절대 주소여야 합니다.
      data: 로 넣은 그림이나 상대 주소는 카카오톡이 읽지 못합니다.
-     그래서 앱 메인 화면 그림을 배포 주소의 /og.png 로 올려 두고 그 주소를 적습니다.
-     (그림에는 개인 저장 번호가 없는 첫 화면을 씁니다) -->
+     그래서 공유 안내 카드 그림을 배포 주소의 /og.png 로 올려 두고 그 주소를 적습니다.
+     그림은 앱 안의 '공유 안내 카드' 와 같은 디자인입니다 —
+     남색 바탕, 금색 강조 문구, 흰 본문, 네잎클로버, 개발자 서명,
+     링크와 홈 화면 추가 안내까지. 상태바·뒤쪽 앱 화면·닫기/공유하기 단추는 넣지 않았습니다.
+     개인 저장 번호는 들어가지 않습니다. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="토요일645">
 <meta property="og:title" content="토요일645">
@@ -22,7 +25,7 @@
 <meta property="og:image" content="https://toyilo645.vercel.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="토요일645 메인 화면">
+<meta property="og:image:alt" content="토요일645 공유 안내 — 평일 열심히 일한 당신, 주말에는 소액으로 작은 설렘을">
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="토요일645">
@@ -262,22 +265,32 @@
   .swd:active{background:linear-gradient(180deg,#D23C41,#B32D33)}
   .card.swipe .swin,.card.swipe .swd{transition:transform .24s cubic-bezier(.22,.61,.36,1)}
   /* ── 게임 한 장을 들어 옮기는 중 ──
-     테두리는 outline 으로 그립니다. border 를 건드리면 카드 높이가 달라져
+     들고 있는 카드는 흐름에서 빠져나와(absolute) 손가락을 따라다닙니다.
+     90% 로 줄이고 손가락보다 조금 위에 띄워, 아래에 생기는 자리가 보입니다.
+     테두리는 outline 으로 그립니다 — border 를 건드리면 높이가 달라져
      목록이 들썩이기 때문입니다. */
-  .card.lift{z-index:40;
+  #v-check .card.lift,#v-log .card.lift,.card.lift{
+    position:absolute;left:0;right:0;z-index:40;margin:0;
     outline:2px solid var(--sky,#5DA9FF);outline-offset:-1px;
-    box-shadow:0 16px 36px rgba(0,0,0,.55);
-    will-change:transform}
-  .card.lift.ease{transition:transform .18s cubic-bezier(.22,.61,.36,1)}
+    box-shadow:0 18px 40px rgba(0,0,0,.6);
+    transform-origin:50% 50%;will-change:transform;pointer-events:none}
+  .card.lift.ease{transition:transform .19s cubic-bezier(.22,.8,.26,1)}
+  /* 들어갈 자리 — 낮은 높이의 반투명 카드 모양.
+     테두리 색은 그 자리가 속한 세트 색을 그때그때 넣어 줍니다. */
+  .ins-slot{flex:0 0 auto;height:44px;border-radius:14px;
+    border:2px dashed var(--sc,#6FE0BE);
+    background:rgba(143,168,208,.07);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    pointer-events:none;overflow:hidden}
+  .ins-slot.grow{animation:insGrow .16s cubic-bezier(.22,.8,.26,1) both}
+  @keyframes insGrow{0%{height:0;opacity:0}100%{height:44px;opacity:1}}
+  /* 빈자리 위에 올렸을 때 */
   .card.dropat{outline:2px dashed #6FE0BE;outline-offset:-1px;
-    background:rgba(111,224,190,.08)}
-  /* 끼워 넣을 자리를 알려 주는 얇은 선 */
-  .ins-line{position:absolute;left:2px;right:2px;height:2px;border-radius:2px;
-    background:#6FE0BE;box-shadow:0 0 8px rgba(111,224,190,.7);
-    pointer-events:none;z-index:45}
-  .ins-line::before{content:'';position:absolute;left:-1px;top:-3px;
-    width:8px;height:8px;border-radius:50%;background:#6FE0BE}
+    background:rgba(111,224,190,.10)}
   .stack.dragging-host{position:relative}
+  @media (prefers-reduced-motion:reduce){
+    .ins-slot.grow{animation:none}
+    .card.lift.ease{transition:none} }
   /* 끌고 있는 동안에는 글자가 잡히지 않게 */
   body.dragswap,body.dragswap .card,body.dragswap .card *{
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -714,8 +727,17 @@
   .pk-panel[hidden]{display:none}
   @keyframes pkIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
   .pk-head{display:flex;align-items:center;margin-bottom:10px}
+  /* 제목은 크기·굵기·색 그대로 두고, 숨 쉬듯 밝기만 오갑니다.
+     1.5초에 한 번 100% ↔ 65%. 사라지거나 자리가 움직이지 않습니다.
+     (opacity 만 바꾸므로 글자 크기·위치는 그대로입니다) */
   .pk-head b{font-size:15px;font-weight:700;color:var(--smInk);letter-spacing:-.04em;
-    white-space:nowrap;word-break:keep-all}
+    white-space:nowrap;word-break:keep-all;
+    animation:pkBreath 1.5s ease-in-out infinite}
+  @keyframes pkBreath{0%,100%{opacity:1} 50%{opacity:.65}}
+  /* 팝업이 닫혀 있을 때는 돌지 않습니다 */
+  .pk-panel[hidden] .pk-head b{animation:none}
+  @media (prefers-reduced-motion:reduce){
+    .pk-head b{animation:none;opacity:1} }
   .pk-head button{margin-left:auto;width:26px;height:26px;padding:0;border:0;background:none;
     color:#8A9097;display:flex;align-items:center;justify-content:center}
   .pk-head button svg{width:16px;height:16px}
@@ -752,17 +774,25 @@
      제목·버튼 글씨는 반드시 한 줄입니다. 낱말 가운데서 갈라지지 않게
      word-break:keep-all 로 낱말 단위로만 줄을 바꿉니다.
      설명은 버튼과 같은 시작선(왼쪽 2px)에 맞추고 줄 간격을 하나로 맞췄습니다. */
-  .pk-sms{width:100%;margin-top:4px;padding:13px 12px;
+  /* 단속 문자 받기 — 이 화면이 하는 일 하나입니다.
+     둥근 모서리는 그대로, 그림자는 은은하게. 글자는 한 줄로 둡니다. */
+  .pk-sms{width:100%;margin-top:4px;padding:13px 14px;
     display:flex;align-items:center;gap:8px;text-align:left;
-    border:1px solid var(--smLine);border-radius:12px;background:#fff;
+    border:0;border-radius:12px;
+    background:linear-gradient(135deg,#FF626C,#D93645);
+    box-shadow:0 4px 12px rgba(217,54,69,.22);
     font-family:inherit;touch-action:manipulation}
-  .pk-sms:active{background:#F7F7F8}
-  .pk-sms b{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--smInk);
-    letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:clip}
-  .pk-sms em{flex:none;font-style:normal;font-size:17px;color:#B6BBC1}
-  .pk-note{margin:8px 2px 0;font-size:11.5px;line-height:1.55;color:var(--smDim);
-    letter-spacing:-.03em;text-align:left;word-break:keep-all}
-  .pk-note.dim{margin-top:4px;font-size:10.5px;opacity:.85}
+  .pk-sms:active{background:linear-gradient(135deg,#F2525C,#C92D3B);
+    transform:translateY(1px)}
+  .pk-sms b{flex:1;min-width:0;font-size:14px;font-weight:800;color:#fff;
+    letter-spacing:-.035em;white-space:nowrap;word-break:keep-all;
+    overflow:hidden;text-overflow:clip}
+  .pk-sms em{flex:none;font-style:normal;font-size:17px;font-weight:700;color:#fff}
+  /* 하단 안내 — 차분한 회색, 가운데.
+     낱말 가운데에서 끊기지 않게 keep-all 을 둡니다. */
+  .pk-note{margin:10px 2px 0;font-size:11.5px;line-height:1.55;color:var(--smDim);
+    letter-spacing:-.03em;text-align:center;
+    word-break:keep-all;overflow-wrap:break-word}
 
   /* ── 사진 한 장에서 복권 여러 장 ── */
   .tk-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
@@ -926,6 +956,37 @@
   #v-log .card,#v-log .card *{
     -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
     -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  /* ── 조작하는 자리 전체 ──
+     누르거나 끌려고 두는 곳에서는 글자가 잡히지 않습니다.
+     읽으라고 둔 본문(안내문·공지·메모)은 그대로 선택됩니다. */
+  nav, nav *,
+  button, button *,
+  .card, .card *,
+  .ball, .seq, .rl, .rl-dup, .tk-how, .tk-h, .tk-tag,
+  .set-head, .set-head *,
+  .sheet-head, .sheet-head *,
+  .round-nav, .round-nav *,
+  .entry3, .entry3 *,
+  .hall, .hall *,
+  .slip-row, .slip-row *,
+  .shot-row, .shot-row *,
+  .qrline, .qrline *,
+  .pk-head, .pk-head *,
+  .dly, .dly *,
+  .view > h2, .set-title, .opt, .ic, svg{
+    -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+    -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  /* 입력칸은 언제나 예외입니다 — 편집·붙여넣기·커서가 살아 있어야 합니다 */
+  input, textarea, [contenteditable="true"],
+  .card input, .card textarea,
+  .dly input, .dly textarea,
+  .shot-row input, .slip-row input{
+    -webkit-user-select:text;-moz-user-select:text;-ms-user-select:text;user-select:text;
+    -webkit-touch-callout:default}
+  /* 번호 공은 입력칸이지만 길게 눌러 고치는 자리라 선택만 꺼 둡니다
+     (숫자를 직접 치는 것은 그대로입니다) */
+  .shot-row .rn, .card .rn{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   /* 입력칸은 그대로 — 붙여넣기·커서·선택이 살아 있어야 합니다 */
   #npBack input,#npBack textarea,#spBack input,#spBack textarea,
   #v-check .card input,#v-check .card textarea,
@@ -973,12 +1034,13 @@
     box-shadow:inset 0 0 0 1.5px #E8A33D}
   .amb-pick button.own{background:transparent;color:var(--dim);font-size:14px;font-weight:700;
     box-shadow:inset 0 0 0 1px var(--line)}
-  .amb-own{display:flex;gap:8px;margin-top:10px}
+  /* 입력칸과 [저장] 은 늘 한 줄입니다. 좁은 화면에서도 줄이 바뀌지 않습니다. */
+  .amb-own{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin-top:10px}
   .amb-own input{flex:1;min-width:0;padding:13px 12px;border-radius:12px;
     border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.04));
     color:var(--ink);font-family:inherit;font-size:20px;font-weight:800;text-align:center}
-  .amb-own button{padding:13px 16px;border:0;border-radius:12px;background:var(--acc);
-    color:#17203A;font-family:inherit;font-size:14px;font-weight:700}
+  .amb-own button{flex:none;padding:13px 16px;border:0;border-radius:12px;background:var(--acc);
+    color:#17203A;font-family:inherit;font-size:14px;font-weight:700;white-space:nowrap}
 
   /* 카드 위에서 바로 열 수 있는 '확인할 칸' 단추 */
   .tk-fix{width:100%;margin-top:10px;padding:11px;border:0;border-radius:12px;
@@ -1093,7 +1155,7 @@
   #v-game .countdown{margin:auto 0;padding:18px 0}
   body.on-game #cd, body.on-check #cd{display:none}   /* 게임·당첨확인 탭에선 숨김 */
   #v-game .adslot-sm{margin-top:0}
-  #v-feed .adslot-sm{margin:12px 0 4px}
+  #v-feed .adslot-sm{margin:10px auto 10px;width:100%;align-self:center}
   /* 기록이 쌓여도 끝까지 볼 수 있게 — 내비게이션은 그대로 고정됩니다 */
   #v-feed{overflow-y:auto;overscroll-behavior:contain;
     touch-action:pan-y pinch-zoom;padding-bottom:14px;
@@ -1221,6 +1283,15 @@
   /* '번호 읽기' 는 꼭 보여야 하는 버튼입니다. 글씨가 잘리지 않게 합니다. */
   .shot-read{margin-top:2px}
   #shot .sheet-body{padding-bottom:14px}
+  /* 일부만 읽은 상태 — 다 읽은 것처럼 보이지 않게 따로 알려 줍니다 */
+  .shot-part{display:flex;align-items:center;gap:8px;margin:6px 2px 0;
+    padding:9px 10px;border-radius:12px;
+    background:rgba(255,186,120,.12);border:1px solid rgba(255,186,120,.35)}
+  .shot-part span{flex:1;min-width:0;font-size:11.5px;font-weight:700;line-height:1.5;
+    color:var(--amber,#FFBA78);letter-spacing:-.03em;word-break:keep-all}
+  .shot-part button{flex:none;padding:7px 11px;border:0;border-radius:10px;
+    background:var(--amber,#FFBA78);color:#17203A;
+    font-family:inherit;font-size:11.5px;font-weight:800;white-space:nowrap}
   .shot-state{min-height:18px;margin:10px 0 4px;text-align:center;
     font-size:12px;color:var(--muted)}
   .shot-state.bad{color:var(--muted)}      /* 빨간 경고 문장은 쓰지 않습니다 */
@@ -1234,6 +1305,12 @@
      글자 수에 맞춰 늘리고 줄바꿈을 막습니다. 색은 그 줄이 속한 세트 색입니다. */
   /* 슬롯 이름 — '1-A' 가 '1-' / 'A' 로 갈라지지 않게 합니다.
      flex 가 줄이지 못하게 flex-shrink 를 0으로 두고, 글자 폭만큼 자리를 잡습니다. */
+  /* 또렷이 읽지 못한 자리 — 눌러서 고칠 수 있다는 표시 */
+  .shot-row .rl.ask{text-decoration:underline dotted;text-underline-offset:3px;
+    cursor:pointer}
+  .shot-row .rl.ask::after{content:'?';margin-left:2px;font-size:10px;opacity:.9}
+  .shot-row .rl-dup{flex:none;font-size:10px;font-weight:800;color:var(--rose,#FF8A8A);
+    letter-spacing:-.03em;white-space:nowrap}
   .shot-row .rl{flex:0 0 auto;width:max-content;min-width:34px;
     font-size:12px;font-weight:800;color:var(--amber);
     white-space:nowrap;word-break:keep-all;overflow-wrap:normal;hyphens:none;
@@ -1695,6 +1772,10 @@
   .pick-slots span.on{box-shadow:none}
   .pick-slots span{position:relative;overflow:visible}
   /* 번호가 들어갈 때 퍼지는 먼지 */
+  /* 아직 정해지지 않은 자리 — 판매점에서 채워집니다 */
+  .pick-slots span.qmark{color:var(--muted);font-weight:800;opacity:.8;
+    background:transparent;
+    box-shadow:inset 0 0 0 1.5px rgba(143,168,208,.30)}
   .slot-puff{position:absolute;left:50%;top:62%;width:8px;height:8px;
     transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
     background:radial-gradient(circle,rgba(212,228,255,.55),rgba(212,228,255,0) 70%);
@@ -2322,7 +2403,11 @@
   /* 우리끼리 N빵 — 통째로 들어온 화면 */
   /* 내 번호 QR — 모바일 슬립지 */
   /* QR로 내보내서 구입하기 — 테두리 선만 깜빡입니다 */
-  .qrline{width:100%;margin:0 0 6px;padding:6px;border-radius:11px;flex:none;
+  .qrline{width:100%;margin:0 0 6px;padding:6px 12px;border-radius:11px;flex:none;
+    /* 바로 아래 점선 빈자리 카드와 같은 높이로 둡니다 (min-height:46px).
+       폭·금색 실선·둥근 모서리는 그대로. 문구는 가로·세로 가운데입니다. */
+    min-height:46px;box-sizing:border-box;
+    display:flex;align-items:center;justify-content:center;text-align:center;
     font-size:12.5px;font-weight:700;color:var(--ink);background:transparent;
     border:1px solid rgba(242,180,65,.75);
     animation:qrLine 1.9s ease-in-out infinite}
@@ -2439,6 +2524,20 @@
     background:var(--sc,var(--amber))}
   .slip-row.on.head::before{top:-1px}
   .slip-page span{--pc:var(--amber)}
+  /* 반자동 칸 — 고정수는 보여 주되 QR에는 담기지 않습니다 */
+  .slip-row.half{opacity:.9}
+  .slip-row.half .bx{background:transparent;border-style:dashed}
+  /* 반자동 줄의 [앱이 채우기] — 꼬리표 옆 작은 단추 */
+  .slip-act.half{flex:none;font-size:10.5px;font-weight:800;padding:5px 9px;
+    white-space:nowrap;word-break:keep-all}
+  /* 원래 반자동이었다가 앱이 채운 칸 */
+  .slip-tag.plan{color:var(--amber,#FFBA78);border-color:rgba(255,186,120,.5)}
+  /* 앞 칸이 빠져 복권에서 줄이 당겨지는 칸 */
+  .slip-tag.qrow{color:var(--amber,#FFBA78);border-style:solid;
+    border-color:rgba(255,186,120,.5)}
+  .slip-tag{flex:none;font-size:10.5px;font-weight:700;color:var(--muted);
+    letter-spacing:-.03em;white-space:nowrap;word-break:keep-all;
+    padding:4px 8px;border-radius:999px;border:1px dashed var(--line)}
   .slip-row .ns{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--ink);
     font-variant-numeric:tabular-nums;letter-spacing:.02em}
   /* 세트 머리글 — 다섯 게임이 한 세트(한 장)입니다 */
@@ -2515,16 +2614,18 @@
   .ldg-all.on{color:#17203A;border-color:transparent;
     background:linear-gradient(145deg,#F7D070,#E0A32B)}
   .ldg-sum{flex:none;display:flex;gap:7px;margin:9px 0 8px}
-  .ldg-sum div{flex:1;min-width:0;padding:7px 8px;border-radius:10px;
-    background:rgba(143,168,208,.07);text-align:center}
+  /* 세 칸만 조금 밝은 남색입니다 — 회차별 카드와 본문 배경은 건드리지 않습니다 */
+  .ldg-sum div{flex:1;min-width:0;padding:8px;border-radius:10px;
+    background:rgba(120,152,206,.15);text-align:center}
   /* 세 칸을 똑같이 나눠 쓰고, 금액은 줄임표 없이 글씨만 줄여 맞춥니다 */
   .ldg-sum>div{flex:1 1 0;min-width:0}
   .ldg-sum>div:nth-child(2),.ldg-sum>div:nth-child(3){flex:1 1 0;width:auto}
   .ldg-sum>div:first-child{flex:1.15 1 0;min-width:0}
-  .ldg-sum span{display:block;font-size:9.5px;color:var(--muted);font-weight:600;
+  /* 제목 +10% · 금액 +15% — 색은 그대로입니다 */
+  .ldg-sum span{display:block;font-size:10.5px;color:var(--muted);font-weight:700;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ldg-sum b{display:block;margin-top:2px;font-size:13px;font-weight:800;
-    font-variant-numeric:tabular-nums;letter-spacing:-.025em;white-space:nowrap;
+  .ldg-sum b{display:block;margin-top:2px;font-size:15px;font-weight:900;
+    font-variant-numeric:tabular-nums;letter-spacing:-.03em;white-space:nowrap;
     overflow:visible;text-overflow:clip}
   .ldg-sum b.wait{color:var(--muted);font-size:11px;font-weight:700}
   .ldg-netn{display:block;margin-top:1px;font-size:8.5px;color:var(--muted);
@@ -2996,7 +3097,10 @@
   .send{padding:13px;font-size:15px}
   .hint{font-size:11px;color:var(--muted);opacity:.75;line-height:1.5}
 
-  nav{display:flex;border-top:1px solid var(--line);background:rgba(19,26,46,.92)}
+  /* flex:none — 본문이 길어져도 탭이 눌려 납작해지지 않습니다.
+     (기본값 0 1 auto 로는 줄어들어 탭 이름이 잘립니다) */
+  nav{display:flex;flex:none;border-top:1px solid var(--line);
+    background:rgba(19,26,46,.92)}
   nav button{flex:1;background:none;border-radius:0;padding:10px 0 14px;color:#B6C6E2;
     font-size:12.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}
   nav .lbl{display:flex;flex-direction:column;justify-content:center;
@@ -3476,7 +3580,7 @@
       <div class="amb-pick" id="ambPick"></div>
       <div class="amb-own" id="ambOwn" hidden>
         <input id="ambIn" inputmode="numeric" maxlength="2" aria-label="직접 수정">
-        <button id="ambInOk" data-i="ambPut">넣기</button>
+        <button id="ambInOk" data-i="ambPut">저장</button>
       </div>
       <button class="dly-ok dly-sub" id="ambShoot" data-i="ambShoot" hidden>다시 촬영</button>
       <button class="dly-ok dly-sub" id="ambLater" data-i="ambLater">나중에 확인</button>
@@ -3765,6 +3869,11 @@
       <input type="file" id="shotFileLib" accept="image/*" hidden>
 
       <p class="shot-state" id="shotState"></p>
+      <!-- 한글 판독을 완료하지 못했을 때만 보입니다 -->
+      <div class="shot-part" id="shotKo" hidden>
+        <span data-i="shotKoMsg">한글 판독을 완료하지 못했습니다. 세트·방식과 빠진 게임을 확인해 주세요.</span>
+        <button type="button" id="shotKoRetry" data-i="shotKoRetry">다시 읽기</button>
+      </div>
       <div class="shot-rows" id="shotRows"></div>
       <div class="tk-list" id="shotMany" hidden></div>
     </div>
@@ -3830,6 +3939,8 @@
     </div>
 
     <!-- 나의 구입 내역 -->
+    <!-- 당첨 소식과 손익 집계 사이 — 본문과 함께 스크롤됩니다 -->
+    <div class="adslot adslot-sm"><em>AD</em><span data-i="adSlot">광고 영역</span></div>
     <div class="ldg" id="ldg">
       <div class="ldg-nav">
         <button id="ldPrev" aria-label="이전 회차">‹</button>
@@ -3849,7 +3960,6 @@
       </div>
     </div>
 
-    <div class="adslot adslot-sm"><em>AD</em><span data-i="adSlot">광고 영역</span></div>
   </section>
 
   <!-- ===== 생활 편의 ===== -->
@@ -4392,7 +4502,6 @@
           <em aria-hidden="true">›</em>
         </button>
         <p class="pk-note" data-i="pkSmsS">지자체에 가입하면 단속 전에 문자가 옵니다.</p>
-        <p class="pk-note dim" data-i="pkNote">토요일645는 단속 정보를 직접 받지 않습니다.</p>
       </div>
 
       <div class="sm-nomap" id="smNoMap" hidden>
@@ -4665,7 +4774,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.32.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.36.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -5330,6 +5439,27 @@ setInterval(function(){
     try{ document.dispatchEvent(new CustomEvent('round:new',{detail:r})); }catch(e){}
   }
 }, 15000);
+/* ── 앱으로 다시 들어왔을 때 ──
+   화면이 가려졌다가 돌아오거나(백그라운드 복귀), 페이지가 되살아날 때
+   날짜와 회차를 다시 계산하고 각 화면에 알립니다.
+   주간 전환(토요일 추첨)이 그 사이에 지났어도 바로 반영됩니다.
+   팝업을 닫는 것은 화면이 가려지는 일이 아니므로 여기에 걸리지 않습니다. */
+(function(){
+  let last=0;
+  function resume(){
+    const now=Date.now();
+    if(now-last<400) return;                     // 같은 복귀로 두 번 돌지 않게
+    last=now;
+    const r=roundNow();
+    if(r!==ROUND){
+      ROUND=r; window.ROUND=r;
+      try{ document.dispatchEvent(new CustomEvent('round:new',{detail:r})); }catch(e){}
+    }
+    try{ document.dispatchEvent(new CustomEvent('app:resume',{detail:ROUND})); }catch(e){}
+  }
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) resume(); });
+  window.addEventListener('pageshow', e=>{ if(e && e.persisted) resume(); });
+})();
 let user=null;
 
 const toastEl=$id('toast');
@@ -6677,29 +6807,53 @@ const Log=(function(){
   const srcTag=$id('srcTag');
   let items=[];
   const key=()=>'history:'+(user?user.id:'guest');
-  /* ── 회차마다 '여기까지 세트를 썼다' 를 따로 적어 둡니다 ──
-     기록만 보면, 마지막 세트를 통째로 지웠을 때 그 세트 번호가 다시
-     비어 보여서 새 입력이 예전 번호를 다시 쓰게 됩니다.
-     지운 자리를 다시 쓰지 않으려면 '어디까지 썼는지' 를 따로 들고 있어야 합니다. */
-  const skey=()=>'setmax:'+(user?user.id:'guest');
-  let setMax={};
-  async function setMaxLoad(){
-    try{ const r=await window.storage.get(skey(),false);
-         setMax=(r&&r.value)? (JSON.parse(r.value)||{}) : {}; }
-    catch(e){ setMax={}; }
+  /* ── 세트 번호 연속 정리 ──
+     게임이 한 장도 없는 세트는 없애고, 남은 세트를 앞에서부터
+     1·2·3… 으로 당깁니다. 세트 안의 A~E 자리와 빈자리는 그대로 지킵니다.
+       1세트 … 5세트만 남았다면 → 1세트 … 2세트
+       기존 5세트-C 는 2세트-C 가 됩니다.
+     '?' 여섯 개인 자동 게임도 실제로 저장된 게임이므로 빈 세트가 아닙니다.
+     번호·방식·구매 표시·식별값은 건드리지 않고 자리만 당깁니다.
+     (전에는 '지운 세트 번호를 계속 건너뛰기' 였는데, 이 규칙으로 바뀌었습니다) */
+  function reseat(list){
+    const sets=[...new Set(list.map(x=>Math.floor((x.pos|0)/SETN)))].sort((a,b)=>a-b);
+    const map=new Map(); sets.forEach((si,n)=>map.set(si,n));
+    let moved=false;
+    for(const x of list){
+      const p=x.pos|0;
+      const np=map.get(Math.floor(p/SETN))*SETN + (p%SETN);
+      if(np!==p){ x.pos=np; moved=true; }
+    }
+    return moved;
   }
-  let smT=0;
-  function setMaxSave(){
-    clearTimeout(smT);
-    smT=setTimeout(()=>{
-      try{ window.storage.set(skey(), JSON.stringify(setMax), false); }catch(e){}
-    }, 60);
+  function compact(round){
+    const list=items.filter(x=>x.round===round && hasPos(x));
+    if(!list.length) return false;
+    return reseat(list);
   }
-  function noteSet(round, pos){
-    if(!(pos>=0)) return;
-    const i=Math.floor(pos/SETN);
-    const now=(setMax[round]>=0)? setMax[round] : -1;
-    if(i>now){ setMax[round]=i; setMaxSave(); }
+  /* 지금 놓으면 '정리까지 끝난 뒤' 어느 자리가 되는지 — 미리보기와 결과를 맞춥니다.
+     실제 기록은 건드리지 않습니다. */
+  function simPos(gid, before, holePos){
+    const i=indexOfGid(gid);
+    if(i<0) return -1;
+    const round=items[i].round;
+    const list=items.filter(x=>x.round===round && hasPos(x))
+                    .map(x=>({gid:x.gid, pos:x.pos|0, me:x.gid===gid}));
+    const me=list.find(x=>x.me);
+    if(!me) return -1;
+    if(holePos!=null && holePos>=0){
+      if(list.some(x=>!x.me && x.pos===holePos)) return -1;
+      me.pos=holePos;
+    }else{
+      const slots=list.map(x=>x.pos).sort((a,b)=>a-b);
+      const seq=list.filter(x=>!x.me).sort((a,b)=>a.pos-b.pos);
+      let k=seq.length;
+      if(before){ const j=seq.findIndex(x=>x.gid===before); if(j>=0) k=j; }
+      seq.splice(k,0,me);
+      seq.forEach((x,n)=>{ x.pos=slots[n]; });
+    }
+    reseat(list);
+    return me.pos;
   }
 
   const PAGE=10;
@@ -6809,6 +6963,8 @@ const Log=(function(){
     }
   }
 
+  /* 앱으로 다시 들어오면 내 기록도 같은 회차를 가리킵니다 */
+  document.addEventListener('app:resume', ()=>{ cur=ROUND; shown=PAGE; render(); });
   on('lPrev','click',()=>{
     const rs=rounds(), i=rs.indexOf(cur);
     if(i<rs.length-1){ cur=rs[i+1]; shown=PAGE; render(); }});
@@ -6839,12 +6995,13 @@ const Log=(function(){
        기존 1세트-A·B 가 있으면 → 2세트-A 부터
        기존 2세트-A 까지 썼으면 → 3세트-A 부터 (2세트-B~E 는 비워 둡니다)
      빈 자리를 '새 게임'으로 만들어 끼우지 않습니다 — 자리만 비켜 둡니다. */
+  /* 새 세트는 '정리된 마지막 세트' 의 다음 번호부터 시작합니다.
+     1·2세트가 남았다면 새 입력은 3세트-A 부터입니다.
+     기존 세트의 빈 A~E 는 자동으로 채우지 않습니다. */
   function nextSetPos(round, n){
     let max=-1;
     for(const it of items) if(it.round===round && hasPos(it) && it.pos>max) max=it.pos;
-    const bySaved=(setMax[round]>=0)? setMax[round] : -1;
-    const last=Math.max(max<0? -1 : Math.floor(max/SETN), bySaved);
-    const start=(last+1)*SETN;
+    const start = max<0 ? 0 : (Math.floor(max/SETN)+1)*SETN;
     const out=[];
     for(let i=0;i<n;i++) out.push(start+i);
     return out;
@@ -6880,11 +7037,8 @@ const Log=(function(){
   }
 
   async function load(){
-    await setMaxLoad();
     try{const r=await window.storage.get(key(),false);items=r&&r.value?JSON.parse(r.value):[];}
     catch(e){items=[];}
-    /* 예전 기록에도 '어디까지 썼는지' 를 채워 둡니다 */
-    for(const it of items) if(hasPos(it)) noteSet(it.round, it.pos);
     if(fixPos()) { try{ await save(); }catch(e){} }
     render();
     /* 저장한 번호를 다 읽은 뒤에 구매 안내를 봅니다.
@@ -6909,7 +7063,6 @@ const Log=(function(){
   }
   async function add(nums){
     const p=freePos(ROUND,1)[0];
-    noteSet(ROUND, p);
     const it={round:ROUND,nums:[...nums],ts:Date.now(),pos:p};
     items.push(it);
     render();await save();
@@ -6936,7 +7089,6 @@ const Log=(function(){
       if(gap>0) it.open=gap;                      // '?' 자리 수
       if(hows[i]) it.how=hows[i];
       if(buy) it.buy=true;                        // 실물 복권을 등록한 것
-      noteSet(round, it.pos);                     // 여기까지 세트를 썼습니다
       items.push(it); made.push(it);
     });
     cur=round; shown=PAGE;
@@ -6946,7 +7098,6 @@ const Log=(function(){
   /* 비워 둔 칸 한 곳에만 넣습니다 — 내 번호 QR의 '번호 넣기' */
   async function addAt(round, nums, pos){
     if(takenPos(round).has(pos)) pos=freePos(round,1)[0];
-    noteSet(round, pos);
     const it={round, nums:[...nums].sort((a,b)=>a-b), ts:Date.now(), memo:'', pos:pos};
     items.push(it);
     cur=round; render(); await save();
@@ -6973,11 +7124,7 @@ const Log=(function(){
   /* 기록을 통째로 비우면 '어디까지 세트를 썼는지' 도 함께 지웁니다.
      남겨 두면 기록이 하나도 없는데 새 저장이 7세트-A 부터 시작합니다.
      (세트 하나를 지우는 것과는 다릅니다 — 그때는 번호를 다시 쓰지 않습니다) */
-  async function clear(){
-    items=[];
-    setMax={}; setMaxSave();
-    render(); await save();
-  }
+  async function clear(){ items=[]; render(); await save(); }
   /* 카드 한 장만 지웁니다 — 저장 목록에서의 자리로 찾습니다.
      한꺼번에 저장하면 저장 시각이 같을 수 있어, 자리를 열쇠로 씁니다.
      되돌릴 수 있게 원래 자리(at)를 함께 돌려줍니다. */
@@ -7001,7 +7148,9 @@ const Log=(function(){
     if(!(i>=0) || i>=items.length) return null;
     const it=items[i];
     const gid=gidOf(it);
+    const round=it.round;
     items.splice(i,1);
+    compact(round);                                // 빈 세트를 없애고 번호를 당깁니다
     render(); await save();
     if(window.Check) Check.render();
     if(window.Ledger) Ledger.render();
@@ -7026,7 +7175,8 @@ const Log=(function(){
      ② moveToPos — 빈자리로 옮기기
         비어 있는 자리 하나로 그대로 들어갑니다.
         원래 있던 자리가 대신 비게 됩니다. 이때도 게임을 새로 만들지 않습니다. */
-  async function afterMove(){
+  async function afterMove(round){
+    if(round!=null) compact(round);                // 빈 세트를 없애고 번호를 당깁니다
     render(); await save();
     if(window.Check) Check.render();
     if(window.Ledger) Ledger.render();
@@ -7052,9 +7202,12 @@ const Log=(function(){
     let changed=false;
     seq.forEach((x,n)=>{ if((x.pos|0)!==slots[n]){ x.pos=slots[n]; changed=true; } });
     if(!changed) return null;
-    await afterMove();
+    await afterMove(me.round);
     return {gid:gid, pos:me.pos};
   }
+  /* 지금 놓으면 어느 자리에 들어가는지 — 끌고 있는 동안 색을 맞추는 데 씁니다.
+     실제로 옮기지는 않습니다. */
+  const landingPos=(gid, before, holePos)=>simPos(gid, before, holePos);
   /* 비어 있는 자리 하나로 옮깁니다 */
   async function moveToPos(gid, pos){
     pos=Number(pos);
@@ -7064,9 +7217,8 @@ const Log=(function(){
     if((me.pos|0)===pos) return null;
     if(takenPos(me.round).has(pos)) return null;   // 비어 있는 자리만
     me.pos=pos;
-    noteSet(me.round, pos);
-    await afterMove();
-    return {gid:gid, pos:pos};
+    await afterMove(me.round);
+    return {gid:gid, pos:me.pos};
   }
   /* 이름표로 지웁니다 — 목록이 그 사이에 다시 그려졌어도 같은 기록을 지웁니다 */
   async function removeGid(gid){
@@ -7174,8 +7326,7 @@ const Log=(function(){
                         && (it.nums||[]).every(n=>got.includes(n)));
   }
   return {load,add,addMany,addAt,saveGames,clear,removeAt,removeGid,putBack,render,
-          gid:gidOf,indexOfGid,nextSetPos,moveTo,moveToPos,
-          setMaxOf:r=>((setMax[r]>=0)? setMax[r] : -1),
+          gid:gidOf,indexOfGid,nextSetPos,moveTo,moveToPos,landingPos,
           editNum,
           fillSlot,openSlots,
           items:()=>items,inOrder,freePos,refit:fitCards,savedMsg};
@@ -7192,15 +7343,14 @@ const Check=(function(){
      내 기록과 당첨확인이 같은 회차를 가리키도록 맞춥니다. */
   /* 다음 회차는 추첨 전이라도 늘 볼 수 있습니다(토요일 추첨이 끝나면 자동으로 한 칸 올라갑니다) */
   function topRound(){ return ROUND; }
-  let cur=LAST(), moved=false;
-  function autoRound(){                  // 저장한 회차를 먼저 보여줍니다
+  /* 처음 보여 주는 회차 = 지금 사러 가는 회차(ROUND).
+     '마지막으로 추첨이 끝난 회차' 가 아닙니다. */
+  let cur=ROUND, moved=false;
+  function autoRound(){
+    /* 화살표로 다른 회차를 고르셨으면 그대로 둡니다 —
+       1초마다 도는 타이머가 과거 회차를 보는 중에 끌고 가면 안 됩니다. */
     if(moved) return;
-    let items=[];
-    try{ items=Log.items(); }catch(e){ return; }
-    if(!items.length) return;
-    const latest=items.slice().sort((a,b)=>b.ts-a.ts)[0];
-    const want=latest && latest.round;
-    if(want>=FIRST && want<=topRound()) cur=want;
+    if(ROUND>=FIRST && ROUND<=topRound() && cur!==ROUND) cur=ROUND;
   }
 
   /* 당첨번호는 오직 실제 데이터만 씁니다.
@@ -7494,10 +7644,20 @@ const Check=(function(){
   }
   setInterval(tickLeft, 1000);
 
-  /* 토요일 추첨이 끝나 회차가 올라가면 화면을 새로 그립니다 */
+  /* 토요일 추첨이 끝나 회차가 올라가면 화면을 새로 그립니다.
+     과거 회차를 보는 중이면 끌고 오지 않습니다. */
   document.addEventListener('round:new', ()=>{
-    if(!moved || cur>=LAST()) { cur=LAST(); }
+    if(!moved) cur=ROUND;
     render();
+  });
+  /* 앱으로 다시 들어왔을 때 — 날짜·회차를 다시 보고 진행 회차로 돌아갑니다.
+     (팝업을 닫는 것은 재진입이 아닙니다. 화면이 실제로 가려졌다 돌아올 때만입니다) */
+  document.addEventListener('app:resume', ()=>{
+    moved=false;
+    cur=ROUND;
+    render();
+    const sc=document.getElementById('check') && document.getElementById('check').parentElement;
+    if(sc) sc.scrollTop=0;
   });
 
   /* --- QR 스캔 (카메라로 용지를 읽습니다) --- */
@@ -8555,6 +8715,36 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.36.0', date:'2026-10-09', items:[
+      '그림에서 세트와 자리를 또렷이 읽지 못하면 조용히 옮기지 않고 \'확인 필요\'로 표시합니다. 눌러서 고치실 수 있고, 읽은 원문 줄도 함께 보여 드립니다.',
+      '잘린 사진이라 C·D부터 시작해도 A로 당기지 않습니다. 같은 자리가 겹쳐도 다른 자리로 옮기지 않고 겹쳤다고 알려 드립니다.',
+      '한글 판독을 못 했을 때 다 읽은 것처럼 보이지 않습니다. 안내와 [다시 읽기]를 드리고, 제목의 게임 수를 보고 없는 게임을 만들지 않습니다.',
+      '읽기가 끝나지 않던 문제를 고쳤습니다. 인식 자료를 못 받으면 기다리다 멈추지 않고 숫자 판독으로 넘어갑니다.',
+      '반자동을 [앱이 채우기]로 채워도 원래 반자동 계획을 따로 보관합니다. 그 줄은 \'수동 구매용\'으로 적고, 다시 열어도 번호가 바뀌지 않습니다.',
+      '번호 공·카드·제목·빈자리·버튼·아이콘·하단 탭에서 글자 선택과 복사 메뉴가 뜨지 않습니다. 입력칸 편집은 그대로입니다.',
+      'QR 간편 구매 단추를 바로 아래 점선 빈자리 카드와 같은 높이로 맞췄습니다.',
+      '명예의 전당 — 광고를 당첨 소식과 손익 집계 사이로 옮기고, 합계 세 칸만 배경을 조금 밝게, 제목과 금액을 더 크고 진하게 했습니다.' ]},
+    { v:'10.35.0', date:'2026-10-09', items:[
+      '추천 화면을 찍은 그림에서 세트·자리·방식까지 그대로 읽습니다. 20게임 4세트가 한 번에 들어옵니다.',
+      '그림 속 한글을 읽습니다. 「1세트-A」, 「[반자동]」, 「[자동선택]」 이 더 이상 버려지지 않습니다.',
+      '번호가 1~5개인 반자동 줄과 번호가 없는 자동 줄도 그림에서 읽습니다. 없는 번호를 만들지 않습니다.',
+      '반자동은 두 갈래로 고르실 수 있습니다. [앱이 채우기] 를 누르면 나머지를 골라 수동으로 사고, 그대로 두면 판매점 기기에서 반자동으로 고릅니다.',
+      '번호를 직접 고치는 칸과 [저장] 이 한 줄에 있고, 키보드가 올라와도 함께 보입니다.' ]},
+    { v:'10.34.0', date:'2026-10-09', items:[
+      '숫자를 한두 개만 적어 넣어도 읽습니다. 「1 23 45」 → 1 23 45 ? ? ? 로 만듭니다.',
+      '\'2수 고정 + 자동 4\' 같은 개수 설명을 게임 번호로 읽지 않습니다. 고정 + 자동은 반자동으로 봅니다.',
+      '세트명이 생략된 B·C 줄은 앞 줄의 세트를 이어받습니다. \'자동선택\' 한 줄도 자동 한 칸으로 읽습니다.',
+      '한 세트는 A·B·C·D·E 다섯 칸입니다. 여섯째 게임은 2세트-A 가 됩니다. 1-F 같은 표기를 쓰지 않습니다.',
+      '방식이 적혀 있지 않으면 임의로 반자동이라고 정하지 않고 비워 둡니다. 카드에서 직접 고르시면 됩니다.' ]},
+    { v:'10.33.0', date:'2026-10-09', items:[
+      '하단 탭이 화면 밖으로 밀려 잘리던 문제를 고쳤습니다. 홈 인디케이터 자리를 빼고 앱 크기를 정합니다.',
+      '앱을 열면 지금 진행 중인 회차가 먼저 나옵니다. 지난 회차에 저장해 둔 기록 때문에 끌려가지 않습니다.',
+      '번호를 먼저 고르고 반자동을 눌러도 고른 번호가 지워지지 않습니다. 비우는 것은 [지우기] 뿐입니다.',
+      '반자동으로 저장할 때 앱이 나머지 번호를 무작위로 만들지 않습니다. 고정수만 저장하고 나머지는 ? 로 둡니다.',
+      '구매용 QR에도 없는 번호를 지어 넣지 않습니다. 반자동 칸은 고정수를 보여 주고 QR에서는 뺍니다.' ]},
+    { v:'10.32.1', date:'2026-10-05', items:[
+      '공유 본문의 네잎클로버가 \'U0001F340\' 글자로 나가던 문제를 고쳤습니다.',
+      '공유 링크 미리보기 그림을 앱의 공유 안내 카드 디자인으로 바꿨습니다.' ]},
     { v:'10.32.0', date:'2026-10-05', items:[
       '게임 이동이 자리 맞바꾸기에서 카드 사이 끼워 넣기로 바뀌었습니다. 얇은 선이 뜨는 자리에 놓으면 그 자리에 들어갑니다.',
       '세트의 빈자리(A~E)를 점선 카드로 보여 줍니다. 빈자리로 바로 옮길 수 있고, 저장된 게임으로 만들지 않습니다.',
@@ -8822,7 +9012,7 @@ const Settings=(function(){
      navigator.share 가 text 와 url 을 이어 붙이는 앱이 있어서,
      본문에 주소를 또 적으면 링크가 두 번 붙습니다. */
   const SHARE_TEXT='평일 열심히 일한 당신,\n'+
-                   '주말에는 소액으로 작은 설렘을 느껴보세요. \U0001F340\n'+
+                   '주말에는 소액으로 작은 설렘을 느껴보세요. 🍀\n'+
                    '\n'+
                    '번호 추천부터 저장, 당첨 확인,\n'+
                    'QR을 제시하는 간편 구매까지.\n'+
@@ -9005,13 +9195,23 @@ const Manual=(function(){
       const n=+btn.dataset.n;
       btn.classList.toggle('sel',sel.includes(n));
     }
+    /* 반자동·자동은 남은 칸을 '?' 로 보여 줍니다 — 판매점에서 정해질 자리입니다.
+       수동은 지금까지대로 빈 칸으로 둡니다. */
+    const openMark = (mode==='half' || mode==='auto');
     [...slots.children].forEach((s,i)=>{
-      const n=sorted[i];
-      if(n===undefined){ s.textContent=''; s.style.background=''; s.classList.remove('on'); }
+      const n=(mode==='auto') ? undefined : sorted[i];
+      if(n===undefined){
+        s.textContent = openMark ? '?' : '';
+        s.style.background=''; s.classList.remove('on');
+        s.classList.toggle('qmark', openMark);
+      }
       else{ const b=bandOf(n); s.textContent=n; s.classList.add('on');
+        s.classList.remove('qmark');
         s.style.background='radial-gradient(circle at 32% 30%,'+b.hi+','+b.c+' 62%)'; }
     });
-    cnt.textContent=sel.length+' / 6';
+    cnt.textContent = (mode==='auto') ? ('0 / 6')
+                    : (mode==='half')  ? (sel.length+t('fixedOf',' 고정') )
+                    : (sel.length+' / 6');
     // 위쪽 선택과 용지에 적히는 회차 표기를 똑같이 맞춥니다
     const label=r=>{
       let d=0; try{ d=Log.items().filter(x=>x.round===r).length; }catch(e){}
@@ -9031,8 +9231,13 @@ const Manual=(function(){
     const pool=Array.from({length:45},(_,i)=>i+1).filter(n=>!sel.includes(n));
     while(sel.length<6) sel.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
   }
+  /* ── 방식만 바꿉니다 ──
+     고른 번호·순서·개수는 그대로 둡니다.
+     '자동 선택' 일 때는 번호판을 잠그지만 고른 번호는 기억해 두었다가,
+     '반자동' 이나 '수동' 으로 돌아오면 그대로 되살립니다.
+     번호를 비우는 것은 [지우기] 를 누르셨을 때뿐입니다. */
   function setMode(m){
-    mode=m; sel=[];
+    mode=m;
     document.querySelectorAll('#mMode .opt').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
     paint();
     if(navigator.vibrate) navigator.vibrate(10);
@@ -9067,7 +9272,14 @@ const Manual=(function(){
   document.querySelectorAll('#mMode .opt').forEach(b=>on(b,'click',()=>setMode(b.dataset.mode)));
 
   on(saveBtn,'click',async()=>{
-    if(sel.length<6) fill();                     // 자동·반자동은 여기서 채웁니다
+    /* ── 앱이 번호를 지어내지 않습니다 ──
+       전에는 여섯 개가 안 되면 여기서 무작위로 채웠습니다.
+       그래서 반자동으로 두 개만 골라도 저장하면 여섯 개짜리 '수동' 이 됐습니다.
+       지금은 고른 번호만 저장하고 나머지는 '?' 로 둡니다.
+       판매점에서 실제로 번호가 정해진 뒤, 그 복권 QR을 읽어 채웁니다.
+       무작위로 채우는 것은 [나머지 무작위로 채우기] 를 직접 누르셨을 때뿐입니다. */
+    const how = mode==='auto' ? 'auto' : (mode==='half' ? 'semi' : 'manual');
+    const nums = (mode==='auto') ? [] : [...sel].sort((a,b)=>a-b);
     paint();
     const r=+roundSel.value;
     sheet.classList.remove('on');
@@ -9075,12 +9287,17 @@ const Manual=(function(){
     /* 내 번호 QR의 빈 칸을 채우는 중이면 그 자리에, 아니면 평소대로 */
     let made;
     if(cb && Number.isFinite(slotWanted)){
-      const it=await Log.addAt(r, sel, slotWanted);
+      const it=await Log.addAt(r, nums, slotWanted);
+      if(it){
+        const gap=6-nums.length;
+        if(gap>0) it.open=gap; else delete it.open;
+        if(how) it.how=how;
+      }
       made=[it];
       try{ if(window.Settings) Settings.render(); }catch(e){}
       toast(Log.savedMsg(r, made));
     }else{
-      made=await Log.saveGames(r,[sel]);
+      made=await Log.saveGames(r,[nums],'',{hows:[how]});
     }
     if(cb) cb(made && made[0]);                  // 기다리던 곳에 방금 번호를 넘깁니다
   });
@@ -11829,6 +12046,9 @@ const TextIn=(function(){
       .replace(/\d{1,3}(?:,\d{3})+/g,' ')                              // 5,000
       .replace(/\d+\s*(?:원|년|월|일|회|등|명|건|％|%|위|점|주|차)/g,' ')
       .replace(/\d+\s*수\s*고정/g,' ')                                  // 2수 고정
+      .replace(/고정\s*\d+/g,' ')                                       // 고정 2
+      .replace(/(?:완전\s*)?자동\s*(?:선택)?\s*\d{1,2}(?![.\d])/g,' ')     // 자동 4 · 자동선택 2
+      .replace(/\d{1,2}\s*(?:개\s*)?자동/g,' ')                          // 4 자동 · 4개 자동
       .replace(/\d+\s*(?:세트|슬롯|게임|줄|행|장)/g,' ')                 // 1세트 · 5슬롯
       .replace(/[A-Za-z]\w*\.(?:png|jpg|jpeg|pdf|txt|csv|xlsx?|docx?)/gi,' ')  // 파일명
       .replace(/\d{6,}/g,' ')                                           // 일련번호
@@ -11848,20 +12068,80 @@ const TextIn=(function(){
      슬롯 이름의 '1' 도 게임 번호가 아닙니다 — 꼬리표를 떼고 난 뒤에만 숫자를 찾습니다. */
   const TAG=/^\s*[*\-•·]?\s*\[?\s*(\d{1,2})\s*세트\s*[-–—~]\s*([A-Ja-j])\s*\]?\s*[:：]\s*(.*)$/;
   const TAG2=/^\s*[*\-•·]?\s*\[?\s*(\d{1,2})\s*[-–—~]\s*([A-Ta-t])\s*\]?\s*[:：]\s*(.*)$/;
+  /* 쌍점 없이 적는 모양도 받습니다 —
+       1세트 A 13, 38 2수 고정 + 자동 4
+       B 18, 38 2수 고정 + 자동 4          (세트명은 앞 줄에서 이어받습니다)
+     글자는 A~E 까지만 자리 이름으로 봅니다. 한 세트는 A~E 다섯 칸이기 때문입니다. */
+  const TAG3=/^\s*[*\-•·]?\s*\[?\s*(?:(\d{1,2})\s*세트\s*\]?\s*)?[-–—~]?\s*([A-Ea-e])\s*\]?\s*[)\].:\-·]?\s+(\S.*)$/;
   const HOWTAG=/[\[(（]?\s*(완전\s*자동|자동\s*선택|반\s*자동|수\s*동|자동|수동)\s*[\])）]?\s*(?:[\/|·]\s*)?/;
 
-  /* 슬롯 글자 → 세트 번호 (A~E=1세트, F~J=2세트, K~O=3세트, P~T=4세트) */
-  const setOfLetter=ch=>Math.floor('ABCDEFGHIJKLMNOPQRST'.indexOf(ch)/5)+1;
+  /* 예전 글(1-A ~ 1-T)도 읽습니다 — 다섯 칸씩 끊어 세트로 옮깁니다.
+     A~E=1세트, F~J=2세트, K~O=3세트, P~T=4세트.
+     화면에 적는 칸 이름은 늘 A~E 다섯 가지뿐입니다. */
+  const LONG='ABCDEFGHIJKLMNOPQRST';
+  const setOfLetter=ch=>Math.floor(LONG.indexOf(ch)/5)+1;
+  const rowOfLetter=ch=>'ABCDE'[LONG.indexOf(ch)%5]||'A';
 
+  /* 그 줄에 게임 번호나 '?' 가 있는지 — 제목·설명문을 자리로 오해하지 않게 */
+  function hasNums(rest){
+    const body=wipe(String(rest||'').replace(HOWTAG,' '));
+    if(/[?？_]/.test(body)) return true;
+    let m; const re=/(?:^|[^\d])(\d{1,2})(?![\d])/g;
+    while((m=re.exec(body))){ const v=+m[1]; if(v>=1 && v<=45) return true; }
+    return /자동/.test(String(rest||''));            // 'A 자동선택' 같은 줄
+  }
+  /* 머리글에 적힌 방식 — 첫 번째로 적힌 것을 씁니다 */
+  function howIn(str){
+    const z=String(str||'');
+    const m=z.match(/완전\s*자동|자동\s*선택|반\s*자동|수\s*동|자동|수동/);
+    if(!m) return '';
+    if(/반\s*자동/.test(m[0])) return 'semi';
+    if(/수\s*동/.test(m[0]))   return 'manual';
+    return 'auto';
+  }
   function tagLines(raw){
     const out=[];
+    let lastSet=0, lastHow='';
     for(const line of raw){
+      /* 세트 머리글 — 다음 줄들이 이 세트와 방식을 이어받습니다.
+           [1세트] 2수 고정 반자동 5슬롯
+           ■ 2세트 (3수 고정)
+         머리글에는 자리 글자가 없습니다. 있으면 아래에서 자리로 읽힙니다. */
+      const hd=line.match(/^\s*[^\dA-Za-z]{0,3}\s*\[?\s*(\d{1,2})\s*세트\s*\]?\s*(.*)$/);
+      if(hd && !TAG.test(line) && !TAG2.test(line)){
+        /* '1세트 A 13, 38 …' 처럼 자리와 번호가 같은 줄에 있으면 머리글이 아닙니다 */
+        const t3=line.match(TAG3);
+        if(!(t3 && hasNums(t3[3]))){
+          lastSet=+hd[1];
+          lastHow = howIn(hd[2]||'') || '';
+          continue;
+        }
+      }
+
       let m=line.match(TAG);
-      if(m){ out.push({set:+m[1], row:m[2].toUpperCase(), rest:m[3], line:line}); continue; }
+      if(m){ lastSet=+m[1];
+             out.push({set:lastSet, row:m[2].toUpperCase(), rest:m[3], line:line,
+                       hint:lastHow}); continue; }
       m=line.match(TAG2);
       if(m){
         const ch=m[2].toUpperCase();
-        out.push({set:setOfLetter(ch), row:ch, rest:m[3], line:line, slip:+m[1]});
+        const st=setOfLetter(ch);
+        lastSet=st;
+        out.push({set:st, row:rowOfLetter(ch), rest:m[3], line:line, slip:+m[1],
+                  hint:lastHow});
+        continue;
+      }
+      m=line.match(TAG3);
+      if(m && hasNums(m[3])){
+        if(m[1]) lastSet=+m[1];
+        out.push({set:lastSet||1, row:m[2].toUpperCase(), rest:m[3], line:line,
+                  hint:lastHow});
+        continue;
+      }
+      /* '자동선택' 한 마디만 적힌 줄 — 자동 한 칸입니다.
+         자리 글자는 그 세트에서 다음 칸으로 이어 붙입니다. */
+      if(out.length && /^\s*[*\-•·]?\s*(?:완전\s*)?(?:반\s*)?자동\s*(?:선택)?\s*$/.test(line)){
+        out.push({set:lastSet||1, row:'', rest:line.trim(), line:line, hint:lastHow});
       }
     }
     return out;
@@ -11946,11 +12226,21 @@ const TextIn=(function(){
         hold=slot.map(()=>false);
         while(slot.length<6){ slot.push(null); hold.push(true); }
       }else{
-        if(uniq.length!==6){ bad.push({li, line, why: dupInLine? 'dup' : 'count', got:ns}); continue; }
+        /* ── 여섯 개가 아니어도 버리지 않습니다 ──
+           '1 23 45' 처럼 한두 개만 적어 넣는 경우가 많습니다.
+           적힌 번호는 그대로 두고 남은 칸은 '?' 로 둡니다.
+           없는 번호를 만들지 않고, 방식도 임의로 정하지 않습니다. */
+        if(dupInLine){ bad.push({li, line, why:'dup', got:ns}); continue; }
+        if(uniq.length>6){ bad.push({li, line, why:'many', got:ns}); continue; }
+        if(!uniq.length){ bad.push({li, line, why:'none', got:ns}); continue; }
         slot=uniq.slice().sort((a,b)=>a-b);
-        hold=[false,false,false,false,false,false];
+        hold=slot.map(()=>false);
+        while(slot.length<6){ slot.push(null); hold.push(true); }
       }
       games.push(slot); holds.push(hold);
+      /* 여섯 개가 다 적힌 줄만 '수동' 으로 봅니다.
+         모자란 줄은 수동인지 반자동인지 알 수 없으므로 비워 둡니다 —
+         임의로 반자동이라고 정하지 않습니다. */
       hows.push(lineHow || (slot.every(v=>v!=null) ? 'manual' : ''));
       sets.push(set||0);
       rowsAt.push(rc ? rc[1].toUpperCase() : '');
@@ -11966,13 +12256,31 @@ const TextIn=(function(){
   function byTag(tags, round){
     const games=[], hows=[], holds=[], sets=[], rowsAt=[], bad=[], part=[];
     let maxSet=0;
+    /* 자리 글자가 없는 줄은 그 세트의 다음 칸으로 이어 붙입니다 */
+    const used={};
+    for(const tg of tags){
+      if(tg.row){ (used[tg.set]=used[tg.set]||[]).push(tg.row); }
+      else{
+        const have=used[tg.set]=used[tg.set]||[];
+        const nx='ABCDE'.split('').find(c=>have.indexOf(c)<0) || 'E';
+        tg.row=nx; have.push(nx);
+      }
+    }
     for(const tg of tags){
       const ht=tg.rest.match(HOWTAG);
       let how = ht ? (/반\s*자동/.test(ht[1]) ? 'semi'
                     : /수\s*동/.test(ht[1])   ? 'manual' : 'auto')
                    : '';
-      /* 꼬리표를 떼고 남은 곳에서만 번호를 찾습니다 */
-      const body=wipe(tg.rest.replace(HOWTAG,' '));
+      /* '2수 고정 + 자동 4' 처럼 고정수와 자동이 함께 적힌 줄은 반자동입니다 */
+      if(/고정/.test(tg.rest) && /자동/.test(tg.rest)) how='semi';
+      else if(!how && /^\s*(?:완전\s*)?자동\s*(?:선택)?\s*$/.test(String(tg.rest).trim())) how='auto';
+      /* 줄에 안 적혀 있으면 세트 머리글에 적힌 방식을 이어받습니다 */
+      if(!how && tg.hint) how=tg.hint;
+      /* ── 지우는 차례가 중요합니다 ──
+         '2수 고정 + 자동 4' 에서 방식 낱말('자동')을 먼저 떼면
+         뒤에 붙은 개수 '4' 가 홀로 남아 게임 번호로 읽힙니다.
+         그래서 개수 설명을 먼저 지우고, 그다음에 방식 낱말을 뗍니다. */
+      const body=wipe(String(tg.rest)).replace(HOWTAG,' ');
       const qn=(body.match(/[?？_]/g)||[]).length;
       const ns=[], outs=[];
       let m2; const re=/(?:^|[^\d])(\d{1,2})(?![\d])/g;
@@ -12099,7 +12407,7 @@ const TextIn=(function(){
   on('txRead','click', read);
   on('closeTxin','click',()=>sheet.classList.remove('on'));
   on('ckText','click', open);
-  return {open, parse, read};
+  return {open, parse, read, toTicket};
 })();
 window.TextIn=TextIn;
 
@@ -12157,7 +12465,7 @@ const Fill=(function(){
     rows.forEach((r,gi)=>{
       const box=document.createElement('div'); box.className='fl-g';
       const hd=document.createElement('b');
-      hd.textContent=(AZF[gi]||('#'+(gi+1)));
+      hd.textContent=(Math.floor(gi/5)+1)+(isKO()?'세트-':'-')+(AZF[gi%5]||'E');
       box.appendChild(hd);
       const ns=document.createElement('div'); ns.className='fl-ns';
       r.game.forEach(n=>{
@@ -12197,7 +12505,7 @@ const Fill=(function(){
       listEl.appendChild(box);
     });
   }
-  const AZF='ABCDEFGHIJKLMNOPQRST';
+  const AZF='ABCDE';
 
   /* 사용자가 고른 대로 돌려줍니다. 닫으면 '전부 새로 저장' 입니다. */
   function ask(r, games){
@@ -12717,10 +13025,23 @@ const Slip=(function(){
   const filled=()=>slots.reduce((n,s)=>n+(s.k!=='0'?1:0),0);
   const inUse=it=>slots.some(s=>s.k==='m' && s.it===it);
   /* 칸 하나를 QR 글자로 — M은 수동, Q는 자동, 빈 칸은 QR에 넣지 않습니다 */
+  /* QR 한 칸 — 확인된 규격만 적습니다.
+       M:번호 12자리  수동
+       Q:            자동
+     '?' 가 남은 반자동은 적는 법을 실물로 확인하지 못했습니다.
+     번호를 지어내 채우지도, 없는 규격을 만들지도 않고 그 칸은 비웁니다. */
+  /* 고정수가 1~5개인 반자동만 QR에서 뺍니다.
+     번호가 하나도 없는 게임은 '자동' 이므로 Q: 로 그대로 담깁니다. */
+  const openGame=s=>!!(s && s.k==='m' && s.it && s.it.nums
+                       && s.it.nums.length>0 && s.it.nums.length<6);
   function one(s){
     if(!s || s.k==='0') return null;
     if(s.k==='a') return 'Q:';
-    return 'M:'+[...s.it.nums].sort((a,b)=>a-b).map(n=>String(n).padStart(2,'0')).join('');
+    if(openGame(s)) return null;                   // 반자동 — QR에 담지 않습니다
+    if(!s.it || !s.it.nums || !s.it.nums.length) return 'Q:';   // 저장해 둔 자동 게임
+    const ns=[...s.it.nums].sort((a,b)=>a-b);
+    if(ns.length!==6) return null;                 // 여섯 개가 아니면 적지 않습니다
+    return 'M:'+ns.map(n=>String(n).padStart(2,'0')).join('');
   }
   /* 저장된 번호를 읽어 칸을 다시 만듭니다.
      한 세트는 늘 다섯 칸이고, 번호가 없는 칸도 자리를 지킵니다.
@@ -12752,6 +13073,33 @@ const Slip=(function(){
     const body='MSG_ESLIP{'+(pg+1)+'0645}{('+es.length+','+es.join(',')+')}{}';
     return body + crc8(body) + '|';
   }
+  /* ── 반자동의 나머지를 앱이 고릅니다 ──
+     적어 두신 고정수는 그대로 두고, 빈 자리에만 1~45 중 겹치지 않는 수를 넣습니다.
+     여섯 개가 다 차면 그 게임은 수동으로 QR에 담깁니다 —
+     반자동을 QR에 적는 법은 실물로 확인하지 못했으므로 지어내지 않습니다. */
+  async function fillHalf(it){
+    if(!it) return;
+    const fixed=[...new Set((it.nums||[]).filter(n=>Number.isFinite(n)&&n>=1&&n<=45))];
+    const need=6-fixed.length;
+    if(need<=0) return;
+    const pool=[];
+    for(let n=1;n<=45;n++) if(fixed.indexOf(n)<0) pool.push(n);
+    const r=new Uint32Array(need);
+    try{ crypto.getRandomValues(r); }
+    catch(e){ for(let i=0;i<need;i++) r[i]=Math.floor(Math.random()*4294967295); }
+    const add=[];
+    for(let i=0;i<need;i++) add.push(pool.splice(r[i]%pool.length,1)[0]);
+    /* 원래 계획을 먼저 적어 둡니다 — 채운 뒤에도 잃지 않습니다.
+       이미 적어 둔 것이 있으면 덮어쓰지 않습니다 (처음 계획이 원본입니다). */
+    if(!it.plan) it.plan={how:(it.how||'semi'), nums:fixed.slice()};
+    let ok=false;
+    try{ ok=await Log.fillSlot(it, fixed.concat(add)); }catch(e){ ok=false; }
+    if(!ok){ delete it.plan;
+             toast(t('slipHalfNo','이 게임은 채울 수 없습니다')); return; }
+    toast(t('slipHalfDone','나머지를 앱이 골랐습니다. 이 게임은 수동으로 삽니다.'));
+    rebuild(); changed();
+  }
+
   /* 번호가 바뀌면 옛 QR을 바로 치우고, 새로 만든 뒤에 다시 보여줍니다 */
   function changed(){
     stale=true; paint();
@@ -12766,6 +13114,24 @@ const Slip=(function(){
     : t('slipAgain','다시 만들기');
   const AZ='ABCDE';
   const label=idx=>(Math.floor(idx/PER)+1)+'-'+AZ[idx%PER];
+  /* ── 복권에 찍힐 줄 ──
+     QR 에 담긴 게임이 A 부터 차례로 발매됩니다. 중간 칸을 빼면 그 뒤가 당겨집니다.
+       1-A 담김 → A      1-B 반자동(제외)      1-C 담김 → B
+     앱의 자리와 달라질 때만 적어 드립니다. 같은 자리면 적지 않습니다. */
+  function qrRowOf(sIdx, k){
+    const part=(pages()[sIdx]||[]);
+    const e=part[k];
+    if(!e || one(e)===null) return null;            // 담기지 않는 칸
+    let n=0;
+    for(let j=0;j<k;j++) if(one(part[j])!==null) n++;
+    const ch=AZ[n]||'';
+    if(!ch || ch===AZ[k%PER]) return null;          // 자리가 그대로면 적지 않습니다
+    const sp=document.createElement('span');
+    sp.className='slip-tag qrow';
+    sp.textContent=(isKO()? '복권 '+ch+'줄' : 'ticket '+ch);
+    sp.title=t('slipQrRowT','앞 칸이 빠져 복권에서는 이 줄로 발매됩니다');
+    return sp;
+  }
   const setCol=setColor, setDim=setSoft;          // 저장 목록과 같은 색을 씁니다
   function paint(){
     rebuild();
@@ -12781,7 +13147,8 @@ const Slip=(function(){
     pgEl.style.color='#101728';
     document.getElementById('slipPrev').disabled = page<=0;
     document.getElementById('slipNext').disabled = page>=pgs.length-1;
-    const nowReal=(pgs[page]||[]).filter(x=>x.k!=='0').length;
+    /* 금액은 이 QR에 실제로 담긴 게임만 셉니다 — 반자동 칸은 빠집니다 */
+    const nowReal=(pgs[page]||[]).filter(x=>x.k!=='0' && !openGame(x)).length;
     document.getElementById('slipAmt').textContent=money(nowReal*PRICE);
     document.getElementById('slipAutoN').textContent=autoN();
     document.getElementById('slipAutoM').disabled = autoN()<=0;
@@ -12859,10 +13226,47 @@ const Slip=(function(){
         const sq=document.createElement('span'); sq.className='sq';
         sq.textContent=label(idx);                       // 1-A · 1-B … 자리는 그대로입니다
         if(sIdx===page) sq.classList.add('now');
+        /* QR 에 담기는 차례 — 빠진 칸이 있으면 복권에 찍히는 줄이 당겨집니다 */
+        const qz=qrRowOf(sIdx, k);
         const ns=document.createElement('span'); ns.className='ns';
         if(gap){ ns.textContent=t('slipNone','번호 없음'); ns.classList.add('dimtx'); }
         else if(e.k==='a'){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
+        else if(!e.it.nums.length){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
+        else if(openGame(e)){
+          /* 고정수는 그대로 보여 드립니다 — 판매점 용지에 직접 표시하셔야 합니다 */
+          ns.textContent=e.it.nums.map(x=>String(x).padStart(2,'0')).join('  ')
+            + (isKO()? '  + 자동' : '  + auto');
+          b.classList.add('half');
+        }
         else ns.textContent=e.it.nums.map(x=>String(x).padStart(2,'0')).join('  ');
+        /* 반자동이었다가 앱이 채운 게임 — 이 QR 은 수동 구매용입니다 */
+        if(!gap && e.k==='m' && e.it && e.it.plan && !openGame(e)){
+          const pt=document.createElement('span'); pt.className='slip-tag plan';
+          pt.textContent=t('slipWasHalf','수동 구매용');
+          pt.title=t('slipWasHalfT','원래 반자동 계획')+' · '
+                  +(e.it.plan.nums||[]).map(x=>String(x).padStart(2,'0')).join(' ');
+          b.appendChild(bx); b.appendChild(sq); b.appendChild(ns); b.appendChild(pt);
+          const dl=document.createElement('button'); dl.type='button'; dl.className='slip-act';
+          dl.textContent=t('del','삭제');
+          dl.addEventListener('click',ev=>{ ev.stopPropagation(); drop(idx); });
+          b.appendChild(dl);
+          pick.appendChild(b);
+          return;
+        }
+        if(openGame(e)){
+          /* 그대로 두면 판매점 기기·용지에서 반자동으로 고릅니다 */
+          const tag=document.createElement('span'); tag.className='slip-tag';
+          tag.textContent=t('slipHalfOut','기기에서');
+          /* 누르면 나머지를 앱이 골라 드립니다 — 그 게임은 수동으로 삽니다 */
+          const fb=document.createElement('button'); fb.type='button';
+          fb.className='slip-act half';
+          fb.textContent=t('slipHalfFill','앱이 채우기');
+          fb.addEventListener('click',ev=>{ ev.stopPropagation(); fillHalf(e.it); });
+          b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
+          b.appendChild(tag); b.appendChild(fb);
+          pick.appendChild(b);
+          return;
+        }
         const act=document.createElement('button'); act.type='button'; act.className='slip-act';
         if(gap){
           act.classList.add('add'); act.textContent=t('slipFill','번호 넣기');
@@ -12871,7 +13275,9 @@ const Slip=(function(){
           act.textContent=t('del','삭제');
           act.addEventListener('click',ev=>{ ev.stopPropagation(); drop(idx); });
         }
-        b.appendChild(bx); b.appendChild(sq); b.appendChild(ns); b.appendChild(act);
+        b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
+        if(qz) b.appendChild(qz);
+        b.appendChild(act);
         pick.appendChild(b);
       });
     }
@@ -16821,6 +17227,8 @@ const Shot=(function(){
   function ocrDrop(){
     try{ if(ocrW && ocrW.terminate) ocrW.terminate(); }catch(e){}
     ocrW=null; ocrWBusy=null;
+    try{ if(ocrK && ocrK.terminate) ocrK.terminate(); }catch(e){}
+    ocrK=null; ocrKBusy=null;
   }
   async function ocrWorker(){
     if(ocrW) return ocrW;
@@ -16839,6 +17247,45 @@ const Shot=(function(){
       }catch(e){ return null; }
     })();
     return ocrWBusy;
+  }
+  /* 한글이 섞인 그림(추천 화면 캡처·메모)을 읽는 일꾼.
+     숫자만 읽는 일꾼과 따로 둡니다 — 묶어 둔 글자 범위가 서로 다르기 때문입니다.
+     쓸 일이 생겼을 때만 받아 옵니다. 받지 못하면 조용히 숫자만 읽던 길로 돌아갑니다. */
+  let ocrK=null, ocrKBusy=null;
+  /* 기다림에 시간을 묶습니다 — 돌아오지 않는 약속을 그대로 기다리지 않습니다 */
+  function within(ms, work){
+    return Promise.race([
+      work,
+      new Promise(res=>setTimeout(()=>res(undefined), ms))
+    ]);
+  }
+  const KO_WAIT=20000;                              // 한글 자료 한 번에 20초까지
+  async function ocrWorkerKo(){
+    if(ocrK) return ocrK;
+    if(ocrKBusy) return ocrKBusy;
+    ocrKBusy=(async()=>{
+      const T=await loadOCR();
+      if(!T || !T.createWorker) return null;
+      const base={};
+      if(OCRCFG.worker) base.workerPath=OCRCFG.worker;
+      if(OCRCFG.core)   base.corePath=OCRCFG.core;
+      /* 한글 인식 자료는 가벼운 쪽(1.5MB 안팎)을 먼저 받아 봅니다.
+         그 길이 막히면 tesseract.js 가 쓰는 기본 자리에서 받습니다.
+         둘 다 안 되면 null 을 돌려주고 숫자만 읽던 길로 조용히 돌아갑니다. */
+      const KOR='https://cdn.jsdelivr.net/npm/@tesseract.js-data/kor@1.0.0/4.0.0_best_int/';
+      const tries = OCRCFG.lang ? [OCRCFG.lang] : [KOR, null];
+      for(const lp of tries){
+        const opt=Object.assign({}, base);
+        if(lp) opt.langPath=lp;
+        try{
+          const w=await within(KO_WAIT, T.createWorker('kor',1,opt));
+          if(!w) continue;                      // 시간 안에 못 받았습니다
+          ocrK=w; return w;                     // 글자 범위를 묶지 않습니다
+        }catch(e){}
+      }
+      return null;
+    })();
+    return ocrKBusy;
   }
   async function ocrText(w, canvas, psm){
     try{
@@ -16927,6 +17374,7 @@ const Shot=(function(){
     const B=Ticket.linesOf(await ocrText(w, Ticket.sheetOf(flat,rows,true),  6));
     const games=[], sure=[], hows=[], asks=[];
     for(let i=0;i<rows.length;i++){
+      if(outOfTime()){ readCut=true; break; }
       const ops=[A[i]||[], B[i]||[]];
       let r=agree(ops), firm=false;
       if(!r.ok){                                 // 두 번으로 안 갈리면 그 줄만 다시 읽습니다
@@ -16983,22 +17431,41 @@ const Shot=(function(){
     if(b.why==='nofix') return isKO()? '반자동인데 고정수가 없습니다' : 'semi-auto without fixed numbers';
     return isKO()? '번호가 여섯 개가 아닙니다' : 'not six numbers';
   }
-  const AZ='ABCDEFGHIJKLMNOPQRST';
-  /* 원문에 '1-N' 처럼 슬롯 이름이 적혀 있으면 그 이름을 그대로 씁니다.
-     다만 '1세트-A · 2세트-A' 처럼 같은 글자가 되풀이되는 글에서는
-     이름이 겹쳐 버리므로, 그럴 때는 읽은 차례대로 A, B, C … 로 붙입니다. */
-  function ownNames(tk){
-    if(!tk) return null;
-    if(tk._own!==undefined) return tk._own;
-    const a=tk.rowsAt;
-    let ok = !!(a && a.length && a.length===(tk.games||[]).length
-                && a.every(x=>x) && new Set(a).size===a.length);
-    tk._own = ok ? a : null;
-    return tk._own;
+  const AZ='ABCDE';
+  /* ── 자리 이름 ──
+     한 세트는 A~E 다섯 칸입니다. 여섯째 게임은 2세트-A 가 됩니다.
+     원문에 세트와 칸이 적혀 있으면 그대로 쓰고,
+     적혀 있지 않으면 읽은 차례대로 다섯씩 끊어 붙입니다. */
+  function setRow(ti, ri){
+    const tk=many[ti];
+    if(!tk) return {set:1, row:'A'};
+    const sets=tk.sets||[], rows=tk.rowsAt||[];
+    const st=(sets[ri]>0) ? sets[ri] : 0;
+    let rw=String(rows[ri]||'').toUpperCase();
+    if(rw && AZ.indexOf(rw)<0) rw='';            // F 이후 글자는 쓰지 않습니다
+    if(st && rw) return {set:st, row:rw};
+    /* 원문에 없으면 차례대로 다섯씩 */
+    if(st){
+      /* 같은 세트 안에서 몇 번째인지 */
+      let k=0;
+      for(let j=0;j<ri;j++) if(((sets[j]>0)?sets[j]:0)===st) k++;
+      return {set:st, row:AZ[k%SETN]||'E'};
+    }
+    /* 원문에 세트가 없으면 읽은 차례대로 다섯씩 끊습니다.
+       사진 두 장을 한 번에 읽었을 때도 이름이 겹치지 않게,
+       앞 장들의 줄 수를 더해 이어서 셉니다
+       (저장될 때도 같은 차례로 들어갑니다). */
+    let base=0;
+    for(let j=0;j<ti;j++){
+      const o=many[j];
+      if(o && o.use!==false) base+=((o.games||[]).length);
+    }
+    const idx=base+ri;
+    return {set:Math.floor(idx/SETN)+1, row:AZ[idx%SETN]||'E'};
   }
   function slotName(ti, ri){
-    const own=ownNames(many[ti]);
-    return (ti+1)+'-'+((own && own[ri]) || AZ[ri] || ('#'+(ri+1)));
+    const a=setRow(ti, ri);
+    return a.set+(isKO()?'세트-':'-')+a.row;
   }
   const gameCount=n=>isKO()? (n+'게임') : (n+(n===1?' game':' games'));
   /* 그 자리가 '반자동이 일부러 비워 둔 자리' 인지 */
@@ -17114,9 +17581,17 @@ const Shot=(function(){
     const op=openSum();
     /* 이 화면에는 금액을 적지 않습니다 — 장수·슬롯 수·미정 개수만 봅니다.
        실제 구매 기록의 금액(명예의 전당)은 그대로 둡니다. */
+    /* 몇 게임이고 몇 세트인지 — 한 세트는 A~E 다섯 칸입니다.
+       여섯 게임이면 1세트-A~E + 2세트-A 이므로 '6게임 · 2세트' 입니다. */
+    let setN=0;
+    many.forEach((tk,ti)=>{
+      if(!tk.use) return;
+      (tk.games||[]).forEach((g,ri)=>{ const a=setRow(ti,ri); if(a.set>setN) setN=a.set; });
+    });
     if(sum) sum.textContent = isKO()
-      ? (papers+'장 · '+n+(op? '슬롯 (번호 미정 '+op+')' : '게임'))
-      : (papers+' · '+n+(op? ' slots ('+op+' open)' : ' games'));
+      ? (n+'게임 · '+setN+'세트'+(op? ' (번호 미정 '+op+')' : ''))
+      : (n+(n===1?' game':' games')+' · '+setN+(setN===1?' set':' sets')
+         +(op? ' ('+op+' open)' : ''));
     if(all) all.disabled = n===0;
     /* 실물 복권을 읽은 것이 하나도 없으면 '번호 저장' 입니다 — 구매 등록이 아닙니다 */
     if(all){
@@ -17153,7 +17628,7 @@ const Shot=(function(){
       nm.textContent=t('tkOne','복권')+' '+(ti+1);
       const sub=document.createElement('i');
       const subTxt=()=>(tk.src==='qr' && tk.round ? roundLabel(tk.round)+' · ' : '')
-                     + gameCount(fullGames(tk).length);
+                     + gameCount(slotRows(tk).length);
       sub.textContent=subTxt();
       const tag=document.createElement('em');
       tag.className='tk-tag'+(tk.src==='qr'?'':' warn');
@@ -17189,12 +17664,29 @@ const Shot=(function(){
            적혀 있지 않은 자료(사진·QR)는 저장 화면과 같은 규칙으로
            다섯 줄씩 묶습니다. 무조건 다섯씩 자르지 않는 이유는,
            세트마다 슬롯 수가 다른 글도 있기 때문입니다. */
-        const setN=((tk.sets && tk.sets[ri]) || (Math.floor(ri/SETN)+1)) - 1;
+        const setN=setRow(ti, ri).set - 1;
         row.style.borderLeftColor=setColor(setN);
         const rl=document.createElement('span'); rl.className='rl';
         rl.textContent=slotName(ti, ri);
         rl.style.color=setColor(setN);
+        /* 세트나 자리를 또렷이 읽지 못했으면 그대로 두지 않고 물어봅니다.
+           조용히 다른 자리로 옮기지 않습니다 — 눌러서 고치실 수 있습니다. */
+        const uq=(tk.unsure||[])[ri];
+        if(uq && (uq.set || uq.row)){
+          rl.classList.add('ask');
+          rl.setAttribute('role','button'); rl.tabIndex=0;
+          rl.title=t('slotAskT','세트와 자리를 확인해 주세요');
+          const openSlot=()=>{ ambQ=[{k:'slot', ti:ti, ri:ri}]; ambAt=0; ambPaint(); };
+          on(rl,'click',openSlot);
+          on(rl,'keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openSlot(); } });
+        }
         row.appendChild(rl);
+        /* 같은 자리가 겹쳤으면 겹친 채로 알려 드립니다 */
+        if(uq && uq.why==='dup'){
+          const d=document.createElement('span'); d.className='rl-dup';
+          d.textContent=t('slotDup','자리 겹침');
+          row.appendChild(d);
+        }
         const how=document.createElement('span');
         how.className='tk-how'+(tk.hows[ri]?'':' chk');
         /* 방식을 모르는 줄에 '확인 필요' 를 스무 번 적으면 글자만 빽빽해집니다.
@@ -17232,6 +17724,7 @@ const Shot=(function(){
             inp.value=inp.value.replace(/\D/g,'').slice(0,2);
             tk.games[ri][i]=inp.value?+inp.value:null;
             tk.sure[ri][i]=true;                   // 사람이 고친 값은 확실합니다
+            tk.edited=true;                        // 고치신 것이 있으면 다시 읽기로 덮지 않습니다
             /* 사람이 번호를 넣었으면 더 이상 '?' 자리가 아닙니다.
                지우면 다시 '?' 로 돌아갑니다 (반자동 줄이었을 때만). */
             if(tk.hold && tk.hold[ri]) tk.hold[ri][i] = !inp.value && !!tk.holds
@@ -17388,8 +17881,10 @@ const Shot=(function(){
     const ng=cl.n||2;
     const cnt=Object.create(null);
     let total=0;
+    if(outOfTime()){ readCut=true; return {v:null, ok:false, alts:[]}; }
     for(const useGray of [false,true])
       for(const psm of (ng===1 ? [10,8,13] : [8,13,7])){
+        if(outOfTime()){ readCut=true; break; }
         let txt='';
         try{ txt=await ocrText(w0, Ticket.cellCanvas(flat, cl, useGray, 1.4), psm); }catch(e){}
         const d=String(txt||'').replace(/\D/g,'');
@@ -17427,8 +17922,179 @@ const Shot=(function(){
     }
     return best>=5;
   }
+  /* ── 읽은 글자 바로잡기 ──
+     번호는 손대지 않습니다. 틀어진 머리글만 제 모양으로 돌립니다.
+       1ME-A: 03, 09, …        →  1세트-A: 03, 09, …
+       1 세 트 -8: 07, 13, …    →  1세트-B: 07, 13, …
+       4M[E-C: 13, 16, … [반자  →  4세트-C: 13, 16, … [반자동]
+       동]                        (줄 끝에서 끊긴 꼬리표를 이어 붙입니다)
+     자리 글자는 A~E 만 믿습니다. 흘려 읽은 글자는 버리고,
+     그 세트에서 아직 안 쓴 글자를 차례로 붙입니다. 화면에서 고칠 수 있습니다. */
+  function fixOcr(txt){
+    const src=String(txt||'').split(/[\r\n]+/);
+    /* ⓐ 줄 끝에서 끊긴 꼬리표를 다음 줄과 잇습니다 — 글자 보정입니다 */
+    const joined=[];
+    for(let i=0;i<src.length;i++){
+      let L=src[i];
+      while(/\[[^\]]*$/.test(L) && i+1<src.length && /^[^\[]{0,8}\]/.test(String(src[i+1]).trim())){
+        L=L.replace(/\s+$/,'')+String(src[++i]).trim();
+      }
+      joined.push(L);
+    }
+    /* ⓑ 한글 낱자 사이에 벌어진 빈칸을 모읍니다 — '세 트' → '세트'. 글자 보정입니다 */
+    const tight=joined.map(L=>String(L).replace(/([가-힣])[ \t]+(?=[가-힣])/g,'$1'));
+
+    /* ⓒ 머리글을 제 모양으로 —
+       여기서 하는 일은 '글자 모양 바로잡기' 뿐입니다.
+       세트 번호와 자리 글자는 읽힌 대로 둡니다.
+       잘린 사진이라 C·D 부터 시작할 수도 있고, 세트가 건너뛸 수도 있으므로
+       '새 세트는 A 로 시작한다'고 넘겨짚지 않습니다.
+       읽지 못한 자리는 빈자리를 빌려 쓰되 '확인 필요' 로 표시해 둡니다.
+       같은 자리가 겹쳐도 다른 자리로 옮기지 않습니다 — 겹친 채로 보여 드립니다. */
+    /* 모양이 닮아 흘려 읽히는 글자들 — 자리 글자는 A~E 뿐입니다 */
+    const LOOK={'&':'A','4':'A','@':'A',
+                '8':'B','ß':'B','3':'B',
+                'ㅇ':'C','○':'C','O':'C','Q':'C','G':'C',
+                '0':'D','Ｄ':'D','ㅁ':'D',
+                '6':'E','ㄷ':'E','Ｅ':'E','£':'E'};
+    const used={};
+    const marks=[];
+    const HEAD=/^(\s*)(\d{1,2})\s*([^\d\-–—~:：]{0,6})\s*[-–—~]\s*([^\s:：])?([^:：]{0,4})[:：]\s*/;
+    const out=tight.map(L=>{
+      const m=L.match(HEAD);
+      if(!m) return L;
+      const rest=L.slice(m[0].length);
+      if(!/\d/.test(rest) && !/자동|수동/.test(rest)) return L;
+      const set=+m[2];
+      const raw=String(m[4]||'').toUpperCase();
+      const tail=String(m[5]||'').trim();
+      let R='', how='';                        // how: 'read' 또렷 · 'char' 글자 보정 · '' 못 읽음
+      if(/^[A-E]$/.test(raw)){ R=raw; how = tail ? 'char' : 'read'; }
+      else if(LOOK[raw]){ R=LOOK[raw]; how='char'; }
+      const have=used[set]=used[set]||[];
+      let why='';
+      if(!R){
+        /* 자리를 못 읽었습니다 — 빈자리를 빌려 두고 확인을 받습니다 */
+        R='ABCDE'.split('').find(c=>have.indexOf(c)<0) || 'E';
+        why='row';
+      }else if(have.indexOf(R)>=0){
+        /* 같은 자리가 겹칩니다 — 옮기지 않고 겹친 채로 둡니다 */
+        why='dup';
+      }
+      have.push(R);
+      marks.push({set:set, row:R, setRead:true, rowRead:(how==='read') && why!=='dup',
+                  how:how, why:why, line:L});
+      return m[1]+set+'세트-'+R+': '+rest;
+    });
+    /* ⓔ 글자 보정으로 되돌린 자리는 바로 믿지 않습니다.
+       그 세트 안에서 읽은 차례대로 A→E 쪽으로 가고, 겹치지 않을 때만 확정합니다.
+       차례가 어긋나면 값은 그대로 두고 '확인 필요' 로 둡니다 — 옮기지 않습니다. */
+    (function(){
+      const bySet={};
+      marks.forEach((m,i)=>{ (bySet[m.set]=bySet[m.set]||[]).push(i); });
+      for(const k in bySet){
+        const idx=bySet[k];
+        const seq=idx.map(i=>'ABCDE'.indexOf(marks[i].row));
+        let okSeq = seq.every(v=>v>=0) && new Set(seq).size===seq.length;
+        for(let j=1; okSeq && j<seq.length; j++) if(seq[j]<=seq[j-1]) okSeq=false;
+        if(!okSeq) continue;
+        idx.forEach(i=>{
+          if(marks[i].how==='char' && marks[i].why!=='dup'){
+            marks[i].rowRead=true; if(marks[i].why==='row') marks[i].why='';
+          }
+        });
+      }
+    })();
+
+    /* ⓓ 세트 번호가 또렷한지는 '낱말이 흐렸는지'가 아니라 '번호 자체'로 봅니다.
+       글은 세트 번호가 커지는 차례로 적힙니다. 그래서
+         · 뒤에 더 작은 세트 번호가 나오거나      (1 1 1 14 1 2 …)
+         · 앞 줄보다 두 단계 넘게 뛰면            (1 → 5)
+       그 줄의 번호를 또렷하다고 보지 않고 '확인 필요' 로 둡니다.
+       값은 읽힌 그대로 두고, 옮기거나 덮어쓰지 않습니다. */
+    for(let i=0;i<marks.length;i++){
+      let odd=false;
+      for(let j=i+1;j<marks.length;j++) if(marks[j].set < marks[i].set){ odd=true; break; }
+      if(!odd && i>0 && marks[i].set > marks[i-1].set+1) odd=true;
+      if(odd){
+        marks[i].setRead=false;
+        if(!marks[i].why) marks[i].why='set';
+      }
+    }
+    return {text:out.join('\n'), marks:marks};
+  }
+
+  /* ── 글이 적힌 그림 읽기 ──
+     추천 화면 캡처처럼 '세트·자리·방식'이 글로 적힌 그림입니다.
+     한글까지 읽은 뒤, 글로 붙여넣었을 때와 똑같은 해석기(TextIn)에 넘깁니다.
+     읽는 규칙을 두 벌로 두지 않기 위해서입니다.
+     한글 일꾼을 못 받아 오면 null 을 돌려주고, 숫자만 읽던 길로 돌아갑니다. */
+  /* 한글 판독이 이번 사진에서 끝까지 됐는지 — 화면에 그대로 적기 위해 둡니다 */
+  let koFail=false, koTries=0;
+  const KO_MAX=3;                                   // 무한정 다시 받지 않습니다
+  async function readKorText(im){
+    if(!window.TextIn || !TextIn.parse || !TextIn.toTicket){ koFail=true; return null; }
+    if(koTries>=KO_MAX){ koFail=true; return null; }
+    koTries++;
+    const w=await ocrWorkerKo();
+    if(!w){ koFail=true; return null; }
+    const box=Ticket.trimEdges(im);
+    const k=Math.max(0.5, Math.min(2, 1400/box.w));
+    const c=Ticket.cvs(Math.max(1,Math.round(box.w*k)), Math.max(1,Math.round(box.h*k)));
+    const x=c.getContext('2d',{willReadFrequently:true});
+    x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+    x.imageSmoothingQuality='high';
+    x.drawImage(im, box.x,box.y,box.w,box.h, 0,0,c.width,c.height);
+    /* 바탕이 어두운 캡처는 밝기를 뒤집어야 글자가 보입니다 */
+    let d=null, dark=false;
+    try{
+      d=x.getImageData(0,0,c.width,c.height);
+      let sum=0,n=0;
+      for(let i=0;i<d.data.length;i+=40){ sum+=d.data[i]; n++; }
+      dark=(sum/Math.max(1,n))<110;
+      if(dark){
+        for(let i=0;i<d.data.length;i+=4){
+          d.data[i]=255-d.data[i]; d.data[i+1]=255-d.data[i+1]; d.data[i+2]=255-d.data[i+2];
+        }
+        x.putImageData(d,0,0);
+      }
+    }catch(e){}
+    let txt='';
+    try{
+      await w.setParameters({tessedit_pageseg_mode:'6'});
+      const r=await within(60000, w.recognize(c));
+      if(!r){ koFail=true; return null; }              // 시간 안에 못 읽었습니다
+      txt=(r && r.data && r.data.text) || '';
+    }catch(e){ koFail=true; return null; }
+    if(!txt.trim()){ koFail=true; return null; }
+    let now=0; try{ now=ROUND; }catch(e){}
+    let fx=null, p=null;
+    try{ fx=fixOcr(txt); p=TextIn.parse(fx.text, now); }catch(e){ koFail=true; return null; }
+    if(!p || !p.games || !p.games.length){ koFail=true; return null; }
+    const tk=TextIn.toTicket(p, now);
+    tk.src='text';
+    /* 그림에서 읽은 것은 늘 눈으로 한 번 보게 둡니다 */
+    tk.fromImage=true;
+    /* 읽은 원문을 그대로 들고 다닙니다 — 화면에서 다시 볼 수 있습니다 */
+    tk.raw=String(txt||'');
+    /* 줄마다 '세트·자리가 또렷했는지' 를 적어 둡니다.
+       줄 수가 맞을 때만 씁니다 — 어긋나면 아무것도 넘겨짚지 않습니다. */
+    koFail=false;                                    // 여기까지 왔으면 한글까지 읽었습니다
+    const mk=(fx && fx.marks) || [];
+    if(mk.length===p.games.length){
+      tk.unsure=mk.map(m=>({set:!m.setRead, row:!m.rowRead, why:m.why, line:m.line}));
+    }
+    return tk;
+  }
+
   let w0=null;
   async function readLoose(im, w){
+    if(outOfTime()){ readCut=true; return null; }
+    /* 글이 적힌 그림이면 여기서 끝납니다 — 세트·자리·방식까지 그대로 읽힙니다 */
+    try{
+      const ko=await readKorText(im);
+      if(ko) return ko;
+    }catch(e){}
     if(!w) return null;
     w0=w;
     /* 위아래 검은 띠(상태바·레터박스)를 먼저 잘라 냅니다.
@@ -17450,6 +18116,8 @@ const Shot=(function(){
     let games=[];
     if(tt){
       for(const bits of [tt.dark, tt.light]){
+        /* 시간 한도 — 밝은 쪽까지 다 보기 전에 넘기면 거기서 멈춥니다 */
+        if(outOfTime()){ readCut=true; break; }
         const ink=Ticket.inkCanvas(bits, tt.W, tt.H);
         const rows=Ticket.chipRows(bits, tt.W, tt.H);
         if(!rows.length) continue;
@@ -17458,9 +18126,10 @@ const Shot=(function(){
         const B=Ticket.linesOf(await ocrText(w, Ticket.sheetOf(flat,rows,true),  6));
         const out=[], sure=[], asks=[];
         for(let i=0;i<rows.length;i++){
+          if(outOfTime()){ readCut=true; break; }
           const ops=[A[i]||[], B[i]||[]];
           let r=agree(ops), firm=r.ok;
-          if(!r.ok){
+          if(!r.ok && !outOfTime()){
             for(const useGray of [false,true])
               for(const psm of [7,13]){
                 const one=Ticket.linesOf(await ocrText(w, Ticket.sheetOf(flat,rows,useGray,i), psm));
@@ -17506,6 +18175,7 @@ const Shot=(function(){
     try{
       await w.setParameters({tessedit_char_whitelist:'0123456789:/.,- '});
       for(const cv of (bright<110 ? [inv,c] : [c,inv])){
+        if(outOfTime()){ readCut=true; break; }
         const g2=parseNums(await ocrText(w, cv, 6)).filter(g=>!looksLikeGrid(g));
         if(g2.length){ games=g2; break; }
       }
@@ -17517,9 +18187,41 @@ const Shot=(function(){
             sure:games.map(()=>[true,true,true,true,true,true])};
   }
 
+  /* ── 한글 판독을 못 했으면 그렇게 적습니다 ──
+     숫자만 읽은 결과를 '다 읽었다'고 보여 주지 않습니다.
+     제목에 적힌 게임 수를 보고 없는 게임을 만들어 채우지도 않습니다. */
+  function koNote(){
+    const box=$maybe('shotKo'); if(!box) return;
+    const edited=many.some(tk=>tk && tk.edited);
+    /* 한 줄도 못 읽었을 때야말로 알려 드려야 합니다.
+       시간 한도에 걸려 중간에 멈춘 경우도 같습니다. */
+    const show = koFail || readCut;
+    box.hidden=!show;
+    const rb=$maybe('shotKoRetry');
+    /* 고치신 내용이 있으면 다시 읽기를 감춥니다 — 고친 것이 덮이면 안 됩니다 */
+    if(rb) rb.hidden = edited || koTries>=KO_MAX;
+  }
+  on('shotKoRetry','click', async()=>{
+    const rb=$maybe('shotKoRetry');
+    if(rb) rb.disabled=true;
+    try{ await readMany(); }catch(e){}
+    if(rb) rb.disabled=false;
+  });
+
   /* 받아 둔 사진을 차례로 읽습니다 */
+  /* ── 읽기 시간 한도 ──
+     한글 자료를 못 받았거나 사진이 아주 크면 칸을 하나씩 읽느라 오래 걸립니다.
+     기다림이 끝나지 않으면 쓸 수 없으므로, 한 번 읽을 때 쓰는 시간을 묶어 둡니다.
+     한도를 넘으면 그때까지 읽은 것만 남기고 멈춥니다 — 지어내지 않습니다. */
+  const READ_MS=90000;
+  let readUntil=0, readCut=false;
+  const outOfTime=()=> readUntil>0 && Date.now()>readUntil;
+
   async function readMany(){
     many=[]; paintMany();
+    koFail=false;
+    readUntil=Date.now()+READ_MS; readCut=false;
+    const kw=$maybe('shotKo'); if(kw) kw.hidden=true;
     let missed=0;                      // 종이는 보이는데 끝내 못 읽은 장 수
     let noPaper=0;                     // 복권으로 읽히지 않은 자리
     say(t('shotFinding','사진에서 복권을 찾는 중…'));
@@ -17574,10 +18276,13 @@ const Shot=(function(){
       if(many.length>qrOnes.length+ocrOnes.length || !ocrGames){
         /* 그림 쪽이 더 잘 읽었으면 그것을 씁니다 */
         let loose=many.filter(tk=>tk.src==='text');
-        let looseGames=0; loose.forEach(tk=>looseGames+=fullGames(tk).length);
+        /* 저장할 수 있는 줄로 셉니다 — 반자동·자동처럼 '?' 가 남은 줄도 한 게임입니다.
+           여섯 개가 다 찬 줄만 세면, 글로 읽은 20게임이 15게임으로 깎입니다. */
+        let looseGames=0; loose.forEach(tk=>looseGames+=slotRows(tk).length);
         if(looseGames>ocrGames){
           many=qrOnes.concat(loose);
           paintMany();
+          koNote();
           say(isKO()
             ? ('그림에서 '+manySum()+'게임을 찾았습니다. 회차를 고르고 번호를 확인해 주세요.')
             : (manySum()+' games found in the image — pick the round and check them'));
@@ -17589,9 +18294,13 @@ const Shot=(function(){
       }
     }
     paintMany();
+    koNote();
     const papers=many.length, games=manySum();
     if(!papers){
-      say(t('shotManyNo','사진에서 복권을 찾지 못했습니다. 복권이 모두 들어오게, 그림자 없이 다시 찍어주세요.'),true);
+      say(readCut
+        ? t('shotSlow','사진이 커서 읽기를 끝내지 못했습니다. 번호가 잘 보이게 잘라서 다시 올려 주세요.')
+        : t('shotManyNo','사진에서 복권을 찾지 못했습니다. 복권이 모두 들어오게, 그림자 없이 다시 찍어주세요.'),true);
+      koNote();
       return;
     }
     const weak=many.filter(x=>x.src!=='qr').length;
@@ -17801,7 +18510,8 @@ const Shot=(function(){
   const POS=['첫째','둘째','셋째','넷째','다섯째','여섯째'];
   function ambWhere(st){
     const row=slotName(st.ti, st.ri);
-    if(st.k==='how') return row;
+    /* 방식·자리를 묻는 자리는 칸 번호가 없습니다 — 줄 이름만 적습니다 */
+    if(st.k==='how' || st.k==='slot') return row;
     return isKO() ? (row+' · '+(POS[st.i]||(st.i+1))+' 칸')
                   : (row+' · cell '+(st.i+1));
   }
@@ -17830,11 +18540,61 @@ const Shot=(function(){
         b.textContent=isKO()? h[1] : h[2];
         on(b,'click',()=>{
           tk.hows[st.ri]=h[0];
+          tk.edited=true;
           ambAt++; paintMany(); ambPaint();
         });
         pick.appendChild(b);
       });
     }
+    const back=$maybe('ambBack'); if(back) back.hidden=false;
+  }
+
+  /* ── 세트·자리 고치기 ──
+     그림에서 또렷이 읽지 못한 줄만 들어옵니다.
+     읽은 원문 줄을 함께 보여 드려, 무엇을 보고 그렇게 읽었는지 알 수 있게 합니다. */
+  function ambSlotPaint(st){
+    const tk=many[st.ti];
+    const pic=$maybe('ambPic'), pick=$maybe('ambPick'), own=$maybe('ambOwn');
+    const ttl=$maybe('ambTitle'), hint=$maybe('ambHint');
+    if(ttl) ttl.textContent=t('slotAskT','세트와 자리를 확인해 주세요');
+    const uq=(tk.unsure||[])[st.ri]||{};
+    if(pic){
+      pic.innerHTML='';
+      const sp=document.createElement('span');
+      sp.style.cssText='font-size:12.5px;font-weight:700;color:#17203A;'
+                      +'letter-spacing:-.02em;line-height:1.5;word-break:break-all';
+      sp.textContent=uq.line ? String(uq.line).trim()
+                             : t('slotNoLine','읽은 원문 줄을 가져오지 못했습니다');
+      pic.appendChild(sp);
+    }
+    if(hint) hint.textContent = uq.why==='dup'
+      ? t('slotDupHint','같은 자리가 겹쳤습니다. 하나를 다른 자리로 옮겨 주세요.')
+      : uq.why==='row' ? t('slotRowHint','자리 글자를 읽지 못했습니다. 눌러서 골라 주세요.')
+      : t('slotSetHint','세트 번호가 또렷하지 않습니다. 아래에 넣어 주세요.');
+    if(pick){
+      pick.innerHTML='';
+      const nowRow=setRow(st.ti, st.ri).row;
+      'ABCDE'.split('').forEach(c=>{
+        const b=document.createElement('button');
+        b.className = (c===nowRow) ? '' : 'alt2';
+        b.textContent=c;
+        b.setAttribute('aria-label', t('slotPut','자리')+' '+c);
+        on(b,'click',()=>{
+          tk.rowsAt=tk.rowsAt||[]; tk.rowsAt[st.ri]=c; tk.edited=true;
+          if(tk.unsure && tk.unsure[st.ri]){ tk.unsure[st.ri].row=false;
+            if(tk.unsure[st.ri].why==='row'||tk.unsure[st.ri].why==='dup')
+              tk.unsure[st.ri].why=''; }
+          paintMany(); ambPaint();
+        });
+        pick.appendChild(b);
+      });
+    }
+    if(own){
+      own.hidden=false;
+      const z=$maybe('ambIn');
+      if(z){ z.value=String(setRow(st.ti, st.ri).set||''); }
+    }
+    const sh=$maybe('ambShoot'); if(sh) sh.hidden=true;
     const back=$maybe('ambBack'); if(back) back.hidden=false;
   }
 
@@ -17851,6 +18611,7 @@ const Shot=(function(){
     if(own) own.hidden=true;
     const inp=$maybe('ambIn'); if(inp) inp.value='';
     if(st.k==='how'){ ambHowPaint(st); return; }
+    if(st.k==='slot'){ ambSlotPaint(st); return; }
     const ttl=$maybe('ambTitle');
     if(ttl) ttl.textContent=t('ambTitle','이 숫자를 확인해 주세요');
     if(pic){
@@ -17903,12 +18664,22 @@ const Shot=(function(){
 
   function ambTake(v){
     const st=ambQ[ambAt]; if(!st) return;
+    if(st.k==='slot'){
+      /* 세트 번호를 고칩니다 — 번호 칸이 아닙니다 */
+      if(!(v>=1 && v<=99)){ toast(t('slotRange','세트 번호는 1부터 99까지입니다')); return; }
+      const tk=many[st.ti]; if(!tk) return;
+      tk.sets=tk.sets||[]; tk.sets[st.ri]=v; tk.edited=true;
+      if(tk.unsure && tk.unsure[st.ri]) tk.unsure[st.ri].set=false;
+      ambAt++; paintMany(); ambPaint();
+      return;
+    }
     if(!(v>=1 && v<=45)){ toast(t('ambRange','1부터 45까지 넣어주세요')); return; }
     const tk=many[st.ti]; if(!tk) return;
     const row=tk.games[st.ri]||[];
     const dup=row.some((z,j)=>j!==st.i && z===v);
     tk.games[st.ri][st.i]=v;
     tk.sure[st.ri][st.i]=true;                 // 사용자가 고른 값만 확정입니다
+    tk.edited=true;
     /* 한 게임에 같은 번호는 들어갈 수 없습니다. 막지는 않고 알려만 드립니다 —
        옆 칸을 고치는 중일 수도 있기 때문입니다. 끝까지 겹쳐 있으면 저장되지 않습니다. */
     if(dup) toast(isKO()? (v+'번이 이 게임에 이미 있습니다')
@@ -17946,6 +18717,31 @@ const Shot=(function(){
   on('ambLater','click', ambLater);
   on('ambClose','click', ()=>{ const b=$maybe('ambBack'); if(b) b.hidden=true; paintMany(); });
   on('ambInOk','click', ()=>{ const z=$maybe('ambIn'); ambTake(z? +z.value : 0); });
+  /* ── 키보드가 올라와도 입력칸과 [저장] 이 함께 보이게 ──
+     iPhone 에서 키보드가 열리면 화면에 보이는 높이만 줄고
+     화면 전체에 붙여 둔 팝업은 그대로 있어, 아래쪽이 키보드에 가립니다.
+     보이는 높이에 맞춰 팝업을 올리고, 짧아지면 위에서부터 보여 줍니다. */
+  (function(){
+    const vv=window.visualViewport; if(!vv) return;
+    function fitDlg(){
+      document.querySelectorAll('.dly-back').forEach(bk=>{
+        if(bk.hidden) return;
+        bk.style.top=(vv.offsetTop||0)+'px';
+        bk.style.bottom='auto';
+        bk.style.height=vv.height+'px';
+        bk.style.alignItems = (vv.height<560) ? 'flex-start' : 'center';
+      });
+    }
+    vv.addEventListener('resize', fitDlg);
+    vv.addEventListener('scroll', fitDlg);
+    document.addEventListener('focusin', e=>{
+      setTimeout(()=>{ fitDlg();
+        try{ if(e.target && e.target.closest('.dly'))
+               e.target.scrollIntoView({block:'center'}); }catch(x){}
+      }, 80);
+    });
+    document.addEventListener('focusout', ()=>setTimeout(fitDlg,140));
+  })();
   on('ambIn','input', ()=>{ const z=$maybe('ambIn');
     if(z) z.value=z.value.replace(/\D/g,'').slice(0,2); });
   on('ambIn','keydown', e=>{ if(e.key==='Enter'){ e.preventDefault();
@@ -17962,7 +18758,7 @@ const Shot=(function(){
      알려만 드릴 것(방식 모름·확인 전 칸)은 한 번 여쭙고 넘어갑니다. */
   function preflight(){
     const stop=[], warn=[];
-    let slots=0, open=0, rounds=new Set();
+    let slots=0, open=0, noHow=0, rounds=new Set();
     many.forEach((tk,ti)=>{
       if(!tk.use) return;
       const who=t('tkOne','복권')+' '+(ti+1)+' ';
@@ -17985,11 +18781,12 @@ const Shot=(function(){
         }
         if(miss){ stop.push(where+' '+t('pfMiss','아직 못 읽은 칸이 ')+miss+t('pfMiss2','개 있습니다')); return; }
         slots++; open+=q;
-        if(q && !(tk.hows&&tk.hows[ri])) warn.push(where+' '+t('pfNoHow','구매 방식을 모릅니다'));
+        /* 방식을 모르는 것은 막을 일이 아닙니다 — 적어만 둡니다 */
+        if(q && !(tk.hows&&tk.hows[ri])) noHow++;
       });
     });
     try{ const left=ambCount(); if(left) warn.push(left+t('pfUnsure','칸이 아직 확인 전입니다')); }catch(e){}
-    return {stop, warn, slots, open, rounds:[...rounds]};
+    return {stop, warn, slots, open, noHow, rounds:[...rounds]};
   }
 
   async function saveAll(){
@@ -18026,8 +18823,11 @@ const Shot=(function(){
          '?' 자리는 숫자로 만들지 않고, 비어 있다는 사실만 넘깁니다. */
       slotRows(tk).forEach(ri=>{
         b.games.push((tk.games[ri]||[]).slice());
-        b.hows.push((tk.hows&&tk.hows[ri]) || (rowHeld(tk,ri)===6 ? 'auto'
-                                            : rowHeld(tk,ri) ? 'semi' : ''));
+        /* ── 방식을 짐작하지 않습니다 ──
+           전에는 '?' 가 남아 있으면 반자동이라고 정했습니다.
+           그런데 '1 23 45' 처럼 번호만 적어 넣은 줄도 '?' 가 남습니다.
+           적혀 있지 않은 방식은 비워 두고, 카드에서 직접 고르시게 합니다. */
+        b.hows.push((tk.hows&&tk.hows[ri]) || '');
       });
     }
     let total=0; byRound.forEach(v=>total+=v.games.length);
@@ -18203,7 +19003,8 @@ const Shot=(function(){
   const omrParts={omrGray, omrPaper, omrCells, omrGroup, omrMed, omrInk, omrRead,
                   omrPanels, omrSeven, omrOne, omrRead5};
   return {open, intake, parseNums, readFrom, omr:omrParts, parseQR:gamesFromQR,
-          readLoose:async im=>readLoose(im, await ocrWorker())};
+          readLoose:async im=>readLoose(im, await ocrWorker()),
+          fixOcr:fixOcr, dbgMany:()=>many};
 })();
 window.Shot=Shot;
 
@@ -22300,6 +23101,7 @@ const I18N=(function(){
       tkUse:'Include in my purchases',
       howManual:'manual',
       howSemi:'semi-auto',
+      fixedOf:' fixed',
       scanAgainB:'Register it anyway',
       scanSaveFail:'Could not save. Please tap again.',
       srcOfficial:'Official (Dong Haeng Lottery)', srcNews:'Cross-checked in the news',
@@ -22539,7 +23341,7 @@ const I18N=(function(){
       setTitle:'Settings',
       sexF:'F',
       sexM:'M',
-      shLine1:'You worked hard all week —<br>treat your weekend to a small thrill. \U0001F340',
+      shLine1:'You worked hard all week —<br>treat your weekend to a small thrill. 🍀',
       shLine2:'Pick numbers, save them, check the draw,<br>'
              +'and buy by showing a QR code.<br>Come along with SATURDAY 645.',
       shSign:'— Andrew Park, developer',
@@ -22752,6 +23554,7 @@ const I18N=(function(){
       mapOffT:'Could not load the map', mapOffB:'Try again',
       mapOffS:'Please check your connection.<br>The shop list and directions still work.',
       slipRedo:'Updating QR', slipLive:'QR live', slipNone:'Empty', slipFill:'Add numbers',
+      slipHalfOut:'semi-auto · not in QR',
       more:'Show more', manualBtn:'Enter numbers myself',
       // 직접 입력
       manualTitle:'Enter numbers', clear:'Clear', saveBtn:'Save',
@@ -23227,7 +24030,12 @@ window.isOpen=isOpen; window.openOf=openOf;
    CSS 만으로는 '이미 생긴 선택' 이 남아 있을 수 있어, 이벤트로도 한 번 더 막습니다.
    입력칸 안에서 일어난 일은 그대로 둡니다 — 붙여넣기·편집을 지켜야 합니다. */
 (function(){
-  const GUARD='#npBack,#spBack,#v-check .card,#v-log .card';
+  /* CSS 가 놓치는 '이미 생긴 선택' 까지 거두는 자리 — 위 CSS 와 같은 범위입니다.
+     화면 전체(body)에 걸지 않습니다. 입력칸은 아래에서 먼저 빠져나갑니다. */
+  const GUARD='#npBack,#spBack,#ambBack,.dly,'
+             +'#v-check .card,#v-log .card,.card,'
+             +'nav,button,.set-head,.sheet-head,.round-nav,.entry3,.hall,'
+             +'.slip-row,.shot-row,.qrline,.pk-head,.set-title,.opt';
   const inInput=t=>!!(t && t.closest && t.closest('input,textarea,[contenteditable="true"]'));
   const inGuard=t=>!!(t && t.closest && t.closest(GUARD));
   document.addEventListener('selectstart',e=>{
@@ -23572,8 +24380,19 @@ const Tap=(function(){
       vv ? vv.height : Infinity
     );
     if(!isFinite(w)||!isFinite(h)||w<=0||h<=0) return;
+    /* ── 안전영역을 빼고 잽니다 ──
+       body 의 padding 이 홈 인디케이터·노치 자리를 비워 두고 있습니다.
+       그 자리를 빼지 않고 크기를 정하면 앱이 칸보다 커져서
+       위아래로 삐져나가고, 맨 아래 탭이 잘립니다. */
+    let padY=0;
+    try{
+      const bs=getComputedStyle(document.body);
+      padY=(parseFloat(bs.paddingTop)||0)+(parseFloat(bs.paddingBottom)||0);
+    }catch(e){ padY=0; }
+    const room=h-padY;
+    if(!(room>0)) return;
     // 확대는 하지 않고, 아래가 잘리지 않도록 여유를 둡니다
-    const k=Math.min(w/BASE_W, (h-8)/BASE_H, 1);
+    const k=Math.min(w/BASE_W, (room-8)/BASE_H, 1);
     lastK=k;
     phone.style.setProperty('--k', k.toFixed(4));
     phone.style.setProperty('--kb','0px');         // 키보드가 닫혔으니 원래대로
@@ -23593,6 +24412,11 @@ const Tap=(function(){
   document.addEventListener('focusin',()=>{ setTimeout(kbSpace,60); setTimeout(kbSpace,260); });
   document.addEventListener('focusout',()=>{ setTimeout(()=>{ kbSpace(); fit(); },60);
                                              setTimeout(()=>{ kbSpace(); fit(); },300); });
+  /* 화면 전환·앱 복귀·홈 화면에서 되돌아올 때도 다시 잽니다 —
+     안전영역이나 주소창 높이가 그 사이에 달라질 수 있습니다. */
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(fit,60); });
+  window.addEventListener('pageshow',()=>setTimeout(fit,60));
+  window.addEventListener('focus',()=>setTimeout(fit,60));
   // 레이아웃이 늦게 잡히는 환경 대비
   [60,200,600,1200].forEach(ms=>setTimeout(fit,ms));
   try{ new ResizeObserver(fit).observe(document.documentElement); }catch(e){}
@@ -23872,40 +24696,51 @@ window.SwipeDel=(function(){
    ■ 조작 구분
    · 번호 공을 길게 누르면 — 그 칸의 번호를 고칩니다 (SavedPick).
    · 카드의 제목이나 빈 공간을 0.5초 이상 길게 누르면 — 게임 전체를 듭니다.
-   공·'?'·단추·입력칸에서 시작한 누름은 여기서 아예 받지 않으므로
-   두 동작이 겹치지 않습니다.
+   공·'?'·단추·입력칸에서 시작한 누름은 여기서 아예 받지 않습니다.
+
+   ■ 드는 순간
+   카드가 흐름에서 빠져나와 90% 크기로 줄고, 손가락보다 조금 위에 뜹니다.
+   그래서 손가락 아래에 '들어갈 자리' 가 가려지지 않습니다.
+
+   ■ 들어갈 자리
+   낮은 높이의 반투명 빈 칸을 목록 사이에 끼워 넣습니다.
+   위·아래 카드가 부드럽게 벌어지며 '여기에 들어간다' 가 보입니다.
+   테두리 색은 그 자리가 속한 세트 색입니다.
+   한 번에 한 곳만 보여 주고, 자리가 바뀌면 그쪽으로 자연스럽게 옮깁니다.
+   빈자리(점선 카드) 위에 올리면 그 카드를 강조해 '그 자리로 간다' 를 알립니다.
+
+   ■ 자리가 흔들리지 않게
+   들어갈 자리를 셈할 때는 '빈 칸을 넣기 전의 배치' 를 기준으로 씁니다.
+   빈 칸이 들어가면 아래 카드들이 밀리는데, 그 밀린 위치로 다시 세면
+   자리가 왔다 갔다 합니다. 그래서 들어 올린 순간의 배치를 한 번만 재 두고
+   그 값으로만 셈합니다.
 
    ■ 세로 스크롤·왼쪽 밀기와 겹치지 않게
    0.5초를 기다리는 동안 손가락이 10px 넘게 움직이면 포기합니다.
-   그래서 스크롤이나 밀기를 시작한 손가락은 절대 들어 올리지 않습니다.
-   들어 올린 뒤에는 touchmove 를 preventDefault 로 막아 화면이 따라
-   스크롤되지 않게 하고, 밀기(SwipeDel)도 그동안 쉬게 합니다.
+   들어 올린 뒤에는 touchmove 를 막아 화면이 따라 스크롤되지 않게 하고,
+   밀기(SwipeDel)도 그동안 쉽니다.
    손가락이 둘이 되면(확대) 어디에 닿든 대기·이동을 모두 접습니다.
 
-   ■ 놓는 곳에 따라 두 가지
-   · 카드 사이 — 얇은 선이 뜨는 자리에 끼워 넣습니다.
-     쓰고 있는 자리는 그대로 두고 사이에 있던 게임들만 한 칸씩 밀립니다.
-     맞교환이 아니므로 반드시 다른 카드와 짝지을 필요가 없습니다.
-   · 빈자리(점선 카드) — 그 자리로 그대로 들어갑니다.
-     원래 자리가 대신 비게 됩니다.
-   어느 쪽도 빈 게임을 새로 만들지 않습니다. 같은 회차 안에서만 옮깁니다.
-
-   ■ 그 밖
-   화면 위·아래 가장자리에서는 목록이 저절로 스크롤되고,
-   스크롤되는 동안에도 끼워 넣을 자리를 계속 다시 셉니다.
-   손을 떼는 순간의 자리로 마지막 확인을 합니다.
-   취소·화면 이탈·카드 밖에서 손 떼기 뒤에는 반드시 정리합니다.
-   놓으면 바로 저장합니다 — 안내문·팝업·실행 취소·완료 단추는 없습니다. */
+   ■ 놓을 때
+   그 빈 칸으로 카드가 짧고 부드럽게 내려앉은 뒤 자리가 바뀝니다.
+   취소하면 원래 자리로 되돌아갑니다.
+   안내 문구·단추·팝업은 없습니다. 바로 저장합니다.
+   번호·'?'·방식·구매 표시·식별값은 함께 옮겨지고,
+   세트명·A~E·세트 색상·구매용 QR 은 최종 자리에 맞춰 갱신됩니다. */
 window.DragSwap=(function(){
   const HOLD=500;                                  // 0.5초
   const MOVE=10;                                   // 이만큼 움직이면 들기 포기
   const EDGE=56;                                   // 가장자리 자동 스크롤 범위
   const SPEED=14;                                  // 한 번에 스크롤하는 양
+  const UP=30;                                     // 손가락보다 이만큼 위에 띄웁니다
+  const SHRINK=0.90;                               // 들고 있는 동안의 크기
 
   let card=null, timer=null, id=null, sx=0, sy=0, dy=0;
   let sc=null, raf=0, edge=0, armed=null, dragging=false;
-  let host=null, line=null, hole=null, before=null;
-  let lastX=0, lastY=0;
+  let host=null, slot=null, hole=null, before=null;
+  let snap=[], gap=8, scroll0=0, lastX=0, lastY=0;
+  /* 들기 전 모습 — 취소하면 이대로 되돌립니다 */
+  let was=null, shown=-2;
 
   const scale=()=>{
     const ph=document.querySelector('.phone');
@@ -23919,37 +24754,70 @@ window.DragSwap=(function(){
       p=p.parentElement; }
     return null;
   };
+  /* 손끝의 세로 자리를 '목록 안에서의 자리' 로 바꿉니다 */
+  const contentY=y=>{
+    if(!host) return 0;
+    return (y - host.getBoundingClientRect().top)/scale();
+  };
 
   function stopScroll(){ if(raf){ cancelAnimationFrame(raf); raf=0; } }
   function autoScroll(){
     raf=0;
     if(!dragging || !sc || !edge) return;
     sc.scrollTop += edge*SPEED;
-    aim(lastX, lastY);                             // 스크롤됐으니 자리를 다시 셉니다
+    lay();                                         // 목록이 움직였으니 카드도 따라갑니다
+    aim(lastX, lastY);                             // 들어갈 자리도 다시 셉니다
     raf=requestAnimationFrame(autoScroll);
   }
 
   function lay(){
     if(!card) return;
-    card.style.transform='translateY('+(dy/scale()).toFixed(1)+'px) scale(1.03)';
+    const k=scale();
+    const sl=sc ? (sc.scrollTop - scroll0) : 0;
+    card.style.transform='translateY('+((dy/k) - sl - UP).toFixed(1)+'px) scale('+SHRINK+')';
   }
-  function home(){
-    if(!card) return;
-    const c=card;
-    c.classList.add('ease');
-    c.style.transform='translateY(0px) scale(1)';
-    setTimeout(()=>{ c.classList.remove('lift','ease'); c.style.transform=''; }, 200);
+
+  /* 위·아래 카드가 부드럽게 벌어지도록 — 옮기기 전후 자리를 재서 되감습니다 */
+  function smooth(run){
+    const els=snap.map(s=>s.el).filter(e=>e && e.isConnected);
+    const was=els.map(e=>e.getBoundingClientRect().top);
+    run();
+    const now=els.map(e=>e.getBoundingClientRect().top);
+    const k=scale();
+    els.forEach((e,i)=>{
+      const d=(was[i]-now[i])/k;
+      if(!d) return;
+      e.style.transition='none';
+      e.style.transform='translateY('+d.toFixed(1)+'px)';
+    });
+    requestAnimationFrame(()=>{
+      els.forEach(e=>{
+        e.style.transition='transform .16s cubic-bezier(.22,.8,.26,1)';
+        e.style.transform='';
+      });
+    });
+  }
+  function clearSmooth(){
+    snap.forEach(s=>{ if(s.el){ s.el.style.transition=''; s.el.style.transform=''; } });
+  }
+
+  function dropSlot(){
+    if(slot && slot.parentElement) slot.parentElement.removeChild(slot);
+    slot=null;
   }
   function clearMarks(){
     if(hole){ hole.classList.remove('dropat'); hole=null; }
-    if(line && line.parentElement) line.parentElement.removeChild(line);
-    line=null; before=null;
+    dropSlot(); before=null;
   }
   function tidy(){
-    stopScroll(); clearMarks();
+    stopScroll(); clearMarks(); clearSmooth();
+    if(card){ card.classList.remove('lift','ease');
+              card.style.transform=''; card.style.top=''; card.style.height='';
+              card.style.outlineColor=''; }
+    was=null; shown=-2;
     if(host) host.classList.remove('dragging-host');
     document.body.classList.remove('dragswap');
-    dragging=false; card=null; id=null; sc=null; armed=null; host=null; edge=0;
+    dragging=false; card=null; id=null; sc=null; armed=null; host=null; edge=0; snap=[];
   }
 
   function begin(c, pid){
@@ -23957,71 +24825,133 @@ window.DragSwap=(function(){
     card=c; id=pid; dy=0; dragging=true;
     host=c.parentElement;
     sc=scrollerOf(c);
+    scroll0 = sc ? sc.scrollTop : 0;
     if(host) host.classList.add('dragging-host');
     document.body.classList.add('dragswap');
     try{ if(window.clearPick) clearPick(); }catch(e){}
+
+    /* ① 지금 배치를 한 번만 재 둡니다 — 들고 있는 카드를 뺀 배치입니다.
+          이 값으로만 '들어갈 자리' 를 셉니다. 빈 칸이 들어가 아래가 밀려도
+          이 기준은 변하지 않으므로 자리가 흔들리지 않습니다. */
+    const cs=getComputedStyle(host);
+    gap=parseFloat(cs.rowGap||cs.gap||8)||8;
+    const all=[...host.children].filter(el=>el.classList && el.classList.contains('card'));
+    const at=all.indexOf(c);
+    const dh=c.offsetHeight+gap;
+    snap=all.filter(el=>el!==c).map(el=>({
+      el, gid:el.dataset.gid||null, hole:(el.dataset.hole!=null),
+      top: el.offsetTop - (all.indexOf(el)>at ? dh : 0),
+      h: el.offsetHeight }));
+
+    /* 들기 전 모습을 적어 둡니다 — 취소하면 이대로 되돌립니다 */
+    const sq0=c.querySelector('.seq');
+    was={ text: sq0? sq0.textContent : '',
+          color: sq0? sq0.style.color : '',
+          bg: sq0? sq0.style.background : '',
+          border: c.style.borderColor || '' };
+    shown=-2;
+
+    /* ② 카드를 흐름에서 빼냅니다 */
+    const top=c.offsetTop, h=c.offsetHeight;
+    c.style.top=top+'px'; c.style.height=h+'px';
     c.classList.add('lift');
     lay();
     if(navigator.vibrate) try{ navigator.vibrate(14); }catch(e){}
     if(window.SFX && SFX.pick) try{ SFX.pick(); }catch(e){}
   }
 
-  /* 손끝 아래에 무엇이 있는지 — 같은 목록 안에서만 봅니다 */
-  function under(x,y){
-    let list=[];
-    try{ list=document.elementsFromPoint(x,y)||[]; }catch(e){ list=[]; }
-    for(const el of list){
-      const c=el.closest && el.closest('.card[data-gid],.card[data-hole]');
-      if(!c || c===card) continue;
-      if(c.parentElement!==host) continue;
-      return c;
-    }
-    return null;
+  /* 지금 놓으면 들어갈 자리 번호 (0부터). 못 구하면 -1 */
+  function landing(){
+    try{
+      if(!card) return -1;
+      if(hole) return Log.landingPos(card.dataset.gid, null, Number(hole.dataset.hole));
+      return Log.landingPos(card.dataset.gid, before);
+    }catch(e){}
+    return -1;
   }
-  /* 끼워 넣을 자리 — 게임 카드들 사이에서 찾습니다 */
-  function slotAt(y){
-    if(!host) return null;
-    const cards=[...host.querySelectorAll('.card[data-gid]')].filter(c=>c!==card);
-    for(const c of cards){
-      const r=c.getBoundingClientRect();
-      if(y < r.top + r.height/2) return c;          // 이 카드 앞에
-    }
-    return null;                                    // 맨 끝에
+  function slotColor(pos){
+    if(!(pos>=0)) return '#6FE0BE';
+    try{ return setColor(setOf(pos+1)); }catch(e){ return '#6FE0BE'; }
   }
-  function drawLine(beforeEl){
-    if(!host) return;
-    if(!line){
-      line=document.createElement('div');
-      line.className='ins-line';
-      host.appendChild(line);
+  /* ── 도착 위치 미리보기 ──
+     들고 있는 카드의 세트명·A~E 와 글자색, 카드 둘레 선색을
+     '지금 놓으면 들어갈 자리' 에 맞춰 바꿉니다.
+     실제 저장 기록은 손을 놓아 이동이 확정될 때만 바뀝니다.
+     번호 공·'?'·방식·구매 표시는 건드리지 않습니다. */
+  function preview(pos){
+    if(!card || !was) return;
+    if(pos===shown) return;                        // 같은 자리면 손대지 않습니다
+    shown=pos;
+    const sq=card.querySelector('.seq');
+    if(!(pos>=0)){                                 // 갈 자리를 모르면 원래 모습으로
+      if(sq){ sq.textContent=was.text; sq.style.color=was.color; sq.style.background=was.bg; }
+      card.style.borderColor=was.border;
+      card.style.outlineColor='';
+      return;
     }
-    if(line.parentElement!==host) host.appendChild(line);
-    const gap=parseFloat(getComputedStyle(host).rowGap||getComputedStyle(host).gap||8)||8;
-    let top;
-    if(beforeEl) top=beforeEl.offsetTop - gap/2 - 1;
-    else{
-      const cards=[...host.querySelectorAll('.card')].filter(c=>c!==card);
-      const last=cards[cards.length-1];
-      top = last ? (last.offsetTop + last.offsetHeight + gap/2 - 1) : 0;
+    const si=setOf(pos+1), col=setColor(si);
+    if(sq){
+      sq.textContent=setLabelLong(pos+1);          // 2세트-C 처럼 바로 바뀝니다
+      sq.style.color=col;
+      sq.style.background=setSoft(si);
     }
-    line.style.top=Math.max(0, Math.round(top))+'px';
+    card.style.borderColor=col;
+    card.style.outlineColor=col;                   // 둘레 선도 그 세트 색으로
   }
+  function restore(){
+    if(!card || !was) return;
+    const sq=card.querySelector('.seq');
+    if(sq){ sq.textContent=was.text; sq.style.color=was.color; sq.style.background=was.bg; }
+    card.style.borderColor=was.border;
+    card.style.outlineColor='';
+    shown=-2;
+  }
+
   /* 지금 손끝 자리로 '어디에 놓일지' 를 정합니다 */
   function aim(x,y){
     if(!dragging || !host) return;
     lastX=x; lastY=y;
-    const el=under(x,y);
-    if(el && el.dataset.hole!=null){                // 빈자리 — 그 자리로
-      if(line && line.parentElement){ line.parentElement.removeChild(line); line=null; }
+    const cy=contentY(y);
+
+    /* 빈자리(점선 카드) 안이면 그 자리로 갑니다 */
+    const h=snap.find(s=>s.hole && cy>=s.top && cy<=s.top+s.h);
+    if(h){
+      if(slot) smooth(dropSlot);
       before=null;
-      if(hole!==el){ if(hole) hole.classList.remove('dropat');
-                     hole=el; hole.classList.add('dropat'); }
+      if(hole!==h.el){
+        if(hole) hole.classList.remove('dropat');
+        hole=h.el; hole.classList.add('dropat');
+      }
+      preview(landing());                          // 그 빈자리의 이름·색으로
       return;
     }
     if(hole){ hole.classList.remove('dropat'); hole=null; }
-    const bf=slotAt(y);                             // 카드 사이 — 얇은 선
-    before = bf ? (bf.dataset.gid||null) : null;
-    drawLine(bf);
+
+    /* 카드 사이 — 게임 카드만 보고 자리를 셉니다 */
+    const games=snap.filter(s=>!s.hole);
+    let k=games.findIndex(s=>cy < s.top + s.h/2);
+    if(k<0) k=games.length;
+    const bf = k<games.length ? games[k].gid : null;
+    const where = k<games.length ? games[k].el : null;
+
+    if(bf===before && slot && slot.isConnected){
+      const p0=landing();
+      slot.style.setProperty('--sc', slotColor(p0));
+      preview(p0);
+      return;                                      // 자리가 그대로면 손대지 않습니다
+    }
+    before=bf;
+    const pos=landing();                           // 이 자리에 놓으면 몇 번 칸인지
+    smooth(()=>{
+      dropSlot();
+      slot=document.createElement('div');
+      slot.className='ins-slot grow';
+      slot.setAttribute('aria-hidden','true');
+      slot.style.setProperty('--sc', slotColor(pos));
+      if(where) host.insertBefore(slot, where);
+      else host.appendChild(slot);
+    });
+    preview(pos);                                  // 카드 이름·글자색·둘레 선색도 함께
   }
 
   async function finish(ok){
@@ -24032,10 +24962,21 @@ window.DragSwap=(function(){
       const gid=c.dataset.gid;
       const toHole = hole ? Number(hole.dataset.hole) : null;
       const bf = before;
-      const samePlace = (!hole && bf===gid);
-      c.classList.remove('lift','ease'); c.style.transform='';
-      clearMarks(); tidy();
-      if(samePlace) return;
+      const same = (toHole==null && bf===gid);
+
+      /* 그 자리로 짧고 부드럽게 내려앉습니다 */
+      const target = hole || slot;
+      if(target && target.isConnected){
+        const k=scale();
+        const tr=target.getBoundingClientRect(), cr=c.getBoundingClientRect();
+        const now=(dy/k) - (sc ? (sc.scrollTop-scroll0) : 0) - UP;
+        const add=(tr.top - cr.top)/k;
+        c.classList.add('ease');
+        c.style.transform='translateY('+(now+add).toFixed(1)+'px) scale('+SHRINK+')';
+        await new Promise(r=>setTimeout(r, 190));
+      }
+      tidy();
+      if(same) return;
       try{
         if(toHole!=null && toHole>=0) await Log.moveToPos(gid, toHole);
         else await Log.moveTo(gid, bf);
@@ -24043,11 +24984,17 @@ window.DragSwap=(function(){
       if(navigator.vibrate) try{ navigator.vibrate(18); }catch(e){}
       return;
     }
-    home(); tidy();                                 // 취소 — 원래 자리 그대로
+    /* 취소 — 원래 자리·원래 세트명·원래 색으로 되돌립니다 */
+    clearMarks();
+    restore();
+    const k=scale();
+    c.classList.add('ease');
+    c.style.transform='translateY('+(sc ? -((sc.scrollTop-scroll0)) : 0).toFixed(1)+'px) scale(1)';
+    setTimeout(()=>{ tidy(); }, 200);
+    dragging=false;                                 // 더는 손가락을 따라가지 않습니다
   }
 
   function wire(c){
-    /* 누름을 시작한 곳이 공·'?'·단추·입력칸이면 여기서 받지 않습니다 */
     const mine=tg=>{
       if(!tg || !tg.closest) return false;
       if(tg.closest('.mini span,.open-q,.rn,.swd,button,input,textarea,select,a,label')) return false;
@@ -24071,7 +25018,6 @@ window.DragSwap=(function(){
         aim(lastX, lastY);
       }, HOLD);
     });
-    /* 기다리는 동안 움직이면 포기 — 스크롤·밀기를 뺏지 않습니다 */
     c.addEventListener('pointermove',e=>{
       if(armed===c && !dragging){
         if(Math.abs(e.clientX-sx)>MOVE || Math.abs(e.clientY-sy)>MOVE){
@@ -24083,7 +25029,6 @@ window.DragSwap=(function(){
       dy=e.clientY-sy;
       lay();
       aim(e.clientX, e.clientY);
-      /* 가장자리에서는 목록이 저절로 움직입니다 */
       if(sc){
         const r=sc.getBoundingClientRect();
         const up=e.clientY-r.top, dn=r.bottom-e.clientY;
@@ -24091,7 +25036,6 @@ window.DragSwap=(function(){
         if(want!==edge){ edge=want; stopScroll(); if(edge) raf=requestAnimationFrame(autoScroll); }
       }
     });
-    /* 들어 올린 뒤에는 화면이 따라 스크롤되지 않게 막습니다 */
     c.addEventListener('touchmove',e=>{
       if(dragging && card===c && e.cancelable) e.preventDefault();
     }, {passive:false});
@@ -24103,7 +25047,7 @@ window.DragSwap=(function(){
     c.addEventListener('pointercancel',e=>{
       if(armed===c){ clearTimeout(timer); timer=null; armed=null; }
       if(!dragging || card!==c || e.pointerId!==id) return;
-      finish(false);                               // 취소 — 원래 자리로
+      finish(false);
     });
     c.addEventListener('contextmenu',e=>{ if(dragging) e.preventDefault(); });
     c._dg=true;
@@ -24113,13 +25057,10 @@ window.DragSwap=(function(){
   document.addEventListener('pointerdown',e=>{
     if(dragging && e.pointerId!==id){ finish(false); return; }
     if(!dragging && armed && e.pointerId!=null){
-      /* 카드에서 시작한 누름이 아직 기다리는 중에 다른 손가락이 닿았습니다 */
       const onCard=e.target && e.target.closest && e.target.closest('.card');
       if(!onCard){ clearTimeout(timer); timer=null; armed=null; }
     }
   }, true);
-  /* 카드가 이벤트를 놓쳐도(카드가 사라졌거나 손가락이 밖에서 떨어졌을 때)
-     들린 상태로 남지 않게, 문서 전체에서도 한 번 더 받습니다. */
   document.addEventListener('pointerup',e=>{
     if(dragging && e.pointerId===id) finish(true);
   }, true);
@@ -24131,7 +25072,6 @@ window.DragSwap=(function(){
   function attach(root){
     if(!root) return;
     root.querySelectorAll('.card[data-gid]').forEach(c=>{ if(!c._dg) wire(c); });
-    /* 다시 그렸으니 들고 있던 카드는 사라졌습니다 */
     if(dragging && card && !card.isConnected) tidy();
   }
   return {attach, on:()=>dragging, cancel:()=>{ if(dragging) finish(false); }};
