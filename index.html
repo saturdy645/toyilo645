@@ -277,7 +277,8 @@
     box-shadow:0 14px 30px rgba(0,0,0,.55);
     opacity:.82;
     transform-origin:50% 0;will-change:transform;pointer-events:none}
-  .card.lift.ease{transition:transform .19s cubic-bezier(.22,.8,.26,1)}
+  /* 놓은 카드가 도착 자리로 내려앉는 시간 — 눈으로 따라갈 수 있게 천천히 */
+  .card.lift.ease{transition:transform .4s cubic-bezier(.33,0,.18,1)}
   /* ── 들어갈 자리 ──
      줄과 줄 사이가 실제로 벌어지는 '공간' 입니다. 얇은 선이 아닙니다.
      가운데에 도착할 자리 이름(2세트-C)을 그 세트 색으로 적습니다.
@@ -291,7 +292,7 @@
     pointer-events:none;overflow:hidden}
   .ins-slot b{font-size:13px;font-weight:900;letter-spacing:-.01em;
     color:var(--sc,#6FE0BE);opacity:.95}
-  .ins-slot.grow{animation:insGrow .18s cubic-bezier(.22,.8,.26,1) both}
+  .ins-slot.grow{animation:insGrow .34s cubic-bezier(.33,0,.18,1) both}
   @keyframes insGrow{0%{height:0;opacity:0}100%{height:62px;opacity:1}}
   /* 들어 올린 카드가 있던 자리 — 목록이 짧아지지 않게 자리만 지킵니다 */
   .drag-keep{flex:0 0 auto;border-radius:14px;pointer-events:none;
@@ -514,20 +515,23 @@
   .sheet-bar button{background:none;padding:6px;color:var(--muted);font-size:15px;font-weight:600}
   /* 카메라가 넓은 주 영역을 채웁니다 */
   /* 카메라가 화면의 큰 자리를 차지합니다 — 아래 안내·단추는 그 다음입니다 */
-  .finder{flex:1 1 auto;display:flex;min-height:330px;margin:8px 0 0}
+  .finder{flex:1 1 auto;display:flex;min-height:392px;margin:8px 0 0}
   .frame{position:relative;flex:1;min-height:0;width:100%;border-radius:18px;
     overflow:hidden;background:rgba(143,168,208,.05)}
   /* 가운데 안내칸 — 둘레를 회색 반투명으로 덮고 가운데만 밝게 둡니다 */
-  .scan-guide{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
-    width:min(62%,228px);aspect-ratio:1;border-radius:22px;pointer-events:none;
+  .scan-guide{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:88%;max-width:340px;aspect-ratio:1;
+    /* 높이가 모자라면 높이에 맞춰 줄어듭니다 — 안내칸이 잘리지 않게 */
+    max-height:88%;
+    border-radius:24px;pointer-events:none;
     box-shadow:0 0 0 2000px rgba(9,14,26,.46);
     display:none}
   .frame.live .scan-guide{display:block}
-  .frame i{position:absolute;width:30px;height:30px;border:3px solid var(--amber)}
-  .frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:16px 0 0 0}
-  .frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 16px 0 0}
-  .frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 16px}
-  .frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 16px 0}
+  .frame i{position:absolute;width:38px;height:38px;border:3px solid var(--amber)}
+  .frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:18px 0 0 0}
+  .frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 18px 0 0}
+  .frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 18px}
+  .frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 18px 0}
   .frame em{position:absolute;left:10px;right:10px;height:2px;border-radius:2px;
     background:linear-gradient(90deg,transparent,var(--amber),transparent);
     animation:sweep 2.4s ease-in-out infinite}
@@ -540,8 +544,12 @@
   .scan-state.bad{color:#F3836F}
   .scan-state{flex:none;text-align:center;font-size:12px;color:var(--muted);
     margin:12px 0 0;min-height:1.2em}
-  /* 더블탭으로 화면이 커지지 않게 합니다 — 두 손가락 확대는 그대로입니다 */
-  #scan, #slip{touch-action:pan-y pinch-zoom}
+  /* 더블탭으로 화면이 커지지 않게 합니다 — 두 손가락 확대는 그대로입니다.
+     (iPhone 에서는 이것만으로 모자라, 아래 코드가 두 번 누름만 따로 막습니다) */
+  #scan, #slip, #manual, #shot{touch-action:pan-y pinch-zoom}
+  /* 번호판·검토 줄은 잇달아 빠르게 누르는 자리라 manipulation 으로 둡니다 —
+     두 번 눌러 확대는 막고, 누름은 바로 먹힙니다. */
+  .grid button, .shot-row .rn, .slip-row, .slip-auto, .half-tab{touch-action:manipulation}
   /* QR 을 좌우로 미는 것은 앱이 직접 처리합니다.
      브라우저에 가로 밀기를 넘기면(pan-x) 세트 넘기기를 빼앗기므로 열지 않습니다. */
   #slipSwipe{touch-action:pan-y pinch-zoom}
@@ -1358,6 +1366,8 @@
   .tk-rows .shot-row{padding-left:7px;border-left:3px solid transparent;
     border-radius:2px}
   /* 눌러서 고칠 수 있는 칸이자, 앱의 구간 색을 그대로 쓰는 번호 공입니다 */
+  /* 글자 크기가 16px 보다 작으면 iPhone 이 칸을 누를 때 저절로 확대합니다.
+     그래서 16px 아래로 내리지 않습니다 (더블탭 확대와는 다른 길입니다). */
   .shot-row .rn{flex:1;min-width:0;aspect-ratio:1;max-width:46px;
     border-radius:50%;border:1px solid var(--line);background:var(--surface-2);
     text-align:center;font-size:16px;font-weight:800;color:var(--ink);padding:0}
@@ -2570,8 +2580,10 @@
   .slip-redo b{font-size:12.5px;font-weight:800;color:#172230;letter-spacing:-.02em}
   @keyframes redoSpin{to{transform:rotate(360deg)}}
   .slip-pick{display:flex;flex-direction:column;gap:7px}
+  /* 높이를 못 박습니다 — 탭이 있는 줄과 없는 줄이 같아야 합니다 */
   .slip-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;
-    border:1px solid var(--line);background:var(--surface);text-align:left}
+    border:1px solid var(--line);background:var(--surface);text-align:left;
+    min-height:48px;box-sizing:border-box}
   /* 세트(장)마다 색을 달리해서, 스무 장까지 가도 눈으로 바로 갈립니다 */
   .slip-row.on{border-color:var(--sc,rgba(242,180,65,.6));background:var(--scDim,rgba(242,180,65,.08))}
   .slip-row .bx{width:17px;height:17px;border-radius:5px;flex:none;
@@ -2590,12 +2602,18 @@
   /* 반자동 칸 — 고정수는 보여 주되 QR에는 담기지 않습니다 */
   .slip-row.half{opacity:.9}
   .slip-row.half .bx{background:transparent;border-style:dashed}
-  /* 반자동 줄의 두 갈래 탭 — 글자가 잘리거나 서로 겹치지 않게 둡니다 */
-  .half-tabs{flex:none;display:flex;gap:4px;align-items:center}
-  .half-tab{flex:none;font-size:10px;font-weight:800;padding:6px 8px;
+  /* 구매 방식 두 갈래 탭 (반자동·자동 공통) — 글자가 잘리거나 겹치지 않게 둡니다.
+     번호 여섯 자리가 들어갈 자리를 남기려고 폭을 좁게 잡았습니다. */
+  .half-tabs{flex:none;display:flex;gap:3px;align-items:center}
+  .half-tab{flex:none;font-size:9.5px;font-weight:800;padding:6px 6px;
     min-height:28px;border-radius:999px;white-space:nowrap;word-break:keep-all;
+    letter-spacing:-.04em;
     font-family:inherit;border:1px solid rgba(23,34,48,.22);
     background:transparent;color:#5A6676}
+  /* 번호 여섯 자리 — 접히면 줄 높이가 달라지므로 한 줄로 둡니다 */
+  .slip-row.pend .ns{white-space:nowrap;letter-spacing:0;font-size:12px}
+  /* 탭이 있는 줄의 [삭제] 는 '×' 한 글자 — 번호 여섯 자리 자리를 지킵니다 */
+  .slip-act.xs{padding:5px 7px;font-size:14px;line-height:1;min-width:0}
   .half-tab.on{background:rgba(23,34,48,.08);color:#172230;
     border-color:rgba(23,34,48,.34)}
   .half-tab.fill{border-color:rgba(224,163,43,.6);color:#8A6412;
@@ -4850,7 +4868,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.46.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.49.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -5483,6 +5501,22 @@ const DRAW_BASE=Date.UTC(2026,8,12,11,45,0);
 const DRAW_WEEK=7*24*60*60*1000;
 function drawAtRound(r){ return DRAW_BASE + (r-DRAW_BASE_ROUND)*DRAW_WEEK; }
 window.drawAtRound=drawAtRound;
+/* ── 추첨이 시작되는 시각 ──
+   drawAtRound() 는 20:45 KST 입니다 — 회차 번호가 다음 회차로 넘어가는 시각이고,
+   실제 추첨 생방송은 그보다 10분 빠른 20:35 에 시작합니다.
+   결과를 조회하고 화면에 올리는 일은 모두 이 시각을 기준으로 삼습니다.
+   회차 번호가 바뀌는 20:45 를 기다리지 않습니다. */
+const DRAW_LIVE=10*60*1000;
+const drawStartOf=r=>drawAtRound(r)-DRAW_LIVE;         // 20:35 KST
+const drawStarted=r=>Date.now()>=drawStartOf(r);
+/* 추첨이 이미 시작된 가장 최근 회차 (= 결과를 기다리고 있는 회차) */
+function drawnRound(){
+  let r=0; try{ r=ROUND; }catch(e){ return 0; }
+  if(!(r>0)) return 0;
+  return drawStarted(r) ? r : r-1;
+}
+window.drawStartOf=drawStartOf; window.drawStarted=drawStarted;
+window.drawnRound=drawnRound;
 /* 어떤 시각을 한국 날짜로 풀어 봅니다 (기기 시간대와 무관) */
 function kst(t){
   const d=new Date((t==null?Date.now():t)+KST);
@@ -7015,7 +7049,7 @@ const Log=(function(){
   window.addEventListener('resize',fitCards);
   try{
     const sc=$id('log') && $id('log').parentElement;
-    if(sc && window.ResizeObserver) new ResizeObserver(fitCards).observe(sc);
+    if(sc) window.roWatch && roWatch([sc], fitCards);
   }catch(e){}
 
   function render(){
@@ -7061,11 +7095,19 @@ const Log=(function(){
       // 당첨확인 화면과 같은 폭·같은 공 크기
       const row=document.createElement('div');row.className='win-row';
       const mini=document.createElement('div');mini.className='mini';
-      for(const n of it.nums){
+      const six=(it.nums||[]).filter(v=>Number.isFinite(v)).slice(0,6);
+      for(const n of six){
         const sp=document.createElement('span');const b=bandOf(n);
         sp.textContent=n;
         sp.style.background='radial-gradient(circle at 32% 30%,'+b.hi+','+b.c+' 62%)';
         mini.appendChild(sp);}
+      /* 아직 안 정해진 자리 — 당첨확인 화면과 같이 '?' 로 자리를 지킵니다.
+         자동 게임은 여섯 개가 모두 '?' 입니다 (빈 줄이 아닙니다). */
+      for(let z=six.length; z<6; z++){
+        const q=document.createElement('span');
+        q.className='open-q'; q.textContent='?';
+        q.setAttribute('aria-label', t('openSlot','아직 정해지지 않은 자리'));
+        mini.appendChild(q);}
       const gap=document.createElement('span');gap.className='plus';
       gap.style.visibility='hidden';gap.textContent='+';
       const bw=document.createElement('div');bw.className='bonus-wrap';
@@ -7187,9 +7229,16 @@ const Log=(function(){
       return false;
     }
   }
+  /* 번호 개수로 '미정 자리 수' 를 적어 둡니다 — 저장본만 봐도 모양을 알 수 있게 */
+  const markOpen=it=>{
+    const got=((it&&it.nums)||[]).filter(v=>Number.isFinite(v)).length;
+    const gap=6-Math.min(6,got);
+    if(gap>0) it.open=gap; else delete it.open;
+    return it;
+  };
   async function add(nums){
     const p=freePos(ROUND,1)[0];
-    const it={round:ROUND,nums:[...nums],ts:Date.now(),pos:p};
+    const it=markOpen({round:ROUND,nums:[...nums],ts:Date.now(),pos:p});
     items.push(it);
     render();await save();
     toast(savedMsg(ROUND,[it]));
@@ -7224,7 +7273,8 @@ const Log=(function(){
   /* 비워 둔 칸 한 곳에만 넣습니다 — 내 번호 QR의 '번호 넣기' */
   async function addAt(round, nums, pos){
     if(takenPos(round).has(pos)) pos=freePos(round,1)[0];
-    const it={round, nums:[...nums].sort((a,b)=>a-b), ts:Date.now(), memo:'', pos:pos};
+    const it=markOpen({round, nums:[...nums].sort((a,b)=>a-b),
+                       ts:Date.now(), memo:'', pos:pos});
     items.push(it);
     cur=round; render(); await save();
     if(window.Check) Check.render();
@@ -7408,7 +7458,10 @@ const Log=(function(){
     if(!it || !items.includes(it)) return false;
     const got=[...new Set((nums||[]).filter(n=>Number.isFinite(n)&&n>=1&&n<=45))];
     if(got.length!==6) return false;
-    if(!((it.open|0)>0)) return false;                     // 이미 다 찬 게임입니다
+    /* 적어 둔 open 이 없어도, 번호가 여섯 개가 아니면 미정 자리가 있는 것입니다 */
+    const openN=Math.max(Math.max(0,(it.open)|0),
+                         6-Math.min(6,((it.nums)||[]).filter(v=>Number.isFinite(v)).length));
+    if(!(openN>0)) return false;                           // 이미 다 찬 게임입니다
     const fixed=(it.nums||[]).slice();
     if(!fixed.every(n=>got.includes(n))) return false;     // 고정수가 안 들어 있습니다
     /* 고정 번호는 있던 자리에 그대로 둡니다.
@@ -7577,11 +7630,11 @@ const Check=(function(){
   window.addEventListener('resize',refit);
   try{
     const sc=$id('check') && $id('check').parentElement;
-    if(sc && window.ResizeObserver){
-      const ro=new ResizeObserver(()=>fitCards());
-      ro.observe(sc);
-      if($id('check')) ro.observe($id('check'));  // 당첨번호 칸이 커져도 다시 잽니다
-    }
+    /* fitCards 는 --chkCard 를 써서 카드 높이를 바꿉니다.
+       그 카드들을 담은 #check 를 함께 보고 있으면, 쓴 결과가 다시 감지되어
+       같은 프레임에서 되풀이됩니다. 그래서 바깥 칸만 보고,
+       크기가 실제로 달라졌을 때만 다음 프레임에 한 번 다시 잽니다. */
+    if(sc) window.roWatch && roWatch([sc], ()=>fitCards());
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
   }catch(e){}
 
@@ -7633,13 +7686,20 @@ const Check=(function(){
 
   function render(){
     autoRound();
-    const soon=(cur>LAST());                     // 아직 추첨 전
     const w=winning(cur);
-    /* 추첨은 지났는데 실제 번호가 아직 없는 회차 —
-       발표가 늦어졌거나 서버에 아직 안 올라온 경우입니다.
-       임의 번호를 지어내지 않고, 빈 자리에서 물음표가 깜빡입니다. */
-    const waiting = !soon && !w;
-    const hide = soon || waiting;
+    /* ── 세 가지 상태 ──
+         번호를 가지고 있다          → 바로 보여 주고 바로 판정합니다
+         아직 추첨이 시작되지 않았다 → '추첨 전'
+         추첨은 시작됐는데 번호가 없다 → '추첨 결과 확인 중'
+       전에는 '회차 번호가 넘어갔는지(cur > ROUND-1)' 로 갈랐습니다.
+       회차는 20:45 에 넘어가므로, 20:40 에 번호를 받아 두어도
+       20:45 까지 '추첨 전' 으로 감춰 두는 일이 생겼습니다.
+       이제 번호가 있으면 시계를 보지 않습니다. */
+    const soon    = !w && !drawStarted(cur);     // 아직 추첨 전
+    const waiting = !w && !soon;                 // 추첨은 됐는데 번호가 아직
+    const hide    = !w;                          // 번호가 없으면 감춥니다
+    /* 결과 없음·조회 실패를 '미당첨' 으로 적는 길은 없습니다 —
+       번호가 없으면 hide 가 참이고, 그때 등수는 셈하지 않습니다. */
     rNum.textContent=roundLabel(cur);
     rDate.textContent= soon
       ? dateOf(cur)+t('drawSoon',' 추첨 예정')
@@ -7662,7 +7722,7 @@ const Check=(function(){
     const card=document.createElement('div');card.className='win'+(soon?' soon':'');
     const lb=document.createElement('div');lb.className='win-label';
     lb.textContent= soon? t('beforeDraw','추첨 전')
-                  : waiting? t('waitDraw','당첨번호 확인 중')
+                  : waiting? t('waitDraw','추첨 결과 확인 중')
                   : t('winning','당첨번호');
     if(waiting) card.classList.add('wait');
     const row=document.createElement('div');row.className='win-row';
@@ -7742,9 +7802,12 @@ const Check=(function(){
       seqEl.style.color=setColor(setOf(seq));
       seqEl.style.background=setSoft(setOf(seq));
       const who=document.createElement('span');who.className='who';
+      /* it.plan 은 [앱에서 채우기] 로 채운 게임에만 있습니다 (원래 계획을 담아 둡니다) */
+      const appFill = !!(it.plan && (soon||waiting));
       who.textContent= gap? (howName(it.how)||t('openGame','번호 미정'))
+                     : appFill? t('cardAppFill','앱이 채운 번호')
                      : soon? t('beforeDrawWait','추첨을 기다리는 중')
-                     : waiting? t('waitDraw','당첨번호 확인 중')
+                     : waiting? t('waitDraw','추첨 결과 확인 중')
                      : (hits+t('hits','개 일치'));
       const badge=document.createElement('span');
       badge.className='hit'+(rank?' win':'')+(gap?' open':'');
@@ -7764,18 +7827,21 @@ const Check=(function(){
       // 당첨번호 줄과 같은 폭·같은 공 크기로 맞춥니다
       const row=document.createElement('div');row.className='win-row';
       const m=document.createElement('div');m.className='mini';
-      it.nums.forEach((n,bi)=>{
+      const shown6=(it.nums||[]).filter(v=>Number.isFinite(v)).slice(0,6);
+      shown6.forEach((n,bi)=>{
         const el=ballEl(n, (hide||gap)? false : (!w.nums.includes(n)&&n!==w.bonus));
         /* 꾹 누르면 이 칸의 번호를 고칠 수 있습니다 */
         try{ if(window.SavedPick) SavedPick.attach(el, it, bi); }catch(e){}
         m.appendChild(el);
       });
-      /* 아직 안 정해진 자리는 '?' 로 — 여섯 칸을 늘 채워 보여 줍니다 */
-      for(let z=0; z<gap; z++){
+      /* 아직 안 정해진 자리는 '?' 로 — 여섯 칸을 늘 채워 보여 줍니다.
+         공 개수를 미정 자리 수에 맡기지 않고, 여섯에서 그린 번호를 뺀 만큼 그립니다.
+         그래야 어떤 기록이든 자동·반자동·수동 모두 정확히 여섯 자리입니다. */
+      for(let z=shown6.length; z<6; z++){
         const q=document.createElement('span');
         q.className='open-q'; q.textContent='?';
         q.setAttribute('aria-label', t('openSlot','아직 정해지지 않은 자리'));
-        try{ if(window.SavedPick) SavedPick.attach(q, it, it.nums.length+z); }catch(e){}
+        try{ if(window.SavedPick) SavedPick.attach(q, it, z); }catch(e){}
         m.appendChild(q);
       }
       const sp=document.createElement('span');sp.className='plus';
@@ -7801,7 +7867,7 @@ const Check=(function(){
   // 뽑힌 번호가 과거 회차의 1~3등과 겹치는지 확인합니다
   window.PastWin=function(nums){
     let best=null;
-    for(let r=LAST();r>=FIRST;r--){
+    for(let r=topRound();r>=FIRST;r--){            // 방금 추첨한 회차까지 (번호가 있을 때만)
       const w=winning(r);
       if(!w) continue;                              // 실제 번호가 없는 회차는 건너뜁니다
       const hit=nums.filter(n=>w.nums.includes(n)).length;
@@ -8397,10 +8463,33 @@ const Check=(function(){
     if(sc) sc.scrollTop=0;
   }
   /* parseQR — 용지 QR 주소를 뜯는 자리. 밖에서도 점검할 수 있게 열어 둡니다 */
+  /* winning(r) 은 실제 번호가 없으면 null 입니다.
+     그래서 '회차가 넘어갔는지' 를 함께 볼 이유가 없습니다.
+     전에는 r<=ROUND-1 이라는 윗 한계가 있어서, 20:45 이 되기 전에는
+     Win.check() 가 방금 추첨한 회차를 판정할 수 없었습니다. */
   return {render, refit:refit, goRound, parseQR:parseDH,
-          winningOf:r=>(r>=FIRST&&r<=LAST())?winning(r):null};
+          winningOf:r=>(r>=FIRST)?winning(r):null};
 })();
 window.Check=Check;
+(function(){
+  const base=Check.render;
+  if(typeof base!=='function') return;
+  Check.render=function(){
+    const el=document.getElementById('check');
+    const sc=el && el.parentElement;
+    if(!sc) return base.apply(Check, arguments);
+    const y=sc.scrollTop;
+    const out=base.apply(Check, arguments);
+    const put=()=>{
+      const m=Math.max(0, sc.scrollHeight-sc.clientHeight);
+      const want=Math.min(y, m);
+      if(Math.abs(sc.scrollTop-want)>0.5) sc.scrollTop=want;
+    };
+    put();                                   // 바로 한 번
+    requestAnimationFrame(put);              // 그려진 뒤 한 번 더
+    return out;
+  };
+})();
 
 /* ===================== 채팅 필터 ===================== */
 const Guard=(function(){
@@ -8919,6 +9008,39 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.49.0', date:'2026-10-10', items:[
+      '당첨번호를 받으면 그 자리에서 보여 줍니다. 전에는 토요일 20:45(회차가 넘어가는 시각)까지 \'추첨 전\'으로 감춰 두었습니다.',
+      '결과 조회를 추첨 시작(20:35) 5분 전부터 시작합니다. 받을 때까지 20초마다 다시 묻고, 받으면 멈춥니다.',
+      '앱으로 돌아왔을 때 아직 받지 못한 회차가 있으면 \'한 시간에 한 번\' 제한을 건너뛰고 바로 조회합니다.',
+      '당첨번호 게시와 게임별 등수 표시가 한 번의 갱신에서 함께 일어납니다. 새로고침·탭 이동이 필요하지 않습니다.',
+      '당첨확인 화면을 보고 있는 중에도 저절로 함께 바뀝니다.',
+      '결과를 아직 받지 못했으면 \'추첨 결과 확인 중\'으로 적습니다. 결과 없음·조회 실패를 미당첨으로 적지 않습니다.',
+      '\'?\'가 남은 게임은 그대로 \'구매 번호 등록 필요\'입니다 — 확정 판정하지 않습니다.',
+      '언론 교차확인으로 먼저 받은 번호가 공식값과 다르면 공식값으로 바로잡고, 게임별 등수도 함께 다시 셈합니다. 저장 번호·세트·자리는 건드리지 않습니다.' ]},
+    { v:'10.48.0', date:'2026-10-10', items:[
+      '자동 게임도 구매 방식을 고를 수 있습니다. [판매점에서 채우기] / [앱에서 채우기] 두 탭이 반자동과 같은 모양으로 붙습니다.',
+      '[앱에서 채우기] 를 고르면 자동 게임은 여섯 개를, 반자동 게임은 빈 자리만 채웁니다. 겹치지 않는 번호로 오름차순입니다.',
+      '앱이 채운 게임은 QR 에 수동(M:)으로 담기고, 줄에 \'앱이 채움 · 수동 구매\' 라고 적힙니다. 원래 계획(자동·반자동)은 꼬리표에 남습니다.',
+      '[판매점에서 채우기] 를 고른 자동 게임은 전과 같이 QR 에 자동(Q:)으로 담깁니다. 반자동은 QR 에 담지 않습니다 — 적는 법을 실물로 확인하지 못했습니다.',
+      'QR 화면의 번호 자리가 늘 여섯 자리입니다. 아직 모르는 자리는 \'?\' 입니다.',
+      'QR 화면 줄 높이를 48px 로 못 박았습니다. 탭이 있든 없든, 1세트든 2세트든 같습니다.',
+      '당첨확인·내 기록 카드의 번호 공이 늘 정확히 여섯 자리입니다. 번호가 셋만 저장된 기록이 공 세 개(하나가 두 배 크기)로 보이던 것을 고쳤습니다.',
+      '내 기록 카드에 \'?\' 자리가 아예 그려지지 않아, 자동 게임이 빈 줄로 보이던 것을 고쳤습니다.',
+      '번호가 여섯 개가 아닌 기록은 당첨 판정에서 제외됩니다. 미정 자리 수가 저장되지 않은 옛 기록도 번호 개수로 셈해 바로잡습니다.',
+      '앱이 채운 번호는 추첨 전까지 \'앱이 채운 번호\' 라고 적습니다 — 실제로 산 번호와 구분하기 위해서입니다.' ]},
+    { v:'10.47.0', date:'2026-10-10', items:[
+      '번호를 보려고 올린 자리가 그대로 있습니다. 입력 메뉴가 접히며 목록이 맨 위로 끌려가던 것을 고쳤습니다.',
+      '입력 메뉴를 접은 자리를 번호 목록이 씁니다. 마지막 게임의 공까지 가려지지 않습니다.',
+      '목록을 다시 그려도(1분마다) 보고 계시던 자리를 지킵니다.',
+      '게임을 옮기는 동안 입력 메뉴가 오르내리지 않습니다. 그 때문에 D·E 사이가 잘 안 잡히던 것을 고쳤습니다.',
+      '틈 열기와 줄 이동을 0.34초, 놓은 카드가 내려앉는 것을 0.4초로 천천히 했습니다.',
+      '가장자리 자동 스크롤이 천천히 시작합니다.',
+      'D·E 사이에 넣어 1세트가 넘치면 2세트를 만들어 기존 E 를 2세트-A 로 옮깁니다. E 가 빈자리면 그 자리만 채웁니다.',
+      'QR 창 [자동 넣기] 가 실제 기록으로 저장됩니다. 다섯 자리가 차면 다음 세트로 이어지고, 당첨확인 목록에도 같은 자리로 바로 보입니다.',
+      'QR 스캔 가운데 안내칸을 카메라 폭의 88% 로 키웠습니다. 읽기는 그대로 보이는 영상 전체에서 합니다.',
+      '두 번 눌러 화면이 커지던 것을 QR·번호 직접 입력·번호판·검토 화면에서 막았습니다. 두 손가락 확대와 빠른 연속 선택은 그대로입니다.',
+      '글로 넣은 번호에 \'그림 속 숫자\' 같은 사진 안내가 붙던 것을 고쳤습니다.',
+      '크기 감지가 되풀이되던 곳 세 군데를 고쳤습니다 (ResizeObserver).' ]},
     { v:'10.46.0', date:'2026-10-10', items:[
       '게임을 옮길 때 줄과 줄 사이가 실제로 벌어집니다. 줄에 테두리만 켜던 표시를 없앴습니다.',
       '손가락이 줄의 위쪽이면 그 줄 앞 틈, 아래쪽이면 뒤 틈이 열립니다. 점선 빈자리는 언제나 그 자리로 들어갑니다.',
@@ -11883,23 +12005,23 @@ const Draws=(function(){
 
   function has(round){ return ok(map[String(round)]); }
 
-  /* 추첨 창 — 토요일 저녁 8시 45분부터 새 회차가 들어올 때까지 계속 두드립니다.
-     번호가 들어오는 순간 화면이 바로 바뀝니다. 다 받으면 알아서 멈춥니다. */
-  /* 발표가 늦어지는 날이 있습니다. 시계만 보고 끝내지 않고,
-     번호가 실제로 들어올 때까지 계속 두드립니다.
-     토요일 20:40부터 시작해, 다음 날 낮까지도 아직 못 받았으면 계속 기다립니다. */
+  /* ── 조회 창 ──
+     추첨 시작(20:35) 5분 전에 열고, 그 회차 번호를 실제로 받을 때까지 닫지 않습니다.
+     발표가 늦어지는 날도 시계만 보고 포기하지 않습니다 (하루 반까지 기다립니다).
+     받으면 그 자리에서 닫힙니다 — 밤새 두드리지 않습니다.
+
+     전에는 '토요일 20:30 이후면 무조건 참' 이었습니다. 그래서
+     ① 결과를 받은 뒤에도 밤새 60초마다 서버를 불렀고
+     ② newestRound() 가 ROUND-1 이라 20:45 까지는 fastWatch 가 곧바로 멈췄습니다. */
+  const WAIT_CAP=36*60*60*1000;                     // 못 받으면 하루 반까지 기다립니다
+  function newestRound(){ return drawnRound(); }    // 추첨이 시작된 가장 최근 회차
   function drawTime(){
-    const k=kst(), m=k.h*60+k.mi;                   // 한국 시간 기준
-    if(k.dow===6 && m>=20*60+30) return true;       // 토요일 20:30부터 (추첨은 20:35)
-    if(k.dow===0 && m<=18*60) return !has(newestRound());  // 일요일 낮까지 못 받았으면
-    return !has(newestRound()) && fresh();          // 그 밖에도 아직 안 왔으면
-  }
-  function fresh(){                                 // 추첨한 지 사흘 안쪽인가
-    try{ return Date.now()-drawAtRound(newestRound()) < 3*24*60*60*1000; }
-    catch(e){ return false; }
-  }
-  function newestRound(){
-    try{ return ROUND-1; }catch(e){ return 0; }     // 방금 추첨이 끝난 회차
+    const r=newestRound();
+    if(!(r>0)) return false;
+    if(has(r)) return false;                        // 이미 받았습니다 — 더 두드리지 않습니다
+    const t0=drawStartOf(r)-5*60*1000;              // 추첨 5분 전부터
+    const dt=Date.now()-t0;
+    return dt>=0 && dt<WAIT_CAP;
   }
   let fastT=0;
   function fastWatch(){
@@ -11911,6 +12033,8 @@ const Draws=(function(){
         return;
       }
       const got=await refresh(true);                // 20초마다 다시 물어봅니다
+      /* 서버(/api/lotto)는 최신 회차를 아직 못 받았으면 no-store 로 내려 줍니다.
+         그래서 이 조회가 오래된 캐시에 막히지 않습니다. */
       if(got && has(newestRound())){
         clearInterval(fastT); fastT=0;
         try{ if(window.Check) Check.render(); }catch(e){}
@@ -11923,12 +12047,23 @@ const Draws=(function(){
     setInterval(()=>{
       if(drawTime()){ refresh(true); fastWatch(); }  // 추첨 창이면 바짝
       else refresh(false);                           // 평소엔 한 시간에 한 번
-    }, 60*1000);
-    document.addEventListener('visibilitychange',()=>{
-      if(document.hidden) return;
-      if(drawTime()){ refresh(true); fastWatch(); }  // 앱을 다시 열면 바로 확인
-      else refresh(false);
-    });
+    }, 30*1000);                                     // 창이 열리는 것을 늦게 알아채지 않게
+    /* ── 앱으로 돌아왔을 때 ──
+       전에는 창 밖이면 refresh(false) 였고, 그것은 '한 시간에 한 번' 제한에 걸렸습니다.
+       그래서 추첨이 끝난 회차를 아직 못 받은 상태로 앱을 다시 열어도
+       한 시간이 지나기 전에는 아무 일도 하지 않았습니다.
+       이제는 못 받은 회차가 있으면 제한 없이 그 자리에서 조회합니다. */
+    const back=()=>{
+      if(drawTime()){ refresh(true); fastWatch(); return; }
+      const r=newestRound();
+      if(r>0 && !has(r)){ refresh(true); return; }   // 아직 못 받았습니다 — 바로
+      refresh(false);
+    };
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) back(); });
+    window.addEventListener('pageshow', back);
+    window.addEventListener('focus', back);
+    document.addEventListener('app:resume', back);
+    document.addEventListener('round:new', back);     // 회차가 넘어간 순간에도
     if(drawTime()) fastWatch();
   }
 
@@ -12607,7 +12742,7 @@ const TextIn=(function(){
     /* holds = 처음 읽었을 때의 '?' 자리 (바뀌지 않는 원본)
        hold  = 지금의 '?' 자리 (사용자가 번호를 넣으면 꺼집니다)
        둘을 같은 배열로 두면, 넣었다 지웠을 때 원래 '?' 였다는 사실을 잃어버립니다. */
-    return {src:'text', round:r.round||nowRound||null, roundGuess:!r.round, tr:'',
+    return {src:'typed', round:r.round||nowRound||null, roundGuess:!r.round, tr:'',
             games:r.games, hows:r.hows,
             holds:r.holds.map(a=>a.slice()), hold:r.holds.map(a=>a.slice()),
             sets:r.sets, rowsAt:r.rowsAt,
@@ -13271,7 +13406,8 @@ const Slip=(function(){
      칸 번호는 저장된 번호가 들고 있는 pos 를 그대로 씁니다. */
   let round=0, rows=[], slots=[], page=0;
   let stale=false, fillAt=-1, redoT=0;
-  let autoAt=new Set();                            // 이 회차에서 '자동'으로 잡아 둔 자리
+  /* 이 단추로 넣은 게임들의 이름표 — 뺄 때 이것만 지웁니다 */
+  let autoGids=[];
   const AUTOKEY=()=>'slipauto:'+(window.user? user.id : 'guest');
   let autoAll=null;
   async function autoLoad(){
@@ -13281,9 +13417,17 @@ const Slip=(function(){
     catch(e){ autoAll={}; }
     return autoAll;
   }
+  /* 지워진 게임의 이름표는 흘려보냅니다 (당첨확인에서 지우셨을 수 있습니다) */
+  function autoTrim(){
+    let live=[];
+    try{ const have=new Set(Log.items().filter(x=>x.round===round).map(x=>x.gid));
+         live=autoGids.filter(g=>have.has(g)); }catch(e){ live=autoGids.slice(); }
+    autoGids=live;
+    return autoGids;
+  }
   async function autoSave(){
     try{ if(!autoAll) autoAll={};
-         autoAll[round]=[...autoAt].sort((a,b)=>a-b);
+         autoAll[round]=autoTrim().slice();
          if(!autoAll[round].length) delete autoAll[round];
          await window.storage.set(AUTOKEY(), JSON.stringify(autoAll), false); }catch(e){}
   }
@@ -13305,7 +13449,7 @@ const Slip=(function(){
   }
   const PER=5, PRICE=1000;                         // 한 장에 다섯 게임, 게임당 천 원
   const MAXG=100;                                  // 1회 구입 한도 10만 원 = 100게임 = 20장
-  const autoN=()=>slots.reduce((n,s)=>n+(s.k==='a'?1:0),0);
+  const autoN=()=>autoTrim().length;
   const filled=()=>slots.reduce((n,s)=>n+(s.k!=='0'?1:0),0);
   const inUse=it=>slots.some(s=>s.k==='m' && s.it===it);
   /* 칸 하나를 QR 글자로 — M은 수동, Q는 자동, 빈 칸은 QR에 넣지 않습니다 */
@@ -13318,6 +13462,18 @@ const Slip=(function(){
      번호가 하나도 없는 게임은 '자동' 이므로 Q: 로 그대로 담깁니다. */
   const openGame=s=>!!(s && s.k==='m' && s.it && s.it.nums
                        && s.it.nums.length>0 && s.it.nums.length<6);
+  /* 정해진 번호 — 1~45 만 셉니다 */
+  const fixOf=s=>((s && s.it && s.it.nums)||[]).filter(n=>Number.isFinite(n)&&n>=1&&n<=45);
+  /* 구매 방식을 고를 수 있는 줄 — 반자동(고정수 1~5)과 자동(고정수 없음) 모두.
+     여섯 개가 다 정해진 줄은 고를 것이 없습니다. */
+  const pendRow=s=>!!(s && s.k==='m' && s.it && fixOf(s).length<6);
+  /* 여섯 자리를 글로 — 모르는 자리는 '?' 입니다 (지어내지 않습니다) */
+  function sixTx(s){
+    const f=fixOf(s).slice(0,6).sort((a,b)=>a-b);
+    const out=f.map(x=>String(x).padStart(2,'0'));
+    while(out.length<6) out.push('?');
+    return out.join(' ');
+  }
   function one(s){
     if(!s || s.k==='0') return null;
     if(s.k==='a') return 'Q:';
@@ -13340,7 +13496,7 @@ const Slip=(function(){
       at[p]={k:'m', it};
       if(p>last) last=p;
     }
-    for(const p of autoAt){ if(!at[p]){ at[p]={k:'a'}; if(p>last) last=p; } }
+    /* 자동 게임도 이제 진짜 저장 기록이므로 위에서 이미 들어왔습니다 */
     const need=(Math.floor(Math.max(last,0)/PER)+1)*PER;
     slots=[];
     for(let p=0;p<need;p++) slots.push(at[p] || {k:'0'});
@@ -13382,8 +13538,34 @@ const Slip=(function(){
     try{ ok=await Log.fillSlot(it, all, {sort:true}); }catch(e){ ok=false; }
     if(!ok){ delete it.plan;
              toast(t('slipHalfNo','이 게임은 채울 수 없습니다')); return; }
-    toast(t('slipHalfDone','나머지를 앱이 골랐습니다. 이 게임은 수동으로 삽니다.'));
+    toast(fixed.length
+      ? t('slipHalfDone','나머지를 앱이 골랐습니다. 이 게임은 수동으로 삽니다.')
+      : t('slipAutoDone','여섯 개를 앱이 골랐습니다. 이 게임은 수동으로 삽니다.'));
     rebuild(); changed();
+  }
+
+  /* ── 구매 방식 탭 ──
+     두 갈래를 나란히 둡니다. 어느 쪽을 고른 상태인지 늘 보입니다.
+     아직 고르지 않은 줄은 '판매점에서 채우기' 가 켜져 있습니다 —
+     앱이 번호를 만들지 않은 상태가 기본이기 때문입니다. */
+  function methodTabs(e){
+    const auto=fixOf(e).length===0;                // 고정수가 없으면 자동 게임입니다
+    const tabs=document.createElement('span'); tabs.className='half-tabs';
+    const keep=document.createElement('button'); keep.type='button';
+    keep.className='half-tab on';
+    keep.textContent=t('slipHalfKeep','판매점에서 채우기');
+    keep.setAttribute('aria-pressed','true');
+    keep.addEventListener('click',ev=>{ ev.stopPropagation();
+      toast(auto
+        ? t('slipAutoKeepTip','판매기가 여섯 개를 뽑습니다. 이 QR 에 자동으로 담겨 있습니다.')
+        : t('slipHalfKeepTip','이 게임은 QR에 담지 않습니다. 판매점 기기나 용지에서 반자동으로 골라 주세요.')); });
+    const fb=document.createElement('button'); fb.type='button';
+    fb.className='half-tab fill';
+    fb.textContent=t('slipHalfFill','앱에서 채우기');
+    fb.setAttribute('aria-pressed','false');
+    fb.addEventListener('click',ev=>{ ev.stopPropagation(); fillHalf(e.it); });
+    tabs.appendChild(keep); tabs.appendChild(fb);
+    return tabs;
   }
 
   /* 번호가 바뀌면 옛 QR을 바로 치우고, 새로 만든 뒤에 다시 보여줍니다 */
@@ -13516,21 +13698,23 @@ const Slip=(function(){
         const qz=qrRowOf(sIdx, k);
         const ns=document.createElement('span'); ns.className='ns';
         if(gap){ ns.textContent=t('slipNone','번호 없음'); ns.classList.add('dimtx'); }
-        else if(e.k==='a'){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
-        else if(!e.it.nums.length){ ns.textContent=isKO()?'자동':'auto'; ns.classList.add('dimtx'); }
-        else if(openGame(e)){
-          /* 고정수는 그대로 보여 드립니다 — 판매점 용지에 직접 표시하셔야 합니다 */
-          ns.textContent=e.it.nums.map(x=>String(x).padStart(2,'0')).join('  ')
-            + (isKO()? '  + 자동' : '  + auto');
-          b.classList.add('half');
+        else if(e.k==='a'){ ns.textContent=sixTx(null); ns.classList.add('dimtx'); }
+        else if(pendRow(e)){
+          /* 정해진 번호 + '?' — 어느 줄이든 여섯 자리입니다.
+             반자동은 고정수를 그대로 보여 드립니다 (용지에 직접 표시하실 번호입니다). */
+          ns.textContent=sixTx(e);
+          b.classList.add('pend');
+          if(openGame(e)) b.classList.add('half');  // 반자동 — QR 에 담지 않습니다
         }
         else ns.textContent=e.it.nums.map(x=>String(x).padStart(2,'0')).join('  ');
         /* 반자동이었다가 앱이 채운 게임 — 이 QR 은 수동 구매용입니다 */
         if(!gap && e.k==='m' && e.it && e.it.plan && !openGame(e)){
           const pt=document.createElement('span'); pt.className='slip-tag plan';
-          pt.textContent=t('slipWasHalf','수동 구매용');
-          pt.title=t('slipWasHalfT','원래 반자동 계획')+' · '
-                  +(e.it.plan.nums||[]).map(x=>String(x).padStart(2,'0')).join(' ');
+          pt.textContent=t('slipWasHalf','앱이 채움 · 수동 구매');
+          const pf=(e.it.plan.nums||[]).filter(n=>Number.isFinite(n));
+          pt.title=t('slipWasHalfT','원래 계획')+' · '
+                  +(howName(e.it.plan.how)||'')
+                  +(pf.length? (' · '+pf.map(x=>String(x).padStart(2,'0')).join(' ')) : '');
           b.appendChild(bx); b.appendChild(sq); b.appendChild(ns); b.appendChild(pt);
           const dl=document.createElement('button'); dl.type='button'; dl.className='slip-act';
           dl.textContent=t('del','삭제');
@@ -13539,25 +13723,19 @@ const Slip=(function(){
           pick.appendChild(b);
           return;
         }
-        if(openGame(e)){
-          /* 두 갈래를 탭으로 나란히 둡니다.
-             · [판매점 자동 채우기] — 지금 고른 쪽. 고정수와 '?' 를 그대로 두고
-               QR 에는 담지 않습니다. 판매점 기기나 마킹 용지에서 반자동으로 삽니다.
-             · [앱이 채우기] — 나머지를 앱이 골라 여섯 개를 채웁니다. 그 게임은 수동입니다. */
-          const tabs=document.createElement('span'); tabs.className='half-tabs';
-          const keep=document.createElement('button'); keep.type='button';
-          keep.className='half-tab on';
-          keep.textContent=t('slipHalfKeep','판매점 자동 채우기');
-          keep.setAttribute('aria-pressed','true');
-          keep.addEventListener('click',ev=>{ ev.stopPropagation();
-            toast(t('slipHalfKeepTip','이 게임은 QR에 담지 않습니다. 판매점 기기나 용지에서 반자동으로 골라 주세요.')); });
-          const fb=document.createElement('button'); fb.type='button';
-          fb.className='half-tab fill';
-          fb.textContent=t('slipHalfFill','앱이 채우기');
-          fb.setAttribute('aria-pressed','false');
-          fb.addEventListener('click',ev=>{ ev.stopPropagation(); fillHalf(e.it); });
-          tabs.appendChild(keep); tabs.appendChild(fb);
-          b.appendChild(bx); b.appendChild(sq); b.appendChild(ns); b.appendChild(tabs);
+        if(pendRow(e)){
+          b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
+          b.appendChild(methodTabs(e));
+          /* 자동 줄은 전부터 [삭제] 가 있었으므로 그대로 둡니다.
+             반자동 줄은 전과 같이 두지 않습니다 — 줄이 좁아져 글자가 잘립니다. */
+          if(!openGame(e)){
+            const dl=document.createElement('button'); dl.type='button';
+            dl.className='slip-act xs'; dl.textContent='×';   // 좁은 줄이라 한 글자로
+            dl.setAttribute('aria-label', t('del','삭제'));
+            dl.title=t('del','삭제');
+            dl.addEventListener('click',ev=>{ ev.stopPropagation(); drop(idx); });
+            b.appendChild(dl);
+          }
           pick.appendChild(b);
           return;
         }
@@ -13733,8 +13911,11 @@ const Slip=(function(){
     round=r; page=0;
     stale=false; fillAt=-1; clearTimeout(redoT);
     sheet.classList.add('on'); if(window.SFX) SFX.pick();
+    /* 옛 저장본에는 '자리 번호' 가 들어 있을 수 있습니다 — 이름표만 받습니다 */
     try{ const all=await autoLoad();
-         autoAt=new Set((all && all[round]) || []); }catch(e){ autoAt=new Set(); }
+         const got=(all && all[round]) || [];
+         autoGids=got.filter(x=>typeof x==='string');
+         autoTrim(); }catch(e){ autoGids=[]; }
     paint(); fresh();
   }
   function close(){ sheet.classList.remove('on'); stop(); }
@@ -13794,17 +13975,43 @@ const Slip=(function(){
     });
   })();
   window.addEventListener('beforeunload',()=>clearTimeout(redoT));
-  function autoUp(){
+  let autoBusy=false;
+  /* 한 게임을 실제로 저장합니다 — 번호 미정 여섯 자리 · 자동 · 구매 안 함.
+     자리를 정하는 일(빈자리부터, 다섯이 차면 다음 세트 A)은 저장 쪽이 합니다. */
+  async function autoUp(){
+    if(autoBusy) return false;
     if(filled()>=MAXG) return false;
-    let g=slots.findIndex(x=>x.k==='0');
-    if(g<0) g=slots.length;                        // 비어 있는 칸부터 채웁니다
-    autoAt.add(g); autoSave();
+    autoBusy=true;
+    let made=null;
+    try{
+      made=await Log.saveGames(round, [[null,null,null,null,null,null]], '',
+                               {hows:['auto']});
+    }catch(e){ made=null; }
+    autoBusy=false;
+    const it=made && made[0];
+    if(!it){ return false; }
+    try{ autoGids.push(it.gid || (Log.gid? Log.gid(it) : '')); }catch(e){}
+    autoSave();
+    rebuild();
+    /* 새 세트에 첫 게임이 들어갔으면 그 세트를 보여 드립니다 */
+    const pg=Math.floor((it.pos|0)/PER);
+    if(pg!==page) page=pg;
     changed(); if(window.SFX) SFX.pick(); return true;
   }
-  function autoDn(){
-    const i=slots.map(x=>x.k).lastIndexOf('a');
-    if(i<0 || filled()<=1) return false;
-    autoAt.delete(i); autoSave();                  // 자리는 그대로 두고 비웁니다
+  /* 이 단추로 넣은 게임만 뒤에서부터 지웁니다 — 원래 있던 게임은 건드리지 않습니다 */
+  async function autoDn(){
+    if(autoBusy) return false;
+    const live=autoTrim();
+    if(!live.length) return false;
+    const gid=live[live.length-1];
+    autoBusy=true;
+    try{ await Log.removeGid(gid); }catch(e){}
+    autoBusy=false;
+    autoGids=autoGids.filter(g=>g!==gid);
+    autoSave();
+    rebuild();
+    const pgs=Math.max(1, Math.ceil(slots.length/PER));
+    if(page>pgs-1) page=pgs-1;
     changed(); return true;
   }
   on2('slipAutoP','click',autoUp);
@@ -17990,8 +18197,11 @@ const Shot=(function(){
   function failOn(){ const el=$maybe('shotFail'); if(el) el.hidden=false; }
   function failOff(){ const el=$maybe('shotFail'); if(el) el.hidden=true; }
 
+  let seq=0;                                       // 읽기 차례표
   async function readOMR(){
     qrRound=null; failOff();
+    const mine=++seq;
+    const stale=()=>mine!==seq;
     const list = photos.length ? photos : (img ? [img] : []);
     if(!list.length){ say(t('shotPickFirst','먼저 사진을 골라주세요.'), true); return; }
 
@@ -18034,6 +18244,7 @@ const Shot=(function(){
 
     /* 마킹 용지로도 그림으로도 하나도 못 읽었습니다.
        마킹 용지가 아니라 산 복권을 찍으신 것일 수 있으니, 그 길로 넘깁니다. */
+    if(stale()) return;                            // 그 사이 다른 입력이 들어왔습니다
     if(!tks.length){
       if(omrLock){
         /* 마킹 용지라고 정해 두었습니다 — 다른 길의 숫자를 섞지 않습니다.
@@ -18052,6 +18263,7 @@ const Shot=(function(){
       return;
     }
 
+    if(stale()) return;                            // 그 사이 다른 입력이 들어왔습니다
     intake(tks, 'photo');
     /* 어느 사진이 안 됐는지 짚어 드립니다 */
     let slotN=0, full=0, part=0, auto=0;
@@ -18491,6 +18703,7 @@ const Shot=(function(){
       const tag=document.createElement('em');
       tag.className='tk-tag'+(tk.src==='qr'?'':' warn');
       tag.textContent = tk.src==='qr' ? 'QR'
+                      : tk.src==='typed' ? t('tkTyped','직접 넣은 글')
                       : tk.src==='text' ? t('tkText','그림 속 숫자')
                       : t('tkOcr','글자 인식');
       head.appendChild(lb); head.appendChild(nm);
@@ -18954,6 +19167,24 @@ const Shot=(function(){
      그 밖의 '숫자 한 개뿐인 줄' 은 잡음입니다 — 지어내지 않고 버립니다. */
   function dropThin(tk){
     if(!tk || !tk.games) return tk;
+    /* ── 이 사진을 '복권·번호 목록' 으로 볼 근거가 있나 ──
+       · QR 이 보였다 → 인쇄된 복권입니다
+       · 여섯 개가 온전히 읽힌 줄이 두 줄 이상이다 → 번호 목록입니다
+       · 방식(수동·반자동·자동)이 읽힌 줄이 있다 → 번호 목록입니다 */
+    let full=0, told=false;
+    (tk.games||[]).forEach((g,i)=>{
+      const ns=(g||[]).filter(v=>Number.isFinite(v) && v>=1 && v<=45);
+      if(ns.length===6 && new Set(ns).size===6) full++;
+      /* '수동' 은 여섯 개가 찼을 때 앱이 붙이는 가정값이라 근거가 되지 못합니다.
+         글에서 실제로 읽어 낸 '반자동·자동' 만 근거로 봅니다. */
+      const h=(tk.hows||[])[i];
+      if(h==='semi' || h==='auto') told=true;
+    });
+    let sawQR=false;
+    try{ sawQR=!!(sweepCache && sweepCache.sweep && sweepCache.sweep.length); }catch(e){}
+    const proof = sawQR || told || full>=2;
+    if(!proof) return null;              // 근거가 없으면 한 줄도 만들지 않습니다
+
     const keep=[];
     tk.games.forEach((g,i)=>{
       const ns=(g||[]).filter(v=>Number.isFinite(v));
@@ -18964,7 +19195,9 @@ const Shot=(function(){
           어느 줄과도 맞지 않는 값이 나왔습니다)
          그래서 네 개 이상이거나, 방식이 또렷이 읽힌 줄만 둡니다.
          글로 직접 적는 「1 23 45」 는 이 길을 타지 않습니다 — 그대로 받습니다. */
-      if(ns.length>=4 || how || allOpen) keep.push(i);
+      /* 방식이 '반자동·자동' 인 줄은 번호가 적어도 정상입니다.
+         '수동' 은 가정값이므로 숫자 개수로만 봅니다. */
+      if(ns.length>=4 || allOpen || how==='semi' || how==='auto') keep.push(i);
     });
     if(keep.length===tk.games.length) return tk;
     const pick=a=>Array.isArray(a)? keep.map(i=>a[i]) : a;
@@ -19932,7 +20165,12 @@ const Shot=(function(){
      검토·수정·'?' 표시·애매한 칸 팝업·중복 확인이 모두 같은 길을 씁니다. */
   function intake(list, kind){
     whereUser=null;                                // 새로 읽었으니 기본값부터 다시
+    seq++;                                         // 늦게 끝난 사진 판독이 덮어쓰지 못하게
     rows=five(null); img=null; photos=[]; many=[];
+    /* 지난 판독의 안내는 모두 치웁니다 — 글에는 사진 안내가 붙지 않습니다 */
+    try{ const ko=$maybe('shotKo'); if(ko) ko.hidden=true; }catch(e){}
+    try{ failOff(); }catch(e){}
+    try{ const nt=$maybe('shotNote'); if(nt){ nt.hidden=true; nt.textContent=''; } }catch(e){}
     paint(); say('');
     if(stage) stage.classList.remove('has');
     if(readBtn) readBtn.disabled=true;
@@ -21197,6 +21435,36 @@ const Golf=(function(){
 })();
 window.Golf=Golf;
 
+
+/* ── 크기 감지 도우미 ──
+   roWatch(요소들, 할일) — 크기가 '실제로' 달라졌을 때만, 다음 프레임에 한 번 부릅니다. */
+window.roWatch=function(els, run){
+  if(!window.ResizeObserver) return null;
+  const list=(Array.isArray(els)? els : [els]).filter(Boolean);
+  if(!list.length) return null;
+  const size=new WeakMap();
+  let waiting=0;
+  const ro=new ResizeObserver(ents=>{
+    let moved=false;
+    for(const e of ents){
+      const el=e.target;
+      if(!el.isConnected){ try{ ro.unobserve(el); }catch(x){} continue; }
+      const r=e.contentRect;
+      const was=size.get(el);
+      /* 1px 미만은 달라진 것으로 보지 않습니다 — 소수점 떨림으로 되풀이되지 않게 */
+      if(was && Math.abs(was.w-r.width)<1 && Math.abs(was.h-r.height)<1) continue;
+      size.set(el,{w:r.width,h:r.height});
+      moved=true;
+    }
+    if(!moved || waiting) return;                 // 예약이 이미 걸려 있으면 겹치지 않습니다
+    waiting=requestAnimationFrame(()=>{           // 읽기(여기)와 쓰기(run)를 떼어 놓습니다
+      waiting=0;
+      try{ run(); }catch(x){}
+    });
+  });
+  list.forEach(el=>{ try{ ro.observe(el); }catch(x){} });
+  return { ro, stop(){ try{ ro.disconnect(); }catch(x){} if(waiting) cancelAnimationFrame(waiting); } };
+};
 /* 오른쪽 드래그 줄 — 스크롤 되는 칸에 붙입니다 */
 window.attachBar=function(sc){
   if(!sc || sc._bar) return;
@@ -21213,21 +21481,22 @@ window.attachBar=function(sc){
     bar.classList.toggle('on',has);                // 막대는 목록이 있으면 늘 보입니다
     bar.classList.toggle('full',!can);             // 다 보이면 손잡이가 꽉 찹니다
     if(!has) return;
-    bar.style.top=(sc.offsetTop+6)+'px';
+    /* ── 재고 나서 한꺼번에 씁니다 ──
+       같은 값을 다시 쓰면 브라우저가 또 '크기가 바뀌었다' 고 알려 되풀이됩니다.
+       달라진 것만 씁니다. */
+    const top=(sc.offsetTop+6);
     const H=Math.max(0, sc.clientHeight-12);
-    bar.style.height=H+'px';
     const h=can? Math.max(28, H*(sc.clientHeight/sc.scrollHeight)) : H;
-    th.style.height=h+'px';
-    th.style.top=(can? (H-h)*(sc.scrollTop/room) : 0)+'px';
+    const y=(can? (H-h)*(sc.scrollTop/room) : 0);
+    const put=(el,k,v)=>{ const t=v.toFixed(1)+'px'; if(el.style[k]!==t) el.style[k]=t; };
+    put(bar,'top',top); put(bar,'height',H);
+    put(th,'height',h); put(th,'top',y);
   };
   sc.addEventListener('scroll',upd,{passive:true});
   window.addEventListener('resize',upd);
   try{
-    if(window.ResizeObserver){
-      const ro=new ResizeObserver(upd);
-      ro.observe(sc);
-      if(sc.firstElementChild) ro.observe(sc.firstElementChild);   // 내용이 늘어도 갱신
-    }
+    if(window.roWatch)
+      roWatch([sc, sc.firstElementChild], upd);
   }catch(e){}
   sc._barUpd=upd;
   requestAnimationFrame(upd);
@@ -24518,8 +24787,12 @@ const I18N=(function(){
       mapOffS:'Please check your connection.<br>The shop list and directions still work.',
       slipRedo:'Updating QR', slipLive:'QR live', slipNone:'Empty', slipFill:'Add numbers',
       slipHalfOut:'semi-auto · not in QR',
-      slipHalfKeep:'Mark at the shop', slipHalfFill:'Let the app fill',
+      slipHalfKeep:'Fill at the shop', slipHalfFill:'Fill in the app',
       slipHalfKeepTip:'This game is not in the QR. Mark the rest on the shop machine or slip.',
+      slipAutoKeepTip:'The shop machine picks all six. It is already in this QR as auto.',
+      slipAutoDone:'The app picked all six. Buy this game as a manual pick.',
+      slipWasHalf:'app-filled · manual buy', slipWasHalfT:'original plan',
+      cardAppFill:'picked by the app',
       more:'Show more', manualBtn:'Enter numbers myself',
       // 직접 입력
       manualTitle:'Enter numbers', clear:'Clear', saveBtn:'Save',
@@ -24550,7 +24823,7 @@ const I18N=(function(){
       pkDropB:'Drop it, pick again', pkRecent:'Recently picked', pkPh:'Type a choice',
       pkNbB:'Send to N빵', pkEvenB:'Make it even', pkWhoB:'People · N빵',
       pkNote:'When you cannot decide, let the app decide. Your list stays for next time.',
-      waitDraw:'Checking the winning numbers', checking:'checking',
+      waitDraw:'Checking the draw result', checking:'checking',
       beforeDrawWait:'Waiting for the draw',
       runTitle:'Running', runStart:'Start', runEnd:'Finish', runSaveB:'Save these numbers',
       runTime:'Time', runPace:'Pace', runSpeed:'Speed', runDist2:'Distance',
@@ -24982,7 +25255,14 @@ function $id(id){
 
    '?'가 남은 게임은 번호가 다 없으므로 당첨 판정에 넣지 않습니다.
    세 개가 맞았다고 5등이라 말할 수 없습니다 — 나머지 세 자리를 모르기 때문입니다. */
-const openOf=it=>Math.max(0, (it && it.open)|0);
+const openOf=it=>{
+  if(!it) return 0;
+  const said=Math.max(0, (it.open)|0);             // 저장해 둔 '미정 자리 수'
+  const got=((it.nums)||[]).filter(v=>Number.isFinite(v)).length;
+  /* 번호가 n 개면 6-n 자리는 반드시 미정입니다.
+     옛 기록이나 open 을 적지 않은 저장 길로 들어온 것도 이 셈으로 바로잡힙니다. */
+  return Math.max(said, 6 - Math.min(6, got));
+};
 const isOpen=it=>openOf(it)>0;
 const howName=h=> h==='semi' ? t('howSemi','반자동')
                 : h==='auto' ? t('howAuto','자동')
@@ -25448,15 +25728,77 @@ document.querySelectorAll('nav button').forEach(btn=>{
   const el=document.getElementById('check');
   const sc=el && el.parentElement;
   if(!view || !sc) return;
-  const DOWN=56, UP=14;                  // 56px 넘게 내려가면 접고, 14px 안쪽으로 오면 폅니다
-  let tucked=false, raf=0;
+  const DOWN=56;             // 이만큼 내려간 뒤부터 접습니다
+  const UP=14;               // 이만큼 올라오면 폅니다
+  const STEP=2;              // 이보다 작게 움직인 것은 방향으로 치지 않습니다
+  const CALM=360;            // 접고 펴는 동안(0.28초)에 여유를 더한 시간
+  let tucked=false, raf=0, lastY=sc.scrollTop, calmT=0, want=-1;
+
+  const maxY=()=>Math.max(0, sc.scrollHeight-sc.clientHeight);
+  /* 메뉴가 움직이는 동안에는 스크롤이 저절로 끌려다닙니다.
+     그 사이의 변화는 사용자가 민 것이 아니므로 방향 판단에 쓰지 않고,
+     잡고 계시던 자리를 되돌려 둡니다. */
+  function calmDown(keep){
+    clearTimeout(calmT);
+    want=keep;
+    const hold=()=>{
+      if(want<0) return;
+      const m=maxY();
+      const y=Math.min(want, m);
+      if(Math.abs(sc.scrollTop-y)>0.5) sc.scrollTop=y;
+      lastY=sc.scrollTop;
+    };
+    const t0=Date.now();
+    (function loop(){
+      if(want<0) return;
+      hold();
+      if(Date.now()-t0 < CALM) requestAnimationFrame(loop);
+      else { want=-1; lastY=sc.scrollTop; }
+    })();
+    calmT=setTimeout(()=>{ want=-1; lastY=sc.scrollTop; }, CALM+80);
+  }
+  function tuck(on){
+    if(on===tucked) return;
+    const keep=sc.scrollTop;
+    tucked=on;
+    view.classList.toggle('tuck', on);
+    calmDown(keep);
+  }
   function upd(){
     raf=0;
-    const y=sc.scrollTop;
-    if(!tucked && y>DOWN){ tucked=true; view.classList.add('tuck'); }
-    else if(tucked && y<UP){ tucked=false; view.classList.remove('tuck'); }
+    if(want>=0) return;                  // 메뉴가 움직이는 중 — 사용자가 민 것이 아닙니다
+    /* 게임을 옮기는 동안에는 메뉴를 그대로 둡니다 —
+       메뉴가 접히고 펴지면 목록 높이가 바뀌어 손가락 아래 줄이 달라집니다. */
+    try{ if(window.DragSwap && DragSwap.on && DragSwap.on()){ lastY=sc.scrollTop; return; } }catch(e){}
+    const y=sc.scrollTop, dy=y-lastY;
+    lastY=y;
+    if(dy>STEP && y>DOWN) tuck(true);        // 내리는 중 — 접습니다
+    else if(dy<-STEP && y<UP) tuck(false);   // 올리는 중, 맨 위 가까이 — 폅니다
   }
   sc.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(upd); },{passive:true});
+
+  /* 메뉴를 접고 나니 목록이 다 들어와 더 밀 데가 없을 수 있습니다.
+     그때는 스크롤이 일어나지 않으므로, 아래로 끌어내리는 손짓으로 메뉴를 부릅니다. */
+  let tid=null, ty0=0;
+  sc.addEventListener('pointerdown',e=>{ tid=e.pointerId; ty0=e.clientY; });
+  sc.addEventListener('pointermove',e=>{
+    if(tid!==e.pointerId || !tucked) return;
+    if(maxY()>2) return;                 // 아직 밀 데가 있으면 스크롤이 알아서 합니다
+    if(e.clientY-ty0 > 24){ tid=null; tuck(false); }
+  },{passive:true});
+  const letGo=e=>{ if(tid===e.pointerId) tid=null; };
+  sc.addEventListener('pointerup',letGo);
+  sc.addEventListener('pointercancel',letGo);
+
+  /* 화면을 다시 그려도(1분마다) 보고 계시던 자리를 지킵니다 */
+  window.checkKeepScroll=function(run){
+    const y=sc.scrollTop;
+    try{ run(); }catch(e){}
+    const m=maxY();
+    const back=Math.min(y, m);
+    if(Math.abs(sc.scrollTop-back)>0.5) sc.scrollTop=back;
+    lastY=sc.scrollTop;
+  };
 })();
 
 /* ── 저장 카드 좌우 swipe 삭제 ──
@@ -25696,7 +26038,8 @@ window.DragSwap=(function(){
   const HOLD=500;                                  // 0.5초
   const MOVE=10;                                   // 이만큼 움직이면 들기 포기
   const EDGE=56;                                   // 가장자리 자동 스크롤 범위
-  const SPEED=14;                                  // 한 번에 스크롤하는 양
+  const SPEED=7;                                   // 한 번에 스크롤하는 양 (천천히)
+  const WARM=12;                                   // 이만큼 프레임 동안 서서히 빨라집니다
   const LIFT=14;                                   // 카드 아래끝과 손끝 사이 간격
   const SHRINK=0.72;                               // 들고 있는 동안의 크기
   /* 둘 다 '도착 자리를 가리지 않게' 하려는 것입니다 —
@@ -25705,7 +26048,7 @@ window.DragSwap=(function(){
   let curT=0;                                      // 지금 카드에 걸어 둔 세로 이동량
 
   let card=null, timer=null, id=null, sx=0, sy=0, dy=0;
-  let sc=null, raf=0, edge=0, armed=null, dragging=false;
+  let sc=null, raf=0, edge=0, warm=0, armed=null, dragging=false;
   let host=null, slot=null, hole=null, before=null;
   let keep=null;               // 들어 올린 카드가 있던 자리 (같은 높이로 비워 둡니다)
   let atGap=-1;                // 지금 열어 둔 틈 번호
@@ -25733,12 +26076,14 @@ window.DragSwap=(function(){
     return (y - host.getBoundingClientRect().top)/scale();
   };
 
-  function stopScroll(){ if(raf){ cancelAnimationFrame(raf); raf=0; } }
+  function stopScroll(){ if(raf){ cancelAnimationFrame(raf); raf=0; } warm=0; }
   function autoScroll(){
     raf=0;
     if(!dragging || !sc || !edge) return;
     dbgScroll++;
-    sc.scrollTop += edge*SPEED;
+    /* 처음에는 천천히, 머물수록 조금씩 빨라집니다 — 갑자기 미끄러지지 않게 */
+    warm=Math.min(WARM, warm+1);
+    sc.scrollTop += edge*SPEED*(warm/WARM);
     lay();                                         // 목록이 움직였으니 카드도 따라갑니다
     aim(lastX, lastY);                             // 들어갈 자리도 다시 셉니다
     raf=requestAnimationFrame(autoScroll);
@@ -25770,7 +26115,8 @@ window.DragSwap=(function(){
     });
     requestAnimationFrame(()=>{
       els.forEach(e=>{
-        e.style.transition='transform .16s cubic-bezier(.22,.8,.26,1)';
+        /* 위·아래 줄이 천천히 벌어지도록 — 급하게 움직이면 겨냥하기 어렵습니다 */
+        e.style.transition='transform .34s cubic-bezier(.33,0,.18,1)';
         e.style.transform='';
       });
     });
@@ -25928,11 +26274,26 @@ window.DragSwap=(function(){
     return -1;
   }
 
+  /* 지금 열어 둔 틈이 차지하는 세로 범위 (들어 올리기 전 배치 기준) */
+  function gapSpan(g){
+    if(!(g>=0) || !snap.length) return null;
+    const a = g>0 ? (snap[g-1].top + snap[g-1].h) : (snap[0].top - 60);
+    const b = g<snap.length ? (snap[g].top + snap[g].h) : (snap[snap.length-1].top + snap[snap.length-1].h + 60);
+    return {a, b};
+  }
+  const STICK=22;        // 이 안에서 움직이는 것은 손떨림으로 봅니다
+
   function aim(x,y){
     if(!dragging || !host) return;
     lastX=x; lastY=y;
     dbgCy=contentY(y); dbgN++;
-    const g=gapAt(dbgCy);
+    let g=gapAt(dbgCy);
+    /* 이웃 틈으로 '충분히' 가기 전에는 지금 틈을 지킵니다 —
+       조금만 흔들려도 틈이 열렸다 닫히면 겨냥할 수가 없습니다. */
+    if(g>=0 && atGap>=0 && g!==atGap){
+      const sp=gapSpan(atGap);
+      if(sp && dbgCy > sp.a-STICK && dbgCy < sp.b+STICK) g=atGap;
+    }
 
     if(g<0){                                       // 목록 밖 — 놓을 자리가 없습니다
       if(slot) smooth(dropSlot);
@@ -25993,7 +26354,7 @@ window.DragSwap=(function(){
         const add=(tr.top - cr.top)/k;
         c.classList.add('ease');
         c.style.transform='translateY('+(curT+add).toFixed(1)+'px) scale('+SHRINK+')';
-        await new Promise(r=>setTimeout(r, 190));
+        await new Promise(r=>setTimeout(r, 400));
       }
       tidy();
       if(same) return;
@@ -26011,7 +26372,7 @@ window.DragSwap=(function(){
     const k=scale();
     c.classList.add('ease');
     c.style.transform='translateY('+(sc ? -((sc.scrollTop-scroll0)) : 0).toFixed(1)+'px) scale(1)';
-    setTimeout(()=>{ tidy(); }, 200);
+    setTimeout(()=>{ tidy(); }, 410);
     dragging=false;                                 // 더는 손가락을 따라가지 않습니다
   }
 
@@ -26059,7 +26420,8 @@ window.DragSwap=(function(){
         const r=sc.getBoundingClientRect();
         const up=(e.clientY-r.top)/k, dn=(r.bottom-e.clientY)/k;
         const want = up<EDGE ? -1 : (dn<EDGE ? 1 : 0);
-        if(want!==edge){ edge=want; stopScroll(); if(edge) raf=requestAnimationFrame(autoScroll); }
+        if(want!==edge){ edge=want; warm=0; stopScroll();
+                         if(edge) raf=requestAnimationFrame(autoScroll); }
       }
     });
     c.addEventListener('touchmove',e=>{
@@ -26107,6 +26469,29 @@ window.DragSwap=(function(){
                           snap:snap.map(z=>Math.round(z.top)+'+'+Math.round(z.h)).join(' ')})};
 })();
 
+
+/* ── 두 번 눌러 확대만 막습니다 ──
+   확대 자체를 끄지 않습니다. 두 손가락으로 벌리는 확대·축소는 그대로입니다. */
+(function(){
+  const GAP=300, NEAR=32;                       // 이 안쪽이면 '두 번 누름' 으로 봅니다
+  let t0=0, x0=0, y0=0;
+  /* 눌러야 하는 것(단추·입력칸·고를 수 있는 칸)은 건드리지 않습니다 —
+     건드리면 빠르게 잇달아 고르는 동작이 한 번 먹힙니다. */
+  const tappy=el=>{
+    if(!el || !el.closest) return false;
+    return !!el.closest('button,input,textarea,select,a,label,[role="button"],[contenteditable]');
+  };
+  document.addEventListener('touchend',e=>{
+    if(e.touches && e.touches.length) return;   // 아직 손가락이 남아 있음 — 확대 제스처
+    const t=e.changedTouches && e.changedTouches[0];
+    if(!t) return;
+    const now=Date.now();
+    const near=(now-t0)<GAP
+            && Math.abs(t.clientX-x0)<NEAR && Math.abs(t.clientY-y0)<NEAR;
+    if(near && !tappy(e.target) && e.cancelable) e.preventDefault();
+    t0=now; x0=t.clientX; y0=t.clientY;
+  }, {passive:false});
+})();
 window.__mainDone=true;                            // 여기까지 오면 본 코드는 끝까지 돈 것입니다
 </script>
 
