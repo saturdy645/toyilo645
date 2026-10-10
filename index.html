@@ -1317,6 +1317,10 @@
   .shot-part button{flex:none;padding:7px 11px;border:0;border-radius:10px;
     background:var(--amber,#FFBA78);color:#17203A;
     font-family:inherit;font-size:11.5px;font-weight:800;white-space:nowrap}
+  /* 읽지 못했을 때 바로 직접 넣으러 가는 단추 */
+  .shot-fail{display:flex;justify-content:center;margin:10px 0 2px}
+  .shot-fail button{min-height:44px;padding:0 20px;font-size:14px;font-weight:800;
+    border-radius:12px;font-family:inherit;touch-action:manipulation}
   .shot-state{min-height:18px;margin:10px 0 4px;text-align:center;
     font-size:12px;color:var(--muted)}
   .shot-state.bad{color:var(--muted)}      /* 빨간 경고 문장은 쓰지 않습니다 */
@@ -3927,6 +3931,11 @@
       <input type="file" id="shotFileLib" accept="image/*" hidden>
 
       <p class="shot-state" id="shotState"></p>
+      <!-- 번호를 읽지 못했을 때만 보입니다 — 바로 직접 넣으실 수 있게 -->
+      <div class="shot-fail" id="shotFail" hidden>
+        <button type="button" class="primary" id="shotToManual"
+          data-i="shotToManual">번호 직접 입력</button>
+      </div>
       <!-- 한글 판독을 완료하지 못했을 때만 보입니다 -->
       <div class="shot-part" id="shotKo" hidden>
         <span data-i="shotKoMsg">한글 판독을 완료하지 못했습니다. 세트·방식과 빠진 게임을 확인해 주세요.</span>
@@ -4832,7 +4841,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.43.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.44.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -8901,6 +8910,11 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.44.0', date:'2026-10-10', items:[
+      '번호를 읽지 못했을 때 손글씨라고 단정하지 않습니다. \'번호를 읽지 못했습니다. 직접 입력하거나 다른 사진으로 다시 시도해 주세요.\' 라고만 적습니다.',
+      '읽지 못했을 때 안내문 아래에 [번호 직접 입력] 단추가 나옵니다. 누르면 쓰시던 입력 화면이 바로 열립니다.',
+      '글로 \'반자동 7 14 21\' 처럼 넣을 때 첫 번호가 사라지던 것을 고쳤습니다. \'자동 4\'(자동 네 게임)를 지우는 규칙이 \'반자동\' 뒤의 고정수까지 지우고 있었습니다.',
+      '손으로 쓴 번호는 아직 읽지 못합니다. 읽은 척하지 않습니다.' ]},
     { v:'10.43.0', date:'2026-10-10', items:[
       '마킹 용지에서 한 칸만 못 읽으면, 그 자리만 원본에서 잘라 크게 그리고 밝기·붉기를 펴서 한 번 더 읽습니다. 이미 읽은 칸은 건드리지 않습니다.',
       '용지가 작게 찍힌 사진에서도 가장자리 칸(E)을 읽습니다.',
@@ -12278,7 +12292,9 @@ const TextIn=(function(){
       .replace(/\d+\s*(?:원|년|월|일|회|등|명|건|％|%|위|점|주|차)/g,' ')
       .replace(/\d+\s*수\s*고정/g,' ')                                  // 2수 고정
       .replace(/고정\s*\d+/g,' ')                                       // 고정 2
-      .replace(/(?:완전\s*)?자동\s*(?:선택)?\s*\d{1,2}(?![.\d])/g,' ')     // 자동 4 · 자동선택 2
+      /* 앞에 '반' 이 붙어 있으면 방식 이름('반자동')이므로 건드리지 않습니다 —
+         그러지 않으면 '반자동 7 14 21' 의 7 이 개수로 읽혀 사라집니다. */
+      .replace(/(^|[^반])((?:완전\s*)?자동\s*(?:선택)?)\s*\d{1,2}(?![.\d])/g,'$1 ')  // 자동 4 · 자동선택 2
       .replace(/\d{1,2}\s*(?:개\s*)?자동/g,' ')                          // 4 자동 · 4개 자동
       .replace(/\d+\s*(?:세트|슬롯|게임|줄|행|장)/g,' ')                 // 1세트 · 5슬롯
       .replace(/[A-Za-z]\w*\.(?:png|jpg|jpeg|pdf|txt|csv|xlsx?|docx?)/gi,' ')  // 파일명
@@ -17936,8 +17952,12 @@ const Shot=(function(){
     return kind;
   }
 
+  /* 못 읽었을 때만 보이는 [번호 직접 입력] 단추 */
+  function failOn(){ const el=$maybe('shotFail'); if(el) el.hidden=false; }
+  function failOff(){ const el=$maybe('shotFail'); if(el) el.hidden=true; }
+
   async function readOMR(){
-    qrRound=null;
+    qrRound=null; failOff();
     const list = photos.length ? photos : (img ? [img] : []);
     if(!list.length){ say(t('shotPickFirst','먼저 사진을 골라주세요.'), true); return; }
 
@@ -17986,13 +18006,15 @@ const Shot=(function(){
            읽지 못했다고 적고, 다시 찍거나 직접 넣으실 수 있게 둡니다. */
         say(t('shotOmrNo','마킹한 자리를 읽지 못했습니다. 용지가 화면에 가득 차게, 그림자 없이 똑바로 다시 찍어주세요.'), true);
         const rb=$maybe('shotKo'); if(rb) rb.hidden=true;
+        failOn();
         return;
       }
       say(t('shotTryTicket','마킹 용지로 읽히지 않아 복권으로 읽어 봅니다…'));
       await new Promise(r=>setTimeout(r,0));
       await readTicketPath();
       if(!many.length)
-        say(t('shotNoAny','이 사진에서는 번호를 찾지 못했습니다. 손으로 쓴 번호는 아직 읽지 못합니다. 마킹 용지나 복권이 화면에 가득 차게, 그림자 없이 다시 찍어주세요.'), true);
+        say(t('shotNoAny','번호를 읽지 못했습니다. 직접 입력하거나 다른 사진으로 다시 시도해 주세요.'), true);
+        failOn();
       return;
     }
 
@@ -19129,10 +19151,11 @@ const Shot=(function(){
     koNote();
     const papers=many.length, games=manySum();
     if(!papers){
+      /* 읽지 못했을 때는 바로 직접 넣으실 수 있게 단추를 보여 드립니다 */
       say(readCut
         ? t('shotSlow','사진이 커서 읽기를 끝내지 못했습니다. 번호가 잘 보이게 잘라서 다시 올려 주세요.')
-        : t('shotManyNo','사진에서 번호를 찾지 못했습니다. 손으로 쓴 번호는 아직 읽지 못합니다. 복권이 모두 들어오게, 그림자 없이 다시 찍어주세요.'),true);
-      koNote();
+        : t('shotManyNo','번호를 읽지 못했습니다. 직접 입력하거나 다른 사진으로 다시 시도해 주세요.'),true);
+      koNote(); failOn();
       return;
     }
     const weak=many.filter(x=>x.src!=='qr').length;
@@ -19820,6 +19843,12 @@ const Shot=(function(){
     rows.push([null,null,null,null,null,null]); paint();
   });
   on('closeShot','click',()=>sheet.classList.remove('on'));
+  /* 못 읽었을 때 — 사진 화면을 닫고 쓰시던 '번호 직접 입력' 화면을 그대로 엽니다 */
+  on('shotToManual','click',()=>{
+    sheet.classList.remove('on');
+    const b=document.getElementById('openManual');
+    if(b) b.click();
+  });
   on(saveBtn,'click',async()=>{
     const games=rows.filter(r=>r && r.length===6
                    && r.every(n=>Number.isFinite(n) && n>=1 && n<=45)
@@ -24031,7 +24060,9 @@ const I18N=(function(){
       shotPickFirst:'Choose a photo first.',
       shotOnePhoto:'One photo at a time — the first one was loaded.',
       shotTryTicket:'Not a marking sheet — trying as a ticket…',
-      shotNoAny:'No numbers found in this photo. Fill the frame and avoid shadows.',
+      shotToManual:'Enter numbers myself',
+      shotManyNo:'Could not read the numbers. Enter them yourself, or try another photo.',
+      shotNoAny:'Could not read the numbers. Enter them yourself, or try another photo.',
       tkReadNote:'Read from the photo — please check before saving.',
       tkTwin:'Another ticket has the same numbers. If you photographed one twice, untick one.',
       ambHowT:'Pick how it was chosen', howAuto:'Auto',
