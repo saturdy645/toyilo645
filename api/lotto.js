@@ -25,7 +25,7 @@
 //    그 결과는 반드시 돌아갑니다. 수집 실패가 전체를 500 으로 만들지 않습니다.
 
 import { BUILD, readDraws, haveRounds, saveDraw } from '../lib/store.js';
-import { latestRound, drawStarted, collectRound, notes } from '../lib/collect.js';
+import { latestRound, drawStarted, collectRound, notes, dhUrl } from '../lib/collect.js';
 import { newDeadline } from '../lib/deadline.js';
 
 /* 함수 제한 시간(vercel.json maxDuration 30초) 안에서 넉넉히 끝나도록 잡았습니다.
@@ -44,6 +44,10 @@ export default async function handler(req, res) {
     const round = Number(req.query.round || 0);
     const since = Number(req.query.since || 0);
     const wantCollect = String(req.query.collect || '') !== '0';
+    /* ?debug=1 — 왜 못 가져왔는지 그대로 보여 줍니다.
+       비밀키가 필요 없습니다. 번호를 지어내지 않고, 받은 것을 그대로 적습니다.
+       (바깥 주소와 HTTP 상태, 받은 글의 앞부분 160자까지입니다) */
+    const wantWhy = String(req.query.debug || '') === '1';
 
     /* ── ① 먼저 DB 를 읽습니다 ──
        여기서 실패하면 예전처럼 500 입니다(데이터베이스 문제).
@@ -145,7 +149,15 @@ export default async function handler(req, res) {
       draws,
       build: BUILD,
       ...(partial ? { partial: true } : {}),
-      ...(collected.length ? { collected } : {})
+      ...(collected.length ? { collected } : {}),
+      ...(wantWhy ? {
+        region: process.env.VERCEL_REGION || '(모름)',
+        officialUrl: dhUrl(latestByClock),
+        newsConfigured: !!(process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET),
+        extraConfigured: !!(process.env.EXTRA_SOURCES || '').trim(),
+        now: new Date(Date.now() + 9 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 19) + ' KST',
+        notes: notes().slice(-12)
+      } : {})
     });
 
   } catch (error) {
