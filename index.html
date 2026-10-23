@@ -2558,6 +2558,9 @@
     width:var(--w,0%);background:var(--c);border-radius:3px}
   .slip-live{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
     margin-top:-2px}
+  /* display 를 적어 둔 칸은 hidden 만으로 숨겨지지 않습니다.
+     QR 이 없을 때 남은 시간·구매 안내가 그대로 보이던 원인이었습니다. */
+  .slip-live[hidden], .slip-now[hidden]{display:none !important}
   .slip-live i{width:6px;height:6px;border-radius:50%;background:#2FBF71}
   .slip-live b{font-size:11px;font-weight:800;color:#5E6B7A;font-variant-numeric:tabular-nums;
     min-width:52px;text-align:left}
@@ -4946,7 +4949,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.56.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.58.1</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -9142,6 +9145,14 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.58.1', date:'2026-10-23', items:[
+      '반자동 표기 설명을 실제 확인된 범위에 맞춰 고쳤습니다. 고정수 한 개는 공식 앱 실물과 같은 것을 확인했고, 두 개 이상은 아직 확인하지 못했습니다.' ]},
+    { v:'10.58.0', date:'2026-10-23', items:[
+      '반자동 게임이 QR 에 담깁니다. 고른 번호만 담고 나머지는 판매점 단말기가 채웁니다 — 앱이 여섯 개를 대신 채우지 않습니다.',
+      '담긴 게임 수와 금액이 반자동까지 포함해 실제와 맞습니다.',
+      '\'QR 제외\' 표시는 정말로 담기지 않은 줄에만 붙습니다.' ]},
+    { v:'10.57.0', date:'2026-10-23', items:[
+      'QR 로 살 수 없는 세트에서 \'QR 사용 중\'·\'QR 스캔 시 바로 구매됩니다\'·남은 시간이 그대로 떠 있던 것을 고쳤습니다. 살 수 없는 화면에 살 수 있는 것처럼 보이는 표시를 남기지 않습니다.' ]},
     { v:'10.56.0', date:'2026-10-18', items:[
       'QR 글 앞자리를 공식 앱 실물과 같게 고쳤습니다. 둘째 장부터 실물과 다른 글이 만들어지고 있었습니다 — 판매점 단말기가 거절하던 또 하나의 원인입니다.',
       '공식 앱 모바일 슬립지 실물 세 장을 디코딩해 규격을 다시 맞췄습니다. 끝의 검사값 계산도 세 건 모두 일치했습니다.',
@@ -13955,13 +13966,20 @@ const Slip=(function(){
     while(out.length<6) out.push('?');
     return out.join(' ');
   }
-  /* 반자동 칸 — 실물에서 확인된 글자는 H 입니다.
-     다만 확인된 표본은 '고정수 한 개' 한 건(H:01) 뿐입니다.
-     그 01 이 '번호 1번' 인지 '고른 개수 1개' 인지가 아직 갈립니다 —
-     고정수가 둘 이상인 실물을 한 건 더 읽기 전에는 확정할 수 없습니다.
-     확정 전에는 HALF_QR 를 false 로 두어 반자동을 QR 에 담지 않습니다.
-     규격을 지어내 담으면 단말기가 엉뚱한 번호를 사게 될 수 있습니다. */
-  const HALF_QR=false;
+  /* ── 반자동 칸 ──
+     ■ 실물로 확인된 것 (공식 앱 모바일 슬립지)
+       H:01   반자동, 고정수 한 개 — 사용자가 '번호 1' 하나를 고른 것
+              (2026-10-18 16:01 생성, 1게임 1,000원)
+       같은 입력으로 이 앱이 만드는 글도 H:01 로 같습니다.
+
+     ■ 아직 확인되지 않은 것
+       고정수가 2~5개일 때의 표기는 실물로 대조하지 못했습니다.
+       여기서는 수동(M:)이 번호를 두 자리씩 이어 붙이는 것과 같은 방식으로
+       적습니다. 어디까지나 같은 형태를 따른 것이고, 확정된 규격이 아닙니다.
+       공식 앱에서 고정수 2개짜리 반자동 슬립지를 한 장 만들어 대조하기 전에는
+       이 부분을 '확인됨' 으로 보지 않습니다.
+       단말기가 어떻게 받아들일지도 실제 접수 결과로만 알 수 있습니다. */
+  const HALF_QR=true;
   function halfCell(s){
     const f=fixOf(s).slice(0,5).sort((a,b)=>a-b);
     if(!f.length || f.length>5) return null;
@@ -14093,6 +14111,10 @@ const Slip=(function(){
     redoT=setTimeout(()=>{ stale=false; keepScroll(paint); fresh(); }, 240);
   }
   const money=n=>(n||0).toLocaleString('ko-KR')+(isKO()?'원':'');
+  /* 이 세트에 QR 이 없는지 — paint() 가 매번 다시 적습니다.
+     QR 이 없으면 'QR 사용 중'·구매 안내·남은 시간을 모두 감춥니다.
+     살 수 없는 화면에 살 수 있는 것처럼 보이는 표시를 남기지 않습니다. */
+  let noQR=false;
   /* 지금 띄워 둔 QR의 상태를 그대로 적어 줍니다 —
      다 만들어 둔 QR을 '생성 중'이라고 하지 않습니다 */
   const liveText=()=> stale ? t('slipRedo','QR 갱신 중')
@@ -14134,7 +14156,9 @@ const Slip=(function(){
     document.getElementById('slipPrev').disabled = page<=0;
     document.getElementById('slipNext').disabled = page>=pgs.length-1;
     /* 금액은 이 QR에 실제로 담긴 게임만 셉니다 — 반자동 칸은 빠집니다 */
-    const nowReal=(pgs[page]||[]).filter(x=>x.k!=='0' && !openGame(x)).length;
+    /* 예전에는 반자동을 무조건 빼고 셌습니다. 이제 반자동도 담기므로
+       '실제로 QR 에 들어간 칸' 을 그대로 셉니다. */
+    const nowReal=inQR(page);
     document.getElementById('slipAmt').textContent=money(nowReal*PRICE);
     document.getElementById('slipAutoN').textContent=autoN();
     document.getElementById('slipAutoM').disabled = autoN()<=0;
@@ -14150,6 +14174,12 @@ const Slip=(function(){
     if(why) why.hidden=!none;
     const wrap=sheet.querySelector('.slip-qrwrap');
     if(wrap) wrap.classList.toggle('empty', none);
+    /* QR 이 없을 때 감추는 것들 — 구매 안내와 남은 시간 */
+    noQR=none;
+    const nowEl=document.getElementById('slipNow');
+    if(nowEl) nowEl.hidden=none;
+    const liveEl=sheet.querySelector('.slip-live');
+    if(liveEl) liveEl.hidden=none;
     if(none){
       cv.innerHTML='';
       if(redo) redo.hidden=true;
@@ -14221,6 +14251,8 @@ const Slip=(function(){
         t2.appendChild(sk);
       }
       const go=document.createElement('em');
+      /* 지금 보는 세트에 QR 이 없으면 'QR 사용 중' 을 달지 않습니다 */
+      const hideGo = (sIdx===page && noQR);
       go.textContent = sIdx===page ? liveText() : (isKO()?'이 세트 QR 만들기':'make QR');
       if(sIdx===page) go.classList.add('cur');
       /* 누르면 그 세트의 QR을 새로 만들고, 유효 시간도 1분부터 다시 셉니다 */
@@ -14233,7 +14265,8 @@ const Slip=(function(){
       if(arwL) h.appendChild(arwL);
       h.appendChild(t1);
       if(arwR) h.appendChild(arwR);
-      h.appendChild(t2); h.appendChild(go);
+      h.appendChild(t2);
+      if(!hideGo) h.appendChild(go);
       pick.appendChild(h);
 
       part.forEach((e,k)=>{
@@ -14287,7 +14320,7 @@ const Slip=(function(){
           b.appendChild(bx); b.appendChild(sq); b.appendChild(ns);
           /* 미완성 반자동은 QR 에 담기지 않습니다 — 그 줄에 그대로 적습니다.
              (자동은 Q: 로 담기므로 적지 않습니다) */
-          if(openGame(e)){
+          if(e.k!=='0' && one(e)===null){
             const nq=document.createElement('span'); nq.className='slip-tag noqr';
             nq.textContent=t('slipNoQR','QR 제외');
             nq.title=t('slipNoQRT','번호가 덜 정해져 이 QR 에 담기지 않습니다. [앱에서 채우기] 로 여섯 개를 채우면 담깁니다.');
@@ -14429,7 +14462,7 @@ const Slip=(function(){
       sp.classList.toggle('on', on || i===full);
       sp.style.setProperty('--w', on ? '100%' : (i===full ? (part-full)*100+'%' : '0%'));
     });
-    if(secEl) secEl.textContent=(left/1000).toFixed(1)+(isKO()?'초':'s');
+    if(secEl && !noQR) secEl.textContent=(left/1000).toFixed(1)+(isKO()?'초':'s');
     /* 세트 머리글의 칩도 같은 시계를 봅니다 — 살아 있는 동안 깜빡입니다 */
     const chip=pick && pick.querySelector('.set-head.now em.cur');
     if(chip){
