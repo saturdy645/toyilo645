@@ -2542,8 +2542,12 @@
   .slip-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
     gap:12px;padding:4px 0 8px;scrollbar-width:none}
   .slip-body::-webkit-scrollbar{width:0}
+  /* 바깥선만 세트 색으로 물들입니다 — 아래 세트 머리글과 같은 색이라
+     지금 몇 세트의 QR 을 보고 있는지 한눈에 들어옵니다.
+     QR 모듈과 흰 바탕은 그대로 둡니다 — 색을 넣으면 스캔이 깨질 수 있습니다. */
   .slip-paper{position:relative;background:#fff;border-radius:16px;padding:14px 14px 12px;
     display:flex;flex-direction:column;align-items:center;gap:10px;
+    border:4px solid var(--qrc, transparent);
     box-shadow:0 10px 30px rgba(0,0,0,.35)}
   /* 남은 유효 시간 — 초록에서 빨강으로 한 칸씩 꺼집니다 */
   .slip-wrap{position:relative;width:100%;overflow:hidden;border-radius:4px}
@@ -2597,11 +2601,13 @@
   .slip-top .amt{font-size:15px;font-weight:800;color:#172230;letter-spacing:-.02em;
     font-variant-numeric:tabular-nums}
   .slip-page{display:flex;align-items:center;gap:10px;margin:-4px 0 -2px}
-  .slip-page span{font-size:12px;font-weight:800;color:#172230;
-    font-variant-numeric:tabular-nums;min-width:30px;text-align:center}
-  /* 손가락으로 누르는 자리라 44×44 를 확보합니다 (화살표는 더 크게) */
-  .slip-page button{background:none;border:0;color:#8894A5;font-size:26px;
-    min-width:44px;min-height:44px;line-height:1;padding:0;
+  /* 몇 장 중 몇 번째인지가 가장 중요한 정보라 크게 둡니다 */
+  .slip-page span{font-size:23px;font-weight:900;color:#172230;
+    font-variant-numeric:tabular-nums;min-width:104px;text-align:center;
+    padding:7px 14px;border-radius:999px;letter-spacing:-.3px}
+  /* 손가락으로 누르는 자리라 넉넉히 확보합니다 — 세트를 자주 넘기는 자리입니다 */
+  .slip-page button{background:none;border:0;color:#8894A5;font-size:40px;
+    min-width:58px;min-height:58px;line-height:1;padding:0;
     display:flex;align-items:center;justify-content:center;
     font-family:inherit;touch-action:manipulation}
   .slip-page button:disabled{opacity:.25}
@@ -2619,7 +2625,9 @@
   .slip-auto .stp b{min-width:26px;text-align:center;font-size:13px;font-weight:800;
     font-variant-numeric:tabular-nums}
   /* QR은 어떤 화면에서도 정사각형을 지킵니다 — 크기도 줄이지 않습니다 */
-  .slip-qrwrap{position:relative;width:248px;max-width:82%;aspect-ratio:1/1;flex:none;
+  /* 카드 안쪽을 가득 채웁니다 — 판매점 단말기에 대는 그림이라 클수록 좋습니다.
+     (248px 고정 + 82% 제한이던 것을 풀었습니다) */
+  .slip-qrwrap{position:relative;width:100%;max-width:100%;aspect-ratio:1/1;flex:none;
     touch-action:pan-y;
     transition:transform .22s cubic-bezier(.22,.61,.36,1), opacity .22s ease}
   .slip-qrwrap.drag{transition:none}
@@ -4949,7 +4957,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.58.1</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.59.3</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -9145,6 +9153,12 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.59.3', date:'2026-10-24', items:[
+      'QR 화면의 세트 표시와 넘김 화살표를 더 크게 했습니다. 몇 장을 찍어야 하는지 멀리서도 보입니다.',
+      'QR 그림을 카드 안쪽에 가득 차도록 키웠습니다. 판매점 단말기에 대기 쉬워집니다.' ]},
+    { v:'10.59.0', date:'2026-10-24', items:[
+      'QR 카드 바깥선이 그 세트의 색으로 바뀝니다. 아래 세트 머리글과 같은 색이라 지금 어느 세트의 QR 인지 한눈에 보입니다.',
+      '\'1 / 3세트\' 표시를 크게 했습니다. 몇 장을 찍어야 하는지 바로 보입니다.' ]},
     { v:'10.58.1', date:'2026-10-23', items:[
       '반자동 표기 설명을 실제 확인된 범위에 맞춰 고쳤습니다. 고정수 한 개는 공식 앱 실물과 같은 것을 확인했고, 두 개 이상은 아직 확인하지 못했습니다.' ]},
     { v:'10.58.0', date:'2026-10-23', items:[
@@ -14151,6 +14165,9 @@ const Slip=(function(){
     pgWrap.classList.toggle('one', pgs.length<=1);
     const pgEl=document.getElementById('slipPg');
     pgEl.textContent=(page+1)+' / '+pgs.length+(isKO()?'세트':'');
+    /* QR 카드 바깥선도 지금 세트 색으로 */
+    const paperEl=sheet.querySelector('.slip-paper');
+    if(paperEl) paperEl.style.setProperty('--qrc', setCol(page));
     pgEl.style.background=setCol(page);            // 지금 보는 장의 색
     pgEl.style.color='#101728';
     document.getElementById('slipPrev').disabled = page<=0;
