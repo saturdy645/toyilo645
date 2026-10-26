@@ -961,6 +961,23 @@
     font-weight:800;opacity:.9}
   .card-top .hit.open{background:rgba(232,163,61,.16);color:#E8A33D;
     box-shadow:inset 0 0 0 1px rgba(232,163,61,.5)}
+  /* [구매 번호 등록] — 누를 수 있는 단추입니다.
+     천천히 숨 쉬듯 깜빡여 '아직 할 일이 남았다' 를 알려 줍니다.
+     빠르게 깜빡이면 눈이 피로하고 글자를 읽기 어려워서 느리게 둡니다. */
+  .card-top .hit.reg{font:inherit;font-size:11px;font-weight:800;
+    border:0;cursor:pointer;padding:5px 11px;border-radius:999px;
+    -webkit-appearance:none;appearance:none;font-family:inherit;
+    touch-action:manipulation;white-space:nowrap;
+    animation:regBreathe 2.8s ease-in-out infinite}
+  .card-top .hit.reg:active{transform:scale(.96)}
+  @keyframes regBreathe{
+    0%,100%{opacity:1;   box-shadow:inset 0 0 0 1px rgba(232,163,61,.5)}
+    50%    {opacity:.62; box-shadow:inset 0 0 0 2px rgba(232,163,61,.95)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .card-top .hit.reg{animation:none;
+      box-shadow:inset 0 0 0 2px rgba(232,163,61,.8)}
+  }
 
   /* ── 구매 번호 연결 ── 어느 자리에 넣을지 큰 단추로 고릅니다 */
   .fl-g{margin:0 0 14px;padding:12px 12px 10px;border-radius:14px;
@@ -4957,7 +4974,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.59.3</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.60.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -7638,6 +7655,28 @@ const Log=(function(){
   }
 
   /* 산 번호를 넣을 수 있는 '?' 슬롯들 — 같은 회차, 고정수가 모두 포함된 것 */
+  /* 번호가 이미 다 찬 게임을 '실물로 샀다' 고만 표시합니다.
+     수동으로 미리 적어 둔 게임은 채울 '?' 가 없어서 fillSlot 이 거절합니다.
+     그래도 용지에 같은 번호가 있으면 같은 게임이므로, 새로 만들지 않고
+     산 것으로만 적어 둡니다. */
+  async function markBuy(it){
+    if(!it || !items.includes(it)) return false;
+    if(it.buy===true) return true;
+    it.buy=true; it.filledAt=it.filledAt||Date.now();
+    await save();
+    try{ if(window.Keep) Keep.autoBackup(); }catch(e){}
+    render();
+    try{ if(window.Check) Check.render(); }catch(e){}
+    try{ if(window.Ledger) Ledger.render(); }catch(e){}
+    return true;
+  }
+  /* 번호가 똑같이 다 찬 게임 — 용지의 한 줄과 같은 게임인지 봅니다 */
+  function sameGames(round, nums){
+    const got=[...(nums||[])].sort((a,b)=>a-b).join(',');
+    return items.filter(it=>it.round===round && !((it.open|0)>0)
+      && ((it.nums||[]).filter(v=>Number.isFinite(v)).length===6)
+      && [...it.nums].sort((a,b)=>a-b).join(',')===got);
+  }
   function openSlots(round, nums){
     const got=(nums||[]);
     return items.filter(it=>it.round===round && (it.open|0)>0
@@ -7647,7 +7686,7 @@ const Log=(function(){
           freePosFrom,
           gid:gidOf,indexOfGid,nextSetPos,moveTo,moveToPos,moveToSlot,landingPos,
           editNum,
-          fillSlot,openSlots,
+          fillSlot,openSlots,markBuy,sameGames,
           items:()=>items,inOrder,freePos,refit:fitCards,savedMsg};
 })();
 
@@ -7928,13 +7967,30 @@ const Check=(function(){
                      : soon? t('beforeDrawWait','추첨을 기다리는 중')
                      : waiting? t('waitDraw','추첨 결과 확인 중')
                      : (hits+t('hits','개 일치'));
+      /* ── 구매 번호 등록 ──
+         번호를 만들기만 한 게임은 아직 '산 것' 이 아닙니다.
+         자동·반자동·수동 어느 쪽으로 만들었든, 실제로 사고 나면
+         용지 QR 을 찍어 이 게임과 이어 주어야 합니다.
+         그래서 아직 잇지 않은 게임에는 누를 수 있는 단추를 둡니다. */
+      const needReg = (it.buy!==true);
+      let regBtn=null;
+      if(needReg){
+        regBtn=document.createElement('button');
+        regBtn.type='button';
+        regBtn.className='hit open reg';
+        regBtn.textContent=t('needBuy','구매 번호 등록');
+        regBtn.title=t('needBuyT','산 복권의 QR 을 찍어 이 세트와 이어 줍니다');
+        regBtn.addEventListener('click',ev=>{ ev.stopPropagation(); regFrom(it); });
+      }
       const badge=document.createElement('span');
       badge.className='hit'+(rank?' win':'')+(gap?' open':'');
-      badge.textContent= gap? t('needBuy','구매 번호 등록 필요')
+      badge.textContent= gap? t('openGame','번호 미정')
                         : soon? t('soonBadge','추첨 전')
                         : waiting? t('checking','확인 중')
                         : (rank||t('noPrize','미당첨'));
-      top.appendChild(seqEl);top.appendChild(who);top.appendChild(badge);
+      top.appendChild(seqEl);top.appendChild(who);
+      if(regBtn) top.appendChild(regBtn);
+      top.appendChild(badge);
       if(rank){
         c.classList.add('won');                   // 카드 전체를 밝게
         const medal=document.createElement('span');
@@ -8492,6 +8548,14 @@ const Check=(function(){
     im.onerror=()=>{ URL.revokeObjectURL(url); say(t('scanPhotoBad','사진을 읽지 못했습니다.')); tools(true,false); };
     im.src=url;
   });
+  /* [구매 번호 등록] 을 누른 자리를 기억해 둡니다.
+     용지를 읽고 나면 그 세트의 게임부터 맞춰 넣습니다.
+     1세트에 2게임만 있으면 그 2게임에 들어가고, 남는 줄은 새 게임이 됩니다. */
+  let regHint=null;
+  function regFrom(it){
+    try{ regHint={ round:it.round, set:setOf((it.pos|0)+1) }; }catch(e){ regHint=null; }
+    openScan();
+  }
   function openScan(){ sheet.classList.add('on'); startCam(); }
   function closeScan(){ sheet.classList.remove('on'); stopCam(); picked=null; showGot(); say(''); }
   on('openScan','click',openScan);
@@ -8524,15 +8588,17 @@ const Check=(function(){
       /* ── 미리 적어 둔 '?' 자리가 있으면 거기에 넣을지 먼저 묻습니다 ──
          연결할 자리가 하나도 없으면 이 걸음을 건너뜁니다 (지금까지와 똑같습니다). */
       let left=games;
-      if(window.Fill && Fill.need(r, games)){
+      const hint=(regHint && regHint.round===r)? regHint : null;
+      if(window.Fill && Fill.need(r, games, hint)){
         closeScan();                                   // 카메라를 먼저 끕니다
-        const plan=await Fill.ask(r, games);
+        const plan=await Fill.ask(r, games, hint);
         const got=await Fill.apply(plan, {buy:true});
         left=got.rest;
         if(got.filled && !left.length){
           /* 전부 기존 자리를 채웠습니다 — 새 게임을 더 만들지 않습니다.
              중복 등록 이력은 실제로 반영된 뒤에 남깁니다. */
           await markDone(txt, r, games);
+          regHint=null;
           render();
           toast(isKO()? (got.filled+'자리에 구매 번호를 넣었습니다')
                       : (got.filled+' slots completed'));
@@ -9153,6 +9219,11 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.60.0', date:'2026-10-26', items:[
+      '저장한 번호 카드에 [구매 번호 등록] 단추가 생겼습니다. 천천히 깜빡이며, 누르면 바로 용지 QR 을 찍습니다.',
+      '자동·반자동·수동 어느 쪽으로 만든 번호든 단추가 나옵니다. 실제로 산 복권과 이어 주기 전까지 남아 있습니다.',
+      '단추를 누른 세트의 게임부터 맞춰 넣습니다. 1세트에 2게임만 있으면 그 2게임에 들어가고, 남는 줄은 새 게임으로 저장됩니다.',
+      '수동으로 미리 적어 둔 번호도 이어집니다. 용지와 번호가 같으면 새로 만들지 않고 산 것으로만 적습니다.' ]},
     { v:'10.59.3', date:'2026-10-24', items:[
       'QR 화면의 세트 표시와 넘김 화살표를 더 크게 했습니다. 몇 장을 찍어야 하는지 멀리서도 보입니다.',
       'QR 그림을 카드 안쪽에 가득 차도록 키웠습니다. 판매점 단말기에 대기 쉬워집니다.' ]},
@@ -13341,10 +13412,26 @@ const Fill=(function(){
   const listEl=$maybe('fillList');
   let rows=[], done=null, round=0;
 
+  /* 한 줄에 이어 줄 수 있는 자리들.
+       ① '?' 가 남아 있고 고정수가 이 줄에 다 들어 있는 게임
+       ② 번호가 이미 똑같이 다 찬 게임 (수동으로 미리 적어 둔 경우)
+     어느 세트에서 눌렀는지(hint) 알면 그 세트를 앞에 둡니다. */
+  function candsOf(r, g, hint){
+    let open=[], same=[];
+    try{ open=Log.openSlots(r, g)||[]; }catch(e){}
+    try{ same=(Log.sameGames? Log.sameGames(r, g) : [])||[]; }catch(e){}
+    let all=open.concat(same.filter(x=>open.indexOf(x)<0));
+    if(hint && hint.set!=null){
+      const inSet=it=>{ try{ return setOf((it.pos|0)+1)===hint.set; }catch(e){ return false; } };
+      const a=all.filter(inSet), b=all.filter(it=>!inSet(it));
+      all=a.concat(b);
+    }
+    return all;
+  }
   /* 연결할 자리가 있는지 — 없으면 화면을 띄울 이유가 없습니다 */
-  function need(r, games){
+  function need(r, games, hint){
     try{
-      for(const g of (games||[])) if(Log.openSlots(r, g).length) return true;
+      for(const g of (games||[])) if(candsOf(r, g, hint).length) return true;
     }catch(e){}
     return false;
   }
@@ -13420,11 +13507,28 @@ const Fill=(function(){
   const AZF='ABCDE';
 
   /* 사용자가 고른 대로 돌려줍니다. 닫으면 '전부 새로 저장' 입니다. */
-  function ask(r, games){
+  function ask(r, games, hint){
     round=r;
     rows=(games||[]).map(g=>({game:[...g].sort((a,b)=>a-b),
-                              cands:(()=>{ try{ return Log.openSlots(r,g); }catch(e){ return []; } })(),
+                              cands:candsOf(r, g, hint),
                               pick:null}));
+    /* ── 누른 세트의 자리를 미리 골라 둡니다 ──
+       한 줄이 그 세트의 한 자리에만 맞으면 그대로 고릅니다.
+       이미 고른 자리는 다른 줄이 다시 고르지 않습니다. */
+    if(hint && hint.set!=null){
+      const taken=new Set();
+      const inSet=it=>{ try{ return setOf((it.pos|0)+1)===hint.set; }catch(e){ return false; } };
+      for(const row of rows){
+        const fit=row.cands.filter(it=>inSet(it) && !taken.has(it));
+        if(fit.length===1){ row.pick=fit[0]; taken.add(fit[0]); }
+      }
+      /* 남은 줄 가운데 그 세트에 맞는 자리가 하나뿐인 것도 마저 고릅니다 */
+      for(const row of rows){
+        if(row.pick) continue;
+        const fit=row.cands.filter(it=>inSet(it) && !taken.has(it));
+        if(fit.length===1){ row.pick=fit[0]; taken.add(fit[0]); }
+      }
+    }
     paint();
     sheet.classList.add('on');
     return new Promise(res=>{ done=res; });
@@ -13453,9 +13557,23 @@ const Fill=(function(){
         let ok=false;
         try{ ok=await Log.fillSlot(p.slot, p.game, opt||{buy:true}); }catch(e){ ok=false; }
         if(ok){ filled++; continue; }
+        /* 채울 '?' 가 없는 게임입니다. 번호가 똑같으면 같은 게임이므로
+           새로 만들지 않고 '샀다' 고만 적습니다. */
+        try{
+          const a=[...(p.slot.nums||[])].sort((x,y)=>x-y).join(',');
+          const b=[...(p.game||[])].sort((x,y)=>x-y).join(',');
+          if(a===b && Log.markBuy && await Log.markBuy(p.slot)){ filled++; continue; }
+        }catch(e){}
         /* 못 채웠으면 잃지 않도록 새로 저장합니다 */
       }
       rest.push(p.game);
+    }
+    /* 다 넣은 뒤 카드 목록을 한 번만 다시 그립니다.
+       Log.fillSlot 은 저장 목록만 다시 그리므로, 마지막으로 채운 게임이
+       당첨확인 화면에서 옛 모습([구매 번호 등록] 단추)으로 남아 있었습니다. */
+    if(filled){
+      try{ if(window.Check) Check.render(); }catch(e){}
+      try{ if(window.Ledger) Ledger.render(); }catch(e){}
     }
     return {filled, rest};
   }
@@ -25007,7 +25125,7 @@ const I18N=(function(){
       ambHowT:'Pick how it was chosen', howAuto:'Auto',
       ck3Txt:'Paste<br>text',
       txTitle:'Paste text', txRead:'Read numbers', txClear:'Clear',
-      openGame:'numbers not set', needBuy:'register ticket numbers',
+      openGame:'numbers not set', needBuy:'register ticket', needBuyT:'Scan the printed ticket QR to link this set',
       shotSaveNums:'Save all numbers',
       fillTitle:'Fill the undecided cells with the bought numbers?',
       fillGo:'Fill this slot', fillNew2:'Register separately', fillCancel:'Cancel',
