@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 커피 맛집 사진: 누구나 보기, 관리자만 올리기·지우기
+    match /stays/{course}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true
+        && (request.resource == null || (request.resource.size < 3 * 1024 * 1024 && request.resource.contentType.matches('image/.*')));
+    }
+    match /cafes/{course}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true
+        && (request.resource == null || (request.resource.size < 3 * 1024 * 1024 && request.resource.contentType.matches('image/.*')));
+    }
+    // 사진 파일: 누구나 보기, 본인 폴더에만 올리기·지우기, 3MB 이하 이미지만
+    match /photos/{uid}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && (request.resource == null
+            || (request.resource.size < 3 * 1024 * 1024 && request.resource.contentType.matches('image/.*')));
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "_policy": "대표사진은 기존 Firestore photos/{course}/items 컬렉션의 방문자가 올린 최신 사진입니다. 자료가 없으면 일러스트를 표시합니다.",
+  "_mood": []
+}

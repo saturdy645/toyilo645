@@ -1,0 +1,47 @@
+[
+ {
+  "id": "n-hwasun-manyeonsan",
+  "name": "화순 만연산 데크길 (오감연결길)",
+  "region": "전남 화순군 화순읍",
+  "km": null,
+  "hours": "",
+  "year": 2017,
+  "note": "만연산 치유의숲센터에서 시작하는 계단 없는 무장애 데크 숲길. 건강오름숲·치유숲길·하늘숲·만연산 숲길로 이어지고, 소나무 숲 사이로 데크가 이어져요. 만연산 주차장 이용.",
+  "source": "더팩트 화순 여행 기사 · 현장 표지석(만연산 치유의숲 2017.7)",
+  "sourceUrl": "https://news.tf.co.kr/read/ogmeta/1821014.htm",
+  "photos": [
+   "newphotos/hwasun-manyeonsan-1.jpg",
+   "newphotos/hwasun-manyeonsan-2.jpg",
+   "newphotos/hwasun-manyeonsan-3.jpg"
+  ],
+  "photoCredit": "사진: 트레킹 108 현장 촬영",
+  "mapQ": "만연산 치유의숲"
+ },
+ {
+  "id": "n-neoritjae",
+  "name": "너릿재 옛길 (화순 → 광주 선교)",
+  "region": "전남 화순군 ↔ 광주 동구",
+  "km": null,
+  "hours": "",
+  "year": 2012,
+  "yearText": "2012년 숲길 재개장",
+  "from": "화순 소아르미술관",
+  "to": "광주 선교지구 우방아이유쉘",
+  "note": "1971년 너릿재 터널이 뚫리기 전까지 광주와 화순을 잇던 고갯길. 2011년부터 벚꽃길·배수로·순환산책로를 정비해 2012년 7월 '너릿재 명품숲길'로 다시 열렸어요. 화순 쪽에서 고개를 넘어 광주 선교동으로 내려가는 코스이고, 화순 쪽 옛길 구간은 약 2.2km.",
+  "source": "너릿재공원 안내(광주 동구 선교동) · 더팩트 화순 기사(화순 구간 2.2km) · 출발·도착 지점: 현지 추천",
+  "sourceUrl": "https://www.ktriptips.com/kor/tourspot/127356",
+  "mapQ": "너릿재 옛길"
+ },
+ {
+  "id": "n-suncheon-bonghwasan",
+  "name": "순천 봉화산 둘레길",
+  "region": "전남 순천시",
+  "km": 12.5,
+  "hours": "",
+  "year": 2013,
+  "note": "봉화산 3부 능선을 따라 도는 둘레길. 용당동·조곡동·생목동·조례동 일대 4개 구간, 구간마다 치유의 숲·유아숲·실버숲 테마.",
+  "source": "아주경제 2013-11-14 (순천시 제공 자료)",
+  "sourceUrl": "https://www.ajunews.com/view/20131114233232276",
+  "mapQ": "순천 봉화산 둘레길"
+ }
+]

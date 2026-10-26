@@ -1,0 +1,11 @@
+{
+  "name": "trekking108-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "걷기좋은 대한민국 트레킹 108 — 웹 배포판 (Vercel + Firebase)",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "nodemailer": "^6.9.14"
+  }
+}

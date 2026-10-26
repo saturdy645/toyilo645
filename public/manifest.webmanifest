@@ -1,0 +1,62 @@
+{
+ "id": "/",
+ "name": "TREKKING 108 — 대한민국 트레킹 108",
+ "short_name": "TREKKING 108",
+ "orientation": "portrait",
+ "categories": [
+  "travel",
+  "sports",
+  "lifestyle"
+ ],
+ "prefer_related_applications": false,
+ "screenshots": [
+  {
+   "src": "/screenshots/home.png",
+   "sizes": "780x1688",
+   "type": "image/png",
+   "form_factor": "narrow",
+   "label": "첫 화면"
+  },
+  {
+   "src": "/screenshots/list.png",
+   "sizes": "780x1688",
+   "type": "image/png",
+   "form_factor": "narrow",
+   "label": "코스 목록"
+  },
+  {
+   "src": "/screenshots/wide.png",
+   "sizes": "1280x860",
+   "type": "image/png",
+   "form_factor": "wide",
+   "label": "PC 화면"
+  }
+ ],
+ "description": "108코스 완주 메달을 모으는 대한민국 트레킹 코스 안내",
+ "lang": "ko",
+ "start_url": "/",
+ "scope": "/",
+ "display": "standalone",
+ "background_color": "#01442e",
+ "theme_color": "#003a27",
+ "icons": [
+  {
+   "src": "/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
