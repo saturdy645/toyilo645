@@ -4974,7 +4974,7 @@
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.60.0</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.60.1</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -7988,8 +7988,9 @@ const Check=(function(){
                         : soon? t('soonBadge','추첨 전')
                         : waiting? t('checking','확인 중')
                         : (rank||t('noPrize','미당첨'));
+      /* 차례: 자리이름 · 방식 ··· [번호 미정] [구매 번호 등록]
+         할 일을 알리는 단추가 맨 오른쪽 끝에 옵니다. */
       top.appendChild(seqEl);top.appendChild(who);
-      if(regBtn) top.appendChild(regBtn);
       top.appendChild(badge);
       if(rank){
         c.classList.add('won');                   // 카드 전체를 밝게
@@ -7998,6 +7999,7 @@ const Check=(function(){
         medal.innerHTML='<i>🏅</i><b>'+rank+'</b>';
         top.appendChild(medal);
       }
+      if(regBtn) top.appendChild(regBtn);          // 늘 맨 오른쪽
 
       // 당첨번호 줄과 같은 폭·같은 공 크기로 맞춥니다
       const row=document.createElement('div');row.className='win-row';
@@ -9219,6 +9221,8 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.60.1', date:'2026-10-26', items:[
+      '[구매 번호 등록] 단추를 카드 맨 오른쪽으로 옮겼습니다. \'번호 미정\' 은 그 왼쪽에 나옵니다.' ]},
     { v:'10.60.0', date:'2026-10-26', items:[
       '저장한 번호 카드에 [구매 번호 등록] 단추가 생겼습니다. 천천히 깜빡이며, 누르면 바로 용지 QR 을 찍습니다.',
       '자동·반자동·수동 어느 쪽으로 만든 번호든 단추가 나옵니다. 실제로 산 복권과 이어 주기 전까지 남아 있습니다.',
