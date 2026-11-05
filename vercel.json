@@ -5,5 +5,8 @@
   },
   "crons": [
     { "path": "/api/sync-lotto", "schedule": "0 12 * * *" }
+  ],
+  "rewrites": [
+    { "source": "/.well-known/assetlinks.json", "destination": "/assetlinks.json" }
   ]
 }

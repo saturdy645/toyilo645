@@ -1,20 +1,36 @@
 {
-  "name": "토요일645",
+  "id": "/",
+  "name": "토요일645 — SATURDAY 645",
   "short_name": "토요일645",
+  "description": "번호 추천부터 저장·당첨 확인·QR 간편 구매까지.",
+  "lang": "ko",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#0A0F1C",
   "theme_color": "#0A0F1C",
+  "categories": ["entertainment", "lifestyle", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

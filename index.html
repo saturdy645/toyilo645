@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>토요일 645</title>
 <meta name="theme-color" content="#0A0F1C">
+<!-- ── 앱으로 설치되게 ──
+     이 줄이 없으면 안드로이드가 manifest.webmanifest 를 아예 읽지 않습니다.
+     읽지 못하면 '앱으로 설치' 가 뜨지 않고, 플레이스토어용 TWA 포장도 되지 않습니다. -->
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="토요일645">
@@ -2041,7 +2045,7 @@
   #settings .sheet-body::-webkit-scrollbar-track{margin:10px 0}
   .set-row .val{margin-left:auto;font-size:13px;font-weight:600;color:var(--muted)}
   .set-row.danger{color:#E86A5A}
-  /* 개발자 응원하기는 그대로 두고, 옆에 슈퍼챗 응원을 붙입니다 */
+  /* 개발자 응원하기는 그대로 두고, 옆에 개발자 후원을 붙입니다 */
   .set-duo{padding:0;gap:0}
   .set-duo .rowbtn{flex:none;display:flex;align-items:center;
     padding:14px 0 14px 14px;background:none;border:0;border-radius:0;text-align:left;
@@ -5058,13 +5062,13 @@
             <button class="rowbtn" id="setCheer">
               <span data-i="setCheerRow">개발자 응원하기</span>
             </button>
-            <button class="hot-chip" id="setSuper" data-i="setSuperRow"><i data-i="cheerFor">고도화를 위한</i><b data-i="cheerSuper">슈퍼챗 응원</b></button>
+            <button class="hot-chip" id="setSuper" data-i="setSuperRow"><i data-i="cheerFor">고도화를 위한</i><b data-i="cheerSuper">개발자 후원</b></button>
             <button class="subbtn" id="setCheer2">
               <span class="val" data-i="setCheerSub">고마운 분들 리스트</span>
             </button>
           </div>
           <div class="set-row"><span data-i="setContact">광고·문의</span><span class="val">toyoil645@gmail.com</span></div>
-          <button class="set-row" id="setVer">버전<span class="val">10.67.1</span></button>
+          <button class="set-row" id="setVer">버전<span class="val">10.70.0</span></button>
           <button class="set-row" id="setUpd" data-i="updTitle">앱 업데이트 안내</button>
           <button class="set-row" id="setRights" data-i="rightsTitle">이용 안내·권리 표시</button>
           <button class="set-row admin-row" id="setAdmin" hidden>
@@ -8637,8 +8641,18 @@ const Check=(function(){
     im.onload=()=>{
       URL.revokeObjectURL(url);
       const txt=qrFromImg(im);
-      if(txt) onText(txt);
-      else { say(t('scanPhotoNo','사진에서 QR을 찾지 못했습니다. 조금 더 가까이, 밝은 곳에서 다시 찍어주세요.')); tools(true,false); }
+      if(txt){ onText(txt); return; }
+      /* ── QR 이 없는 사진이면 글자로 읽습니다 ──
+         동행복권 '티켓 보기' 화면처럼 QR 없이 번호만 적힌 것을 찍으셨을 때입니다.
+         다시 찍으시라고 하지 않고, 찍은 그 사진을 그대로 글자 판독으로 넘깁니다. */
+      say(t('scanPhotoText','QR 이 없어 글자로 읽어 봅니다…'));
+      try{
+        closeScan();
+        Shot.readFrom(file);
+      }catch(e){
+        say(t('scanPhotoNo','사진에서 QR을 찾지 못했습니다. 조금 더 가까이, 밝은 곳에서 다시 찍어주세요.'));
+        tools(true,false);
+      }
     };
     im.onerror=()=>{ URL.revokeObjectURL(url); say(t('scanPhotoBad','사진을 읽지 못했습니다.')); tools(true,false); };
     im.src=url;
@@ -9363,6 +9377,16 @@ const Settings=(function(){
      위에 있는 것이 최신입니다. 스토어를 확인하는 기능이 아니라
      사용자가 달라진 점을 읽는 안내 화면입니다. */
   const UPDATES=[
+    { v:'10.70.0', date:'2026-11-04', items:[
+      '사진에 QR 이 없으면 글자로 읽습니다. 동행복권 \'티켓 보기\' 화면처럼 QR 없이 번호만 있는 것을 찍어도 번호가 들어갑니다. 다시 찍으라고 하지 않고 찍은 사진을 그대로 넘깁니다.',
+      '\'E 자동 10 16 17 20 33 40\' 처럼 적힌 줄에서 첫 번호가 사라지던 것을 고쳤습니다. \'자동 4\'(자동 네 게임)를 지우는 규칙이 뒤에 번호가 더 있어도 첫 번호를 개수로 읽고 있었습니다. 쉼표로 이어 적어도 지킵니다.',
+      '핸드폰 뒤로가기(안드로이드)와 가장자리 쓸어넘기기(아이폰)로 열린 창이 닫힙니다. 전에는 창이 아니라 앱이 꺼졌습니다. 창이 없을 때는 평소대로 나갑니다.' ]},
+    { v:'10.69.0', date:'2026-11-03', items:[
+      '앱으로 설치할 수 있게 했습니다. 매니페스트를 화면에 연결하고(전에는 파일만 있고 연결이 빠져 있었습니다) 서비스 워커를 넣었습니다. 안드로이드에서 \'앱으로 설치\' 가 뜨고, 아이폰 홈 화면에서도 인터넷이 끊겼을 때 화면이 열립니다.',
+      '당첨번호(/api/)는 담아 두지 않습니다. 옛날 번호가 보이는 일이 없습니다.',
+      '홈 화면 아이콘이 기기 모양(원·둥근네모)에 맞춰 잘리지 않도록 전용 아이콘을 넣었습니다.' ]},
+    { v:'10.68.0', date:'2026-11-02', items:[
+      '설정 화면의 \'슈퍼챗 응원\' 을 \'개발자 후원\' 으로 바꿨습니다. 채팅에 띄우는 슈퍼챗이 아니라 서버 운영을 돕는 자발적인 후원이라는 뜻을 분명히 했습니다. 영어·일본어·중국어도 함께 고쳤습니다.' ]},
     { v:'10.67.1', date:'2026-11-02', items:[
       '로그인 화면의 안내문(\'로그인하면 … 그대로 남습니다\')을 뺐습니다.',
       '사진을 덜 덮습니다. 위아래 모두, 맨 아래까지 사진이 비쳐 보입니다. 대신 아래쪽 글자에는 그림자를 주어 읽히게 했습니다.' ]},
@@ -9921,7 +9945,7 @@ const Settings=(function(){
   const openCheer=()=>{ sheet.classList.remove('on'); $id('cheer').classList.add('on'); Thanks.start(); };
   on('setCheer','click',openCheer);
   on('setCheer2','click',openCheer);         // '고마운 분들'을 눌러도 같은 화면
-  on('setSuper','click',openCheer);          // 슈퍼챗 응원도 같은 화면으로
+  on('setSuper','click',openCheer);          // 개발자 후원도 같은 화면으로
   on('closeCheer','click',()=>$id('cheer').classList.remove('on'));
 
   let cheerAmt=0;
@@ -13163,8 +13187,11 @@ const TextIn=(function(){
       .replace(/\d+\s*수\s*고정/g,' ')                                  // 2수 고정
       .replace(/고정\s*\d+/g,' ')                                       // 고정 2
       /* 앞에 '반' 이 붙어 있으면 방식 이름('반자동')이므로 건드리지 않습니다 —
-         그러지 않으면 '반자동 7 14 21' 의 7 이 개수로 읽혀 사라집니다. */
-      .replace(/(^|[^반])((?:완전\s*)?자동\s*(?:선택)?)\s*\d{1,2}(?![.\d])/g,'$1 ')  // 자동 4 · 자동선택 2
+         그러지 않으면 '반자동 7 14 21' 의 7 이 개수로 읽혀 사라집니다.
+         뒤에 숫자가 또 이어지면 개수가 아니라 그 게임의 번호입니다 —
+         동행복권 '티켓 보기' 의 'E 자동 10 16 17 20 33 40' 에서
+         첫 번호 10 이 개수로 읽혀 사라지던 것을 막습니다. */
+      .replace(/(^|[^반])((?:완전\s*)?자동\s*(?:선택)?)\s*\d{1,2}(?![.\d])(?!\s*[,·、]?\s*\d)/g,'$1 ')  // 자동 4 · 자동선택 2
       .replace(/\d{1,2}\s*(?:개\s*)?자동/g,' ')                          // 4 자동 · 4개 자동
       .replace(/\d+\s*(?:세트|슬롯|게임|줄|행|장)/g,' ')                 // 1세트 · 5슬롯
       .replace(/[A-Za-z]\w*\.(?:png|jpg|jpeg|pdf|txt|csv|xlsx?|docx?)/gi,' ')  // 파일명
@@ -25010,7 +25037,7 @@ const I18N=(function(){
       aiDisc:'AIが生成した結果であり、当選を保証するものではありません。',
       setPhilRow:'開発者の哲学', setPhilSub:'平日は頑張り、週末に小さなときめきを',
       setCheerRow:'開発者を応援', setCheerSub:'ありがとうの方々',
-      setSuperRow:'<i>もっと良くするために</i><b>スーパーチャット</b>', setSuperSub:'チャットに応援を表示',
+      setSuperRow:'<i>もっと良くするために</i><b>開発者を支援</b>', setSuperSub:'運営を支える',
       philTitle:'開発者の哲学', philLead:'平日は頑張り、<br>週末に小さなときめきを。',
       philNote:'宝くじで日常が揺らがないことを願っています。ふつうの一週間を過ごした人が、週末に小さな期待をひとつ持てれば十分です。',
       philK1:'まじめに', philV1:'分析はていねいに',
@@ -25165,7 +25192,7 @@ const I18N=(function(){
       aiDisc:'这是AI生成的结果，并不保证中奖。',
       setPhilRow:'开发者理念', setPhilSub:'平日努力，周末一点小期待',
       setCheerRow:'支持开发者', setCheerSub:'感谢名单',
-      setSuperRow:'<i>为了让它更好</i><b>超级留言</b>', setSuperSub:'在聊天里亮出应援',
+      setSuperRow:'<i>为了让它更好</i><b>支持开发者</b>', setSuperSub:'帮助维持运营',
       philTitle:'开发者理念', philLead:'平日努力，<br>周末一点小期待。',
       philNote:'希望彩票不会动摇你的日常。认真过完一周的人，周末能有一点小小的期待，就够了。',
       philK1:'认真地', philV1:'分析踏实做',
@@ -25405,7 +25432,7 @@ const I18N=(function(){
       cancel2:'Cancel',
       chatRow:'Chat',
       cheerFor:'To keep improving',
-      cheerSuper:'Super chat support',
+      cheerSuper:'Support the maker',
       clear2:'Clear',
       close2:'Close',
       dAnc:'Ancestor dream',
@@ -25873,7 +25900,7 @@ const I18N=(function(){
       aiDisc:'These are AI-generated suggestions and do not guarantee a win.',
       setPhilRow:'Our philosophy', setPhilSub:'Work hard on weekdays, a small thrill on weekends',
       setCheerRow:'Support the maker', setCheerSub:'Thank-you wall',
-      setSuperRow:'<i>To grow the app</i><b>Super Chat</b>', setSuperSub:'Pin a cheer in chat',
+      setSuperRow:'<i>To grow the app</i><b>Support the maker</b>', setSuperSub:'Help keep it running',
       philTitle:'Our philosophy', philLead:'Work hard on weekdays,<br>a small thrill on weekends.',
       philNote:'We hope the lottery never shakes your everyday life. If someone who lived an ordinary week can hold one small hope on the weekend, that is enough.',
       philK1:'Seriously', philV1:'We analyse with care',
@@ -26024,7 +26051,7 @@ const I18N=(function(){
     ['#settings [data-i="setCheerRow"]','setCheerRow','개발자 응원하기'],
     ['#settings [data-i="setCheerSub"]','setCheerSub','고마운 분들 리스트'],
     ['#settings [data-i="setSuperRow"]','setSuperRow',
-     '<i data-i="cheerFor">고도화를 위한</i><b data-i="cheerSuper">슈퍼챗 응원</b>','html'],
+     '<i data-i="cheerFor">고도화를 위한</i><b data-i="cheerSuper">개발자 후원</b>','html'],
     ['#setCall','setCall','AI 호칭 다시 고르기'],
     ['#setClear','setClear','기록 전체 삭제'],
     ['#setUnblock','setUnblock','차단·숨김 모두 해제'],
@@ -27540,6 +27567,125 @@ window.__mainDone=true;                            // 여기까지 오면 본 �
   }
   setTimeout(show, 1800);
   setInterval(show, 4000);
+})();
+</script>
+
+<script>
+/* ── 뒤로가기로 창 닫기 ──
+   안드로이드 뒤로가기 단추와 아이폰 가장자리 쓸어넘기기는 브라우저의 '뒤' 로 갑니다.
+   창(시트)이 떠 있을 때 그렇게 하면 창만 닫히는 게 아니라 앱이 통째로 꺼졌습니다.
+   앱으로 설치해 쓰면 더 크게 걸립니다 — 돌아갈 웹 페이지가 없으니 그냥 종료됩니다.
+
+   고치는 방법
+     · 창이 열리면 주소 기록을 하나 쌓습니다.
+     · 뒤로가기가 오면 그 창의 '닫기' 를 대신 눌러 줍니다.
+       창마다 할 일이 다르므로(카메라 끄기 등) 직접 지우지 않고 닫기를 누릅니다.
+     · 창을 손으로 닫으면 쌓아 둔 기록도 조용히 거둡니다.
+       그러지 않으면 다음 뒤로가기가 한 번 헛돕니다.
+     · 창이 하나도 없을 때의 뒤로가기는 건드리지 않습니다 — 평소대로 나갑니다. */
+(function(){
+  if(!window.history || !history.pushState) return;
+
+  /* ── 기록은 '창이 하나라도 열려 있다' 는 표시 하나만 씁니다 ──
+     창마다 하나씩 쌓았더니, 한 창이 닫히면서 다른 창이 바로 열리는 자리
+     (설정 → 응원처럼)에서 쌓기와 되돌리기가 엇갈려 기록을 한 칸 더
+     빼먹었습니다. 그러면 앱이 화면 밖으로 나가 버립니다. 실제로 그랬습니다.
+     그래서 창이 몇 개든 표시는 하나만 두고, 열고 닫히는 일이 다 끝난 뒤
+     (다음 화면 그릴 때) 지금 몇 개가 열려 있는지만 보고 맞춥니다. */
+  var armed=false;         // 우리가 쌓아 둔 표시가 지금 있는가
+  var selfBack=0;          // 우리가 스스로 부른 뒤로가기 (무시해야 합니다)
+  var fromBack=false;      // 지금 뒤로가기 때문에 닫는 중인가
+  var waiting=false;       // 맞추기를 예약해 두었는가
+  var order=[];            // 열린 창, 열린 차례대로 (마지막이 맨 위)
+
+  function openList(){
+    var out=[], all=document.querySelectorAll('.sheet.on'), i;
+    for(i=0;i<all.length;i++) out.push(all[i]);
+    return out;
+  }
+  function keepOrder(list){
+    var i, keep=[];
+    for(i=0;i<order.length;i++) if(list.indexOf(order[i])>=0) keep.push(order[i]);
+    for(i=0;i<list.length;i++) if(keep.indexOf(list[i])<0) keep.push(list[i]);
+    order=keep;
+  }
+
+  function sync(){
+    waiting=false;
+    var list=openList();
+    keepOrder(list);
+    if(list.length>0 && !armed){
+      armed=true;
+      try{ history.pushState({t645:1},''); }catch(e){ armed=false; }
+    }else if(list.length===0 && armed){
+      armed=false;
+      if(fromBack) return;                 // 뒤로가기로 닫혔으면 기록은 이미 빠졌습니다
+      selfBack++;
+      try{ history.back(); }catch(e){ selfBack--; }
+    }
+  }
+  function later(){
+    if(waiting) return;
+    waiting=true;
+    if(window.requestAnimationFrame) requestAnimationFrame(sync);
+    else setTimeout(sync,16);
+  }
+
+  /* 창 63개를 하나하나 고치지 않고 class 가 바뀌는 것만 봅니다 */
+  try{
+    var mo=new MutationObserver(function(ms){
+      for(var k=0;k<ms.length;k++){
+        var el=ms[k].target;
+        if(el.classList && el.classList.contains('sheet')){ later(); return; }
+      }
+    });
+    mo.observe(document.documentElement,
+      {subtree:true, attributes:true, attributeFilter:['class']});
+  }catch(e){ return; }
+
+  window.addEventListener('popstate', function(){
+    if(selfBack>0){ selfBack--; return; }   // 우리가 부른 것입니다
+    armed=false;                            // 그 표시는 이미 빠졌습니다
+    var list=openList();
+    keepOrder(list);
+    var el=order[order.length-1];
+    if(!el){ return; }                      // 열린 창이 없으면 평소대로 나갑니다
+    /* 창마다 닫을 때 할 일이 다릅니다(카메라 끄기 등).
+       그래서 class 를 지우지 않고 그 창의 닫기 단추를 누릅니다. */
+    var btn=el.querySelector('.sheet-bar button, [id^="close"], button.x');
+    fromBack=true;
+    try{ if(btn) btn.click(); else el.classList.remove('on'); }
+    catch(e){ try{ el.classList.remove('on'); }catch(e2){} }
+    /* 닫는 동안 또 다른 창이 열렸을 수도 있습니다. 다 끝난 뒤에 다시 맞춥니다. */
+    setTimeout(function(){ fromBack=false; later(); }, 0);
+  });
+})();
+</script>
+
+<script>
+/* ── 서비스 워커 ──
+   안드로이드가 '앱으로 설치' 를 띄우려면 서비스 워커가 있어야 합니다.
+   아이폰에서 홈 화면에 추가했을 때 인터넷이 끊겨도 화면이 열리게 합니다.
+   당첨번호(/api/)는 담아 두지 않습니다 — sw.js 안에 적어 두었습니다.
+
+   파일을 직접 열었을 때(file://)는 등록하지 않습니다. 그럴 땐 동작하지 않고
+   오류만 납니다. 배포 주소(https)와 localhost 에서만 씁니다. */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol!=='https:' && location.hostname!=='localhost'
+     && location.hostname!=='127.0.0.1') return;
+  var had = !!navigator.serviceWorker.controller;   // 이미 쓰고 있었는지
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js', {scope:'/'}).catch(function(){});
+  });
+  /* 새 버전이 자리를 넘겨받으면 한 번만 다시 읽습니다.
+     처음 설치할 때는(had 가 거짓) 다시 읽지 않습니다 — 되풀이를 막습니다. */
+  var once=false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(!had || once) return;
+    once=true;
+    location.reload();
+  });
 })();
 </script>
 </body>
